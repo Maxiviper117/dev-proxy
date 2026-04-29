@@ -323,11 +323,53 @@ Useful scripts:
 - `pnpm test` runs Vitest
 - `pnpm build` cleans and compiles TypeScript
 
+## Beta Releases
+
+This repository is configured for Google Release Please in beta prerelease mode.
+
+On pushes to `main`, `.github/workflows/release-please.yml` runs `googleapis/release-please-action@v4` with:
+
+- `release-please-config.json`
+- `.release-please-manifest.json`
+- `release-type: node`
+- `prerelease: true`
+- `prerelease-type: beta`
+
+Release Please opens or updates a Release PR based on Conventional Commits. When that Release PR is merged, the workflow creates the GitHub release and publishes the package to npm with the `beta` dist-tag:
+
+```bash
+npm publish --tag beta --access public
+```
+
+Required repository secret:
+
+```text
+NPM_TOKEN
+```
+
+Install beta releases with:
+
+```bash
+npm install -g @maxiviper117/devproxy@beta
+```
+
 ## Troubleshooting
 
 ### Caddy is not found
 
 Install Caddy and confirm it is on `PATH`:
+
+```powershell
+winget install CaddyServer.Caddy
+```
+
+or:
+
+```powershell
+scoop install caddy
+```
+
+Then open a new terminal and run:
 
 ```bash
 caddy version

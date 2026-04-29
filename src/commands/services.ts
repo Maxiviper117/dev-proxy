@@ -4,6 +4,7 @@ import { DevProxyError } from "../core/errors.js";
 import { readRegistry, removeService, upsertService, writeRegistry } from "../core/registry.js";
 import type { DevProxyContext, Service } from "../core/types.js";
 import {
+  caddyInstallHint,
   generateCaddyfile,
   stopCaddy,
   validateAndReloadCaddy,
@@ -99,7 +100,7 @@ export async function doctor(context: DevProxyContext): Promise<string> {
   );
 
   if (caddy.code !== 0) {
-    checks.push("hint Install Caddy and run `caddy trust` from an elevated PowerShell session.");
+    checks.push(`hint ${caddyInstallHint}`);
   }
 
   return checks.join("\n");

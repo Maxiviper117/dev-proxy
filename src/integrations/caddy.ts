@@ -3,6 +3,15 @@ import { dirname } from "node:path";
 import { DevProxyError } from "../core/errors.js";
 import type { CommandRunner, Service } from "../core/types.js";
 
+export const caddyInstallHint = [
+  "Caddy is required but was not found on PATH.",
+  "Install Caddy, then open a new terminal and run `caddy version` to confirm it is available.",
+  "Windows options:",
+  "  winget install CaddyServer.Caddy",
+  "  scoop install caddy",
+  "After installing, run `caddy trust` from an elevated PowerShell session.",
+].join("\n");
+
 export function generateCaddyfile(services: readonly Service[]): string {
   const lines: string[] = [];
 
@@ -36,9 +45,7 @@ export async function writeCaddyfile(
 export async function ensureCaddyAvailable(run: CommandRunner): Promise<void> {
   const result = await run("caddy", ["version"]);
   if (result.code !== 0) {
-    throw new DevProxyError(
-      "Caddy is required but was not found on PATH. Install Caddy, then run this command again.",
-    );
+    throw new DevProxyError(caddyInstallHint);
   }
 }
 

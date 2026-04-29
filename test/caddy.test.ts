@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { generateCaddyfile, stopCaddy, validateAndReloadCaddy } from "../src/integrations/caddy.js";
+import {
+  ensureCaddyAvailable,
+  generateCaddyfile,
+  stopCaddy,
+  validateAndReloadCaddy,
+} from "../src/integrations/caddy.js";
 import type { CommandRunner, Service } from "../src/core/types.js";
 
 const service = {
@@ -46,6 +51,16 @@ describe("generateCaddyfile", () => {
       "caddy reload --config C:\\devproxy\\Caddyfile",
       "caddy start --config C:\\devproxy\\Caddyfile",
     ]);
+  });
+
+  it("warns clearly when Caddy is not installed", async () => {
+    const run: CommandRunner = async () => ({
+      code: 127,
+      stdout: "",
+      stderr: "caddy not found",
+    });
+
+    await expect(ensureCaddyAvailable(run)).rejects.toThrow("winget install CaddyServer.Caddy");
   });
 
   it("stops Caddy through the generated config", async () => {

@@ -15,6 +15,7 @@ Use `TODO.md` for future enhancements, deferred product work, and follow-up hard
 - Linter: Oxlint
 - Formatter: Oxfmt
 - Tests: Vitest
+- Releases: Google Release Please beta prereleases
 - TypeScript config:
   - `tsconfig.json` for editor/workspace diagnostics across source and tests
   - `tsconfig.build.json` for package output
@@ -49,6 +50,15 @@ For publishing-related changes, also run:
 pnpm pack --dry-run
 ```
 
+## Releases
+
+- Release Please config lives in `release-please-config.json`.
+- Release Please manifest lives in `.release-please-manifest.json`.
+- GitHub Actions workflow lives in `.github/workflows/release-please.yml`.
+- The current setup publishes prereleases to npm with the `beta` dist-tag.
+- Repository secret `NPM_TOKEN` is required before npm publishing can work.
+- Keep commits Conventional Commits-compatible so Release Please can infer versions.
+
 ## Architecture
 
 - `src/cli.ts` is the npm binary entrypoint and defines the Commander CLI.
@@ -79,6 +89,7 @@ pnpm pack --dry-run
 - `devproxy stop` stops Caddy; it does not stop attach-mode app processes.
 - Caddy integration uses generated Caddyfile reloads, not the Caddy Admin API.
 - If `caddy reload` reports that `localhost:2019` is unavailable, DevProxy starts Caddy with the generated config.
+- If Caddy is missing, CLI errors and `doctor` output must include actionable install commands.
 - Proxy upstreams should include both `localhost:<port>` and `127.0.0.1:<port>` so Windows apps that bind IPv6 localhost or IPv4 loopback work.
 - HTTPS uses Caddy `tls internal`.
 - Managed process spawning is deferred. `devproxy stop <name>` currently reports that attach services cannot be stopped.

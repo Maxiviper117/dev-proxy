@@ -1,6 +1,45 @@
 # DevProxy
 
+### Stable HTTPS local domains for Windows + WSL development
+
+[![CI](https://github.com/Maxiviper117/dev-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/Maxiviper117/dev-proxy/actions/workflows/ci.yml) ![npm](https://img.shields.io/badge/npm-unpublished-lightgrey) ![beta](https://img.shields.io/badge/beta-pending-lightgrey) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](package.json) [![pnpm](https://img.shields.io/badge/pnpm-10.33.0-F69220?logo=pnpm&logoColor=white)](package.json) [![typescript](https://img.shields.io/badge/TypeScript-ESM-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
+
 DevProxy is a Windows-native CLI for stable HTTPS local domains that proxy to development services running in WSL.
+
+## Why Windows + WSL
+
+When you run a development server inside WSL, Windows can usually reach it through `localhost:<port>`. For example, a Laravel, Node, or Vite server running in WSL on port `8000` can often be opened from the Windows browser at:
+
+```text
+http://localhost:8000
+```
+
+DevProxy builds on that behavior. It keeps the network-facing pieces on Windows:
+
+- hosts-file entries
+- trusted HTTPS certificates
+- Caddy reverse proxy
+- browser-facing `.local` domains
+
+Your app still runs normally in WSL. DevProxy registers a Windows hosts entry such as:
+
+```text
+127.0.0.1 api.myapp.local
+```
+
+Then Caddy receives:
+
+```text
+https://api.myapp.local
+```
+
+and proxies it back to the WSL-forwarded port:
+
+```text
+localhost:8000
+```
+
+This gives a WSL app a real HTTPS local domain without moving the app into Docker, changing WSL networking, or installing certificates inside the Linux environment.
 
 Instead of opening `http://localhost:8000`, register a readable local domain:
 

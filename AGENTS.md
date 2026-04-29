@@ -56,8 +56,8 @@ pnpm pack --dry-run
 - Release Please config lives in `release-please-config.json`.
 - Release Please manifest lives in `.release-please-manifest.json`.
 - GitHub Actions workflow lives in `.github/workflows/release-please.yml`.
-- The current setup publishes prereleases to npm with the `beta` dist-tag.
-- Repository secret `NPM_TOKEN` is required before npm publishing can work.
+- Release Please creates release PRs and GitHub releases only; do not add automated npm publishing unless explicitly requested.
+- npm publishing is manual from a local machine after running the full checks and `pnpm pack --dry-run`.
 - Keep commits Conventional Commits-compatible so Release Please can infer versions.
 
 ## Architecture

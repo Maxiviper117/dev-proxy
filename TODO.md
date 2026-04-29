@@ -53,6 +53,7 @@
 - Add npm provenance once publishing is ready.
 - Add Windows install smoke tests.
 - Revisit Release Please beta prerelease settings before the first stable release.
+- Decide whether npm publishing should remain manual or move back into CI later.
 
 ## Documentation
 

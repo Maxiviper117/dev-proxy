@@ -376,16 +376,23 @@ On pushes to `main`, `.github/workflows/release-please.yml` runs `googleapis/rel
 - `prerelease: true`
 - `prerelease-type: beta`
 
-Release Please opens or updates a Release PR based on Conventional Commits. When that Release PR is merged, the workflow creates the GitHub release and publishes the package to npm with the `beta` dist-tag:
+Release Please opens or updates a Release PR based on Conventional Commits. When that Release PR is merged, the workflow creates the GitHub release, but npm publishing is manual.
+
+Before publishing locally, run:
+
+```bash
+pnpm fmt:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm pack --dry-run
+```
+
+Then publish the beta manually:
 
 ```bash
 npm publish --tag beta --access public
-```
-
-Required repository secret:
-
-```text
-NPM_TOKEN
 ```
 
 Install beta releases with:

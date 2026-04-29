@@ -49,7 +49,6 @@
 
 ## Packaging And Release
 
-- Add GitHub Actions CI for format, lint, typecheck, test, build, and pack dry-run.
 - Add changelog generation.
 - Add npm provenance once publishing is ready.
 - Add Windows install smoke tests.

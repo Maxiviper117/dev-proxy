@@ -327,6 +327,8 @@ Useful scripts:
 
 This repository is configured for Google Release Please in beta prerelease mode.
 
+CI runs on pull requests and pushes to `main` using `.github/workflows/ci.yml`. It checks formatting, linting, TypeScript, tests, build output, and npm package contents.
+
 On pushes to `main`, `.github/workflows/release-please.yml` runs `googleapis/release-please-action@v4` with:
 
 - `release-please-config.json`

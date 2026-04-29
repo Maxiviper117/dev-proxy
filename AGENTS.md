@@ -52,6 +52,7 @@ pnpm pack --dry-run
 
 ## Releases
 
+- CI workflow lives in `.github/workflows/ci.yml`.
 - Release Please config lives in `release-please-config.json`.
 - Release Please manifest lives in `.release-please-manifest.json`.
 - GitHub Actions workflow lives in `.github/workflows/release-please.yml`.

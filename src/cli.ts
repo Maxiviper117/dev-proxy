@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import {
@@ -21,13 +22,17 @@ import {
 } from "./commands/services.js";
 import { DevProxyError, normalizeError } from "./core/errors.js";
 
+const require = createRequire(import.meta.url);
+const packageJson = require("../package.json") as { version?: string };
+const cliVersion = packageJson.version ?? "0.0.0";
+
 export function buildProgram(context = createDefaultContext()): Command {
   const program = new Command();
 
   program
     .name("devproxy")
     .description("Stable HTTPS local domains for WSL development services.")
-    .version("0.1.0");
+    .version(cliVersion);
 
   program
     .command("add")

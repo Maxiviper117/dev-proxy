@@ -178,8 +178,8 @@ export async function status(context: DevProxyContext): Promise<string> {
           domainReachable ? "is reachable through Caddy" : "is not reachable through Caddy"
         }`,
         `${upstreamReachable ? "ok" : "warn"} upstream ${service.domain} -> localhost:${service.port} ${
-        localhostReachable ? "reachable" : "unreachable"
-      }, 127.0.0.1:${service.port} ${loopbackReachable ? "reachable" : "unreachable"}`,
+          localhostReachable ? "reachable" : "unreachable"
+        }, 127.0.0.1:${service.port} ${loopbackReachable ? "reachable" : "unreachable"}`,
       ].join("\n");
     }),
   );

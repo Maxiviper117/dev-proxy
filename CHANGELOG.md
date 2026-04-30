@@ -2,10 +2,9 @@
 
 ## [0.2.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.2.0...devproxy-v0.2.1) (2026-04-30)
 
-
 ### Bug Fixes
 
-* **release-please:** add missing step ID for release action ([b09ed14](https://github.com/Maxiviper117/dev-proxy/commit/b09ed141a603d5dda5cfc8e79c19b683c871d4dd))
+- **release-please:** add missing step ID for release action ([b09ed14](https://github.com/Maxiviper117/dev-proxy/commit/b09ed141a603d5dda5cfc8e79c19b683c871d4dd))
 
 ## [0.2.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.1.0...devproxy-v0.2.0) (2026-04-30)
 

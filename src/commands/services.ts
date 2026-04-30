@@ -1,4 +1,5 @@
 import { Socket } from "node:net";
+import { request as httpsRequest } from "node:https";
 import { platform } from "node:os";
 import { domainFromName, parsePort } from "../core/domain.js";
 import { DevProxyError } from "../core/errors.js";
@@ -23,6 +24,7 @@ export function createDefaultContext(): DevProxyContext {
     platform: platform(),
     probeTcp: probeTcpPort,
     probeUrl: probeUrl,
+    probeHttps: probeHttpsUrl,
   };
 }
 
@@ -137,6 +139,7 @@ export async function status(context: DevProxyContext): Promise<string> {
   const registry = await readRegistry(context.paths.registryFile);
   const probeTcp = context.probeTcp ?? probeTcpPort;
   const probeUrlFn = context.probeUrl ?? probeUrl;
+  const probeHttps = context.probeHttps ?? probeHttpsUrl;
   const caddyVersion = await context.run("caddy", ["version"]);
   const caddyInstalled = caddyVersion.code === 0;
   const caddyRunning = caddyInstalled ? await probeUrlFn("http://localhost:2019/config/") : false;
@@ -168,10 +171,16 @@ export async function status(context: DevProxyContext): Promise<string> {
         probeTcp("127.0.0.1", service.port),
       ]);
       const upstreamReachable = localhostReachable || loopbackReachable;
+      const domainReachable = await probeHttps(`https://${service.domain}/`);
 
-      return `${upstreamReachable ? "ok" : "warn"} ${service.domain} -> localhost:${service.port} ${
+      return [
+        `${domainReachable ? "ok" : "warn"} https://${service.domain}/ ${
+          domainReachable ? "is reachable through Caddy" : "is not reachable through Caddy"
+        }`,
+        `${upstreamReachable ? "ok" : "warn"} upstream ${service.domain} -> localhost:${service.port} ${
         localhostReachable ? "reachable" : "unreachable"
-      }, 127.0.0.1:${service.port} ${loopbackReachable ? "reachable" : "unreachable"}`;
+      }, 127.0.0.1:${service.port} ${loopbackReachable ? "reachable" : "unreachable"}`,
+      ].join("\n");
     }),
   );
 
@@ -220,4 +229,36 @@ async function probeUrl(url: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+async function probeHttpsUrl(url: string): Promise<boolean> {
+  return await new Promise((resolve) => {
+    const request = httpsRequest(
+      url,
+      {
+        method: "HEAD",
+        rejectUnauthorized: false,
+      },
+      (response) => {
+        response.resume();
+        resolve(true);
+      },
+    );
+
+    let settled = false;
+
+    const finish = (reachable: boolean): void => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      request.destroy();
+      resolve(reachable);
+    };
+
+    request.setTimeout(750, () => finish(false));
+    request.once("error", () => finish(false));
+    request.end();
+  });
 }

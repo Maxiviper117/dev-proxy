@@ -127,6 +127,7 @@ describe("app commands", () => {
 
     context.probeUrl = async (url) => url === "http://localhost:2019/config/";
     context.probeTcp = async (host, port) => host === "localhost" && port === 8000;
+    context.probeHttps = async (url) => url === "https://api.myapp.local/";
 
     await addService(context, { name: "api.myapp", port: "8000" });
 
@@ -135,8 +136,9 @@ describe("app commands", () => {
     expect(output).toContain("ok Caddy on PATH");
     expect(output).toContain("ok Caddy admin endpoint on localhost:2019 is reachable");
     expect(output).toContain("info Registered services: 1");
+    expect(output).toContain("ok https://api.myapp.local/ is reachable through Caddy");
     expect(output).toContain(
-      "api.myapp.local -> localhost:8000 reachable, 127.0.0.1:8000 unreachable",
+      "ok upstream api.myapp.local -> localhost:8000 reachable, 127.0.0.1:8000 unreachable",
     );
   });
 
@@ -150,6 +152,7 @@ describe("app commands", () => {
     });
 
     context.probeUrl = async () => true;
+    context.probeHttps = async () => true;
 
     const output = await status(context);
 

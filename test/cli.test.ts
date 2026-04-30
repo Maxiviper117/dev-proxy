@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   addService,
+  doctor,
   listServices,
   removeRegisteredService,
   startCaddyServer,
@@ -28,6 +29,11 @@ async function createContext(): Promise<DevProxyContext> {
     now: () => new Date("2026-04-29T00:00:00.000Z"),
     platform: "win32",
   };
+}
+
+async function createContextWithRunner(run: CommandRunner): Promise<DevProxyContext> {
+  const context = await createContext();
+  return { ...context, run };
 }
 
 describe("app commands", () => {
@@ -70,5 +76,18 @@ describe("app commands", () => {
       "Caddy is running with 1 registered service(s).",
     );
     await expect(stopCaddyServer(context)).resolves.toBe("Caddy stopped.");
+  });
+
+  it("doctor warns when Caddy is not installed", async () => {
+    const context = await createContextWithRunner(async () => ({
+      code: 127,
+      stdout: "",
+      stderr: "caddy not found",
+    }));
+
+    const output = await doctor(context);
+
+    expect(output).toContain("fail Caddy on PATH");
+    expect(output).toContain("winget install CaddyServer.Caddy");
   });
 });

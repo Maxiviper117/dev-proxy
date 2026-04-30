@@ -49,11 +49,11 @@
 
 ## Packaging And Release
 
-- Add GitHub Actions CI for format, lint, typecheck, test, build, and pack dry-run.
-- Add release workflow for publishing `@maxiviper117/devproxy`.
 - Add changelog generation.
 - Add npm provenance once publishing is ready.
 - Add Windows install smoke tests.
+- Revisit Release Please beta prerelease settings before the first stable release.
+- Decide whether npm publishing should remain manual or move back into CI later.
 
 ## Documentation
 

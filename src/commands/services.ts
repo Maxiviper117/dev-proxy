@@ -46,9 +46,9 @@ export async function addService(
   await writeRegistry(context.paths.registryFile, next);
   await writeHostsFile(context.paths.hostsFile, next.services);
   await writeCaddyfile(context.paths.caddyFile, next.services);
-  await validateAndReloadCaddy(context.paths.caddyFile, context.run);
+  const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
 
-  return `Registered ${domain} -> localhost:${port}, 127.0.0.1:${port}`;
+  return `Registered ${domain} -> localhost:${port}, 127.0.0.1:${port} (${formatCaddyLifecycle(caddyLifecycle)}).`;
 }
 
 export async function removeRegisteredService(
@@ -114,9 +114,9 @@ export async function startCaddyServer(context: DevProxyContext): Promise<string
   }
 
   await writeCaddyfile(context.paths.caddyFile, registry.services);
-  await validateAndReloadCaddy(context.paths.caddyFile, context.run);
+  const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
 
-  return `Caddy is running with ${registry.services.length} registered service(s).`;
+  return `Caddy ${formatCaddyLifecycle(caddyLifecycle)} with ${registry.services.length} registered service(s).`;
 }
 
 export async function stopCaddyServer(context: DevProxyContext): Promise<string> {
@@ -134,4 +134,8 @@ function ensureWindows(context: DevProxyContext): void {
   if (context.platform !== "win32") {
     throw new DevProxyError("DevProxy currently supports Windows only.");
   }
+}
+
+function formatCaddyLifecycle(lifecycle: "reloaded" | "started"): string {
+  return lifecycle === "started" ? "started" : "reloaded";
 }

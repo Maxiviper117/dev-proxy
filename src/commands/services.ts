@@ -13,6 +13,7 @@ import {
   writeCaddyfile,
 } from "../integrations/caddy.js";
 import { canWriteHosts, ensureHostsWritable, writeHostsFile } from "../integrations/hosts.js";
+import { openDefaultBrowser } from "../platform/browser.js";
 import { defaultPaths } from "../platform/paths.js";
 import { runCommand } from "../platform/runner.js";
 
@@ -25,6 +26,7 @@ export function createDefaultContext(): DevProxyContext {
     probeTcp: probeTcpPort,
     probeUrl: probeUrl,
     probeHttps: probeHttpsUrl,
+    openUrl: openDefaultBrowser,
   };
 }
 
@@ -71,6 +73,19 @@ export async function removeRegisteredService(
   await validateAndReloadCaddy(context.paths.caddyFile, context.run);
 
   return `Removed ${removed.domain}`;
+}
+
+export async function openServiceInBrowser(
+  context: DevProxyContext,
+  name: string,
+): Promise<string> {
+  ensureWindows(context);
+  const domain = domainFromName(name);
+  const openUrl = context.openUrl ?? openDefaultBrowser;
+
+  await openUrl(`https://${domain}/`);
+
+  return `Opened https://${domain}/ in the default browser.`;
 }
 
 export async function listServices(context: DevProxyContext): Promise<string> {

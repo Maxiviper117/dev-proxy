@@ -137,6 +137,14 @@ https://api.myapp.local -> localhost:8000, 127.0.0.1:8000
 
 Service names must include at least two labels, such as `api.myapp` or `web.myapp`. Do not include the `.local` suffix yourself.
 
+### Open a service
+
+```bash
+devproxy open api.myapp
+```
+
+This opens `https://api.myapp.local/` in your default browser.
+
 ### List services
 
 ```bash

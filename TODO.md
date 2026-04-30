@@ -12,7 +12,7 @@
 
 - Add `--json` output for `list`, `doctor`, and future automation-friendly commands.
 - Add `--verbose` to show underlying Caddy commands and paths.
-- Add `devproxy open <name>` to open `https://<name>.local` in the default browser.
+- [x] Add `devproxy open <name>` to open `https://<name>.local` in the default browser.
 - Add `devproxy logs` if DevProxy starts managing Caddy logs or process metadata.
 - Consider `devproxy update <name> --port <port>` instead of requiring remove/add for port changes.
 

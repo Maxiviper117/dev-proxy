@@ -2,10 +2,9 @@
 
 ## [0.3.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.3.0...devproxy-v0.3.1) (2026-04-30)
 
-
 ### Bug Fixes
 
-* sync cli version ([#7](https://github.com/Maxiviper117/dev-proxy/issues/7)) ([d79e218](https://github.com/Maxiviper117/dev-proxy/commit/d79e21855356a313d25f91572a258fd01d1d098a))
+- sync cli version ([#7](https://github.com/Maxiviper117/dev-proxy/issues/7)) ([d79e218](https://github.com/Maxiviper117/dev-proxy/commit/d79e21855356a313d25f91572a258fd01d1d098a))
 
 ## [0.3.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.2.1...devproxy-v0.3.0) (2026-04-30)
 

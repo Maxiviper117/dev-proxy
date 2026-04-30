@@ -43,6 +43,9 @@ describe("app commands", () => {
     await expect(addService(context, { name: "api.myapp", port: "8000" })).resolves.toContain(
       "api.myapp.local",
     );
+    await expect(addService(context, { name: "web.myapp", port: "5173" })).resolves.toContain(
+      "(reloaded)",
+    );
     await expect(listServices(context)).resolves.toContain("localhost:8000, 127.0.0.1:8000");
 
     const caddyfile = await readFile(context.paths.caddyFile, "utf8");
@@ -73,9 +76,30 @@ describe("app commands", () => {
     await addService(context, { name: "api.myapp", port: "8000" });
 
     await expect(startCaddyServer(context)).resolves.toBe(
-      "Caddy is running with 1 registered service(s).",
+      "Caddy reloaded with 1 registered service(s).",
     );
     await expect(stopCaddyServer(context)).resolves.toBe("Caddy stopped.");
+  });
+
+  it("reports when Caddy has to start instead of reload", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "reload") {
+        return {
+          code: 1,
+          stdout: "",
+          stderr:
+            'Error: sending configuration to instance: performing request: Post "http://localhost:2019/load": dial tcp [::1]:2019: connectex: No connection could be made because the target machine actively refused it.',
+        };
+      }
+
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    await addService(context, { name: "api.myapp", port: "8000" });
+
+    await expect(startCaddyServer(context)).resolves.toBe(
+      "Caddy started with 1 registered service(s).",
+    );
   });
 
   it("doctor warns when Caddy is not installed", async () => {

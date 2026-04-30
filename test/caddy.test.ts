@@ -27,6 +27,21 @@ describe("generateCaddyfile", () => {
     expect(caddyfile).toContain("header_up X-Forwarded-Proto {scheme}");
   });
 
+  it("reports when reload succeeds without starting a new instance", async () => {
+    const calls: string[] = [];
+    const run: CommandRunner = async (command, args) => {
+      calls.push([command, ...args].join(" "));
+      return { code: 0, stdout: "ok", stderr: "" };
+    };
+
+    await expect(validateAndReloadCaddy("C:\\devproxy\\Caddyfile", run)).resolves.toBe("reloaded");
+    expect(calls).toEqual([
+      "caddy version",
+      "caddy validate --config C:\\devproxy\\Caddyfile",
+      "caddy reload --config C:\\devproxy\\Caddyfile",
+    ]);
+  });
+
   it("starts Caddy when reload has no running admin endpoint", async () => {
     const calls: string[] = [];
     const run: CommandRunner = async (command, args) => {
@@ -44,7 +59,7 @@ describe("generateCaddyfile", () => {
       return { code: 0, stdout: "ok", stderr: "" };
     };
 
-    await expect(validateAndReloadCaddy("C:\\devproxy\\Caddyfile", run)).resolves.toBeUndefined();
+    await expect(validateAndReloadCaddy("C:\\devproxy\\Caddyfile", run)).resolves.toBe("started");
     expect(calls).toEqual([
       "caddy version",
       "caddy validate --config C:\\devproxy\\Caddyfile",

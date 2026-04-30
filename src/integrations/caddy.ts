@@ -3,6 +3,8 @@ import { dirname } from "node:path";
 import { DevProxyError } from "../core/errors.js";
 import type { CommandRunner, Service } from "../core/types.js";
 
+export type CaddyLifecycle = "reloaded" | "started";
+
 export const caddyInstallHint = [
   "Caddy is required but was not found on PATH.",
   "Install Caddy, then open a new terminal and run `caddy version` to confirm it is available.",
@@ -49,7 +51,10 @@ export async function ensureCaddyAvailable(run: CommandRunner): Promise<void> {
   }
 }
 
-export async function validateAndReloadCaddy(caddyFile: string, run: CommandRunner): Promise<void> {
+export async function validateAndReloadCaddy(
+  caddyFile: string,
+  run: CommandRunner,
+): Promise<CaddyLifecycle> {
   await ensureCaddyAvailable(run);
 
   const validate = await run("caddy", ["validate", "--config", caddyFile]);
@@ -65,7 +70,7 @@ export async function validateAndReloadCaddy(caddyFile: string, run: CommandRunn
     if (isCaddyAdminUnavailable(output)) {
       const start = await run("caddy", ["start", "--config", caddyFile]);
       if (start.code === 0) {
-        return;
+        return "started";
       }
 
       throw new DevProxyError(
@@ -75,6 +80,8 @@ export async function validateAndReloadCaddy(caddyFile: string, run: CommandRunn
 
     throw new DevProxyError(`Caddy reload failed:\n${output}`);
   }
+
+  return "reloaded";
 }
 
 export async function stopCaddy(

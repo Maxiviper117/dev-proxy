@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.3.1...devproxy-v0.4.0) (2026-04-30)
+
+
+### Features
+
+* add open command ([#9](https://github.com/Maxiviper117/dev-proxy/issues/9)) ([4adc75c](https://github.com/Maxiviper117/dev-proxy/commit/4adc75c947733e2ebb4b7a8d615a6eb71efd711f))
+
 ## [0.3.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.3.0...devproxy-v0.3.1) (2026-04-30)
 
 ### Bug Fixes

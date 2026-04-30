@@ -7,6 +7,7 @@ import {
   addService,
   doctor,
   listServices,
+  openServiceInBrowser,
   removeRegisteredService,
   status,
   startCaddyServer,
@@ -79,6 +80,19 @@ describe("app commands", () => {
       "Removed api.myapp.local",
     );
     await expect(listServices(context)).resolves.toBe("No services registered.");
+  });
+
+  it("opens a service domain in the default browser", async () => {
+    const context = await createContext();
+    let openedUrl = "";
+    context.openUrl = async (url) => {
+      openedUrl = url;
+    };
+
+    await expect(openServiceInBrowser(context, "api.myapp")).resolves.toBe(
+      "Opened https://api.myapp.local/ in the default browser.",
+    );
+    expect(openedUrl).toBe("https://api.myapp.local/");
   });
 
   it("starts and stops Caddy using the current registry", async () => {

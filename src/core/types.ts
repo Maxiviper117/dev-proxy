@@ -32,6 +32,8 @@ export type UrlProbe = (url: string) => Promise<boolean>;
 
 export type HttpsProbe = (url: string) => Promise<boolean>;
 
+export type BrowserOpener = (url: string) => Promise<void>;
+
 export type DevProxyContext = {
   paths: RuntimePaths;
   run: CommandRunner;
@@ -40,4 +42,5 @@ export type DevProxyContext = {
   probeTcp?: TcpProbe;
   probeUrl?: UrlProbe;
   probeHttps?: HttpsProbe;
+  openUrl?: BrowserOpener;
 };

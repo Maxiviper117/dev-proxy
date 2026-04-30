@@ -15,6 +15,7 @@ import {
   createDefaultContext,
   doctor,
   listServices,
+  openServiceInBrowser,
   removeRegisteredService,
   status,
   startCaddyServer,
@@ -50,6 +51,14 @@ export function buildProgram(context = createDefaultContext()): Command {
     .description("Remove a registered service.")
     .action(async (name: string) => {
       console.log(success(await removeRegisteredService(context, name)));
+    });
+
+  program
+    .command("open")
+    .argument("<name>", "service name, for example api.myapp")
+    .description("Open the service domain in the default browser.")
+    .action(async (name: string) => {
+      console.log(success(await openServiceInBrowser(context, name)));
     });
 
   program

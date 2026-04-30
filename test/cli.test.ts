@@ -7,6 +7,7 @@ import {
   doctor,
   listServices,
   removeRegisteredService,
+  status,
   startCaddyServer,
   stopCaddyServer,
 } from "../src/commands/services.js";
@@ -113,5 +114,49 @@ describe("app commands", () => {
 
     expect(output).toContain("fail Caddy on PATH");
     expect(output).toContain("winget install CaddyServer.Caddy");
+  });
+
+  it("reports Caddy and upstream status", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    context.probeUrl = async (url) => url === "http://localhost:2019/config/";
+    context.probeTcp = async (host, port) => host === "localhost" && port === 8000;
+    context.probeHttps = async (url) => url === "https://api.myapp.local/";
+
+    await addService(context, { name: "api.myapp", port: "8000" });
+
+    const output = await status(context);
+
+    expect(output).toContain("ok Caddy on PATH");
+    expect(output).toContain("ok Caddy admin endpoint on localhost:2019 is reachable");
+    expect(output).toContain("info Registered services: 1");
+    expect(output).toContain("ok https://api.myapp.local/ is reachable through Caddy");
+    expect(output).toContain(
+      "ok upstream api.myapp.local -> localhost:8000 reachable, 127.0.0.1:8000 unreachable",
+    );
+  });
+
+  it("reports when no services are registered", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    context.probeUrl = async () => true;
+    context.probeHttps = async () => true;
+
+    const output = await status(context);
+
+    expect(output).toContain("info Registered services: 0");
+    expect(output).toContain("info No services registered.");
   });
 });

@@ -4,6 +4,7 @@ export {
   doctor,
   listServices,
   removeRegisteredService,
+  status,
   startCaddyServer,
   stopCaddyServer,
 } from "./commands/services.js";

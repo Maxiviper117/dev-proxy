@@ -3,7 +3,7 @@
 ## Near Term
 
 - Add an integration test mode that uses temporary Caddy/hosts paths and never touches the real system.
-- Add a `devproxy status` command that reports Caddy running state, registered services, and upstream reachability.
+- [x] Add a `devproxy status` command that reports Caddy running state, registered services, and upstream reachability.
 - Add a `devproxy trust` helper that checks Caddy trust state and prints the exact elevated `caddy trust` command when needed.
 - [x] Improve Caddy lifecycle messages so users can tell whether DevProxy reloaded an existing server or started a new one.
 - Add tests for hosts-file permission failures and friendly `EPERM`/`EACCES` messaging.

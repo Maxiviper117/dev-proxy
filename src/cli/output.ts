@@ -50,6 +50,35 @@ export function formatDoctor(output: string): string {
     .join("\n");
 }
 
+export function formatStatus(output: string): string {
+  return output
+    .split("\n")
+    .map((line) => {
+      if (line.startsWith("ok ")) {
+        return `${chalk.green("ok")} ${line.slice(3)}`;
+      }
+
+      if (line.startsWith("warn ")) {
+        return `${chalk.yellow("warn")} ${line.slice(5)}`;
+      }
+
+      if (line.startsWith("fail ")) {
+        return `${chalk.red("fail")} ${line.slice(5)}`;
+      }
+
+      if (line.startsWith("hint ")) {
+        return `${chalk.cyan("hint")} ${line.slice(5)}`;
+      }
+
+      if (line.startsWith("info ")) {
+        return `${chalk.blue("info")} ${line.slice(5)}`;
+      }
+
+      return chalk.dim(line);
+    })
+    .join("\n");
+}
+
 function colorListRow(row: string): string {
   const [name, target] = row.split(" -> ");
   if (!name || !target) {

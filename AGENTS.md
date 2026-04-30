@@ -64,7 +64,12 @@ pnpm pack --dry-run
 - The workflow may use an optional `RELEASE_PLEASE_TOKEN` secret; otherwise it falls back to `GITHUB_TOKEN`.
 - npm publishing is manual from a local machine after running the full checks and `pnpm pack --dry-run`.
 - When ready for the first stable release, use a commit footer like `Release-As: 1.0.0`.
-- Keep commits Conventional Commits-compatible so Release Please can infer versions.
+- Keep commits Conventional Commits-compatible so Release Please can infer versions. Examples:
+  - `feat: add devproxy open command`
+  - `fix: improve Caddy lifecycle messages`
+  - `docs: add screenshots for Caddy flow`
+  - `chore: update AGENTS.md with new safety rules`
+  - Never use brackets in commit messages since they can interfere with Release Please parsing; for example, use `feat: add devproxy open command` instead of `feat(cli): add devproxy open command`.
 
 ## Architecture
 
@@ -93,6 +98,7 @@ pnpm pack --dry-run
 - MVP mode is attach-first: users provide a port with `devproxy add <name> --port <port>`.
 - Domain derivation is `<name>.local`; for example, `api.myapp` becomes `api.myapp.local`.
 - `devproxy start` starts or reloads Caddy from the current registry.
+- `devproxy status` reports Caddy running state, registered services, and upstream reachability.
 - `devproxy stop` stops Caddy; it does not stop attach-mode app processes.
 - Caddy integration uses generated Caddyfile reloads, not the Caddy Admin API.
 - If `caddy reload` reports that `localhost:2019` is unavailable, DevProxy starts Caddy with the generated config.

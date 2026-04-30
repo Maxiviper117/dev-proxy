@@ -69,6 +69,7 @@ Included:
 - Caddy `tls internal` HTTPS
 - Caddy config validation and reload
 - basic listing, removal, and diagnostics
+- status reporting for Caddy, registry entries, and upstream reachability
 
 Deferred:
 
@@ -147,6 +148,14 @@ Alias:
 ```bash
 devproxy ls
 ```
+
+### Check status
+
+```bash
+devproxy status
+```
+
+This reports whether Caddy's admin endpoint is reachable, how many services are registered, and whether each service's `localhost:<port>` and `127.0.0.1:<port>` upstreams respond.
 
 ### Remove a service
 

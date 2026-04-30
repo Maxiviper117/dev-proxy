@@ -1,13 +1,21 @@
 #!/usr/bin/env node
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
-import { errorMessage, formatDoctor, formatList, success, warning } from "./cli/output.js";
+import {
+  errorMessage,
+  formatDoctor,
+  formatList,
+  formatStatus,
+  success,
+  warning,
+} from "./cli/output.js";
 import {
   addService,
   createDefaultContext,
   doctor,
   listServices,
   removeRegisteredService,
+  status,
   startCaddyServer,
   stopCaddyServer,
 } from "./commands/services.js";
@@ -52,6 +60,13 @@ export function buildProgram(context = createDefaultContext()): Command {
     .description("Check local DevProxy prerequisites.")
     .action(async () => {
       console.log(formatDoctor(await doctor(context)));
+    });
+
+  program
+    .command("status")
+    .description("Report Caddy, registry, and upstream status.")
+    .action(async () => {
+      console.log(formatStatus(await status(context)));
     });
 
   program

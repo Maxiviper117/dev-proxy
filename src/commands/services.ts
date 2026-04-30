@@ -1,3 +1,4 @@
+import { Socket } from "node:net";
 import { platform } from "node:os";
 import { domainFromName, parsePort } from "../core/domain.js";
 import { DevProxyError } from "../core/errors.js";
@@ -20,6 +21,8 @@ export function createDefaultContext(): DevProxyContext {
     run: runCommand,
     now: () => new Date(),
     platform: platform(),
+    probeTcp: probeTcpPort,
+    probeUrl: probeUrl,
   };
 }
 
@@ -130,6 +133,53 @@ export async function stopCaddyServer(context: DevProxyContext): Promise<string>
   return "Caddy stopped.";
 }
 
+export async function status(context: DevProxyContext): Promise<string> {
+  const registry = await readRegistry(context.paths.registryFile);
+  const probeTcp = context.probeTcp ?? probeTcpPort;
+  const probeUrlFn = context.probeUrl ?? probeUrl;
+  const caddyVersion = await context.run("caddy", ["version"]);
+  const caddyInstalled = caddyVersion.code === 0;
+  const caddyRunning = caddyInstalled ? await probeUrlFn("http://localhost:2019/config/") : false;
+
+  const lines: string[] = [];
+  lines.push(`${caddyInstalled ? "ok" : "fail"} Caddy on PATH`);
+
+  if (caddyInstalled) {
+    lines.push(
+      `${caddyRunning ? "ok" : "warn"} Caddy admin endpoint on localhost:2019 ${
+        caddyRunning ? "is reachable" : "is not reachable"
+      }`,
+    );
+  } else {
+    lines.push(`hint ${caddyInstallHint}`);
+  }
+
+  lines.push(`info Registered services: ${registry.services.length}`);
+
+  if (registry.services.length === 0) {
+    lines.push("info No services registered.");
+    return lines.join("\n");
+  }
+
+  const serviceLines = await Promise.all(
+    registry.services.map(async (service) => {
+      const [localhostReachable, loopbackReachable] = await Promise.all([
+        probeTcp("localhost", service.port),
+        probeTcp("127.0.0.1", service.port),
+      ]);
+      const upstreamReachable = localhostReachable || loopbackReachable;
+
+      return `${upstreamReachable ? "ok" : "warn"} ${service.domain} -> localhost:${service.port} ${
+        localhostReachable ? "reachable" : "unreachable"
+      }, 127.0.0.1:${service.port} ${loopbackReachable ? "reachable" : "unreachable"}`;
+    }),
+  );
+
+  lines.push(...serviceLines);
+
+  return lines.join("\n");
+}
+
 function ensureWindows(context: DevProxyContext): void {
   if (context.platform !== "win32") {
     throw new DevProxyError("DevProxy currently supports Windows only.");
@@ -138,4 +188,36 @@ function ensureWindows(context: DevProxyContext): void {
 
 function formatCaddyLifecycle(lifecycle: "reloaded" | "started"): string {
   return lifecycle === "started" ? "started" : "reloaded";
+}
+
+async function probeTcpPort(host: string, port: number): Promise<boolean> {
+  return await new Promise((resolve) => {
+    const socket = new Socket();
+    let settled = false;
+
+    const finish = (reachable: boolean): void => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      socket.destroy();
+      resolve(reachable);
+    };
+
+    socket.setTimeout(750);
+    socket.once("connect", () => finish(true));
+    socket.once("timeout", () => finish(false));
+    socket.once("error", () => finish(false));
+    socket.connect(port, host);
+  });
+}
+
+async function probeUrl(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(750) });
+    return response.ok || response.status >= 200;
+  } catch {
+    return false;
+  }
 }

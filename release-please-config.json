@@ -4,9 +4,11 @@
     ".": {
       "release-type": "node",
       "package-name": "@maxiviper117/devproxy",
+      "component": "devproxy",
+      "include-component-in-tag": true,
       "changelog-path": "CHANGELOG.md",
-      "prerelease": true,
-      "prerelease-type": "beta"
+      "bump-minor-pre-major": true,
+      "draft": false
     }
   }
 }

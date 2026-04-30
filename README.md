@@ -2,7 +2,7 @@
 
 ### Stable HTTPS local domains for Windows + WSL development
 
-[![CI](https://github.com/Maxiviper117/dev-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/Maxiviper117/dev-proxy/actions/workflows/ci.yml) ![npm](https://img.shields.io/badge/npm-unpublished-lightgrey) ![beta](https://img.shields.io/badge/beta-pending-lightgrey) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](package.json) [![pnpm](https://img.shields.io/badge/pnpm-10.33.0-F69220?logo=pnpm&logoColor=white)](package.json) [![typescript](https://img.shields.io/badge/TypeScript-ESM-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
+[![CI](https://github.com/Maxiviper117/dev-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/Maxiviper117/dev-proxy/actions/workflows/ci.yml) ![npm](https://img.shields.io/badge/npm-unpublished-lightgrey) ![status](https://img.shields.io/badge/status-pre--1.0-orange) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](package.json) [![pnpm](https://img.shields.io/badge/pnpm-10.33.0-F69220?logo=pnpm&logoColor=white)](package.json) [![typescript](https://img.shields.io/badge/TypeScript-ESM-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
 
 DevProxy is a Windows-native CLI for stable HTTPS local domains that proxy to development services running in WSL.
 
@@ -362,21 +362,40 @@ Useful scripts:
 - `pnpm test` runs Vitest
 - `pnpm build` cleans and compiles TypeScript
 
-## Beta Releases
+## Pre-1.0 Releases
 
-This repository is configured for Google Release Please in beta prerelease mode.
+This repository is configured for Google Release Please to ship normal releases while staying below `1.0.0` until the project is ready for a deliberate `1.0.0` release.
 
 CI runs on pull requests and pushes to `main` using `.github/workflows/ci.yml`. It checks formatting, linting, TypeScript, tests, build output, and npm package contents.
 
-On pushes to `main`, `.github/workflows/release-please.yml` runs `googleapis/release-please-action@v4` with:
+On pushes to `main`, `.github/workflows/release-please.yml` runs `googleapis/release-please-action@v4` in manifest mode with:
 
 - `release-please-config.json`
 - `.release-please-manifest.json`
+- `component: devproxy`
+- `include-component-in-tag: true`, which preserves the existing `devproxy-v<version>` tag format
 - `release-type: node`
-- `prerelease: true`
-- `prerelease-type: beta`
+- `bump-minor-pre-major: true`, which keeps breaking changes below `1.0.0` by bumping the minor version instead of jumping straight to `1.0.0`
+- `draft: false`
 
-Release Please opens or updates a Release PR based on Conventional Commits. When that Release PR is merged, the workflow creates the GitHub release, but npm publishing is manual.
+Release Please opens or updates a Release PR based on Conventional Commits. When that Release PR is merged, the workflow:
+
+- updates `package.json`, `CHANGELOG.md`, and `.release-please-manifest.json`
+- creates the matching Git tag in the existing `devproxy-v<version>` format
+- creates a published GitHub release for the new `0.x.y` version
+
+While the project remains below `1.0.0`, version bumps behave like this:
+
+- `fix:` -> patch bump, for example `0.2.0` -> `0.2.1`
+- `feat:` -> minor bump, for example `0.2.0` -> `0.3.0`
+- `feat!:` or `BREAKING CHANGE:` -> minor bump, for example `0.2.0` -> `0.3.0`
+
+Repository setup notes:
+
+- Enable **Settings -> Actions -> General -> Allow GitHub Actions to create and approve pull requests**.
+- If you want other workflows to trigger from Release Please PRs or release events, add a `RELEASE_PLEASE_TOKEN` secret with a GitHub PAT. The workflow falls back to `GITHUB_TOKEN` when that secret is not present.
+
+npm publishing is still manual.
 
 Before publishing locally, run:
 
@@ -389,16 +408,18 @@ pnpm build
 pnpm pack --dry-run
 ```
 
-Then publish the beta manually:
+Then publish manually:
 
 ```bash
-npm publish --tag beta --access public
+npm publish --access public
 ```
 
-Install beta releases with:
+When you are ready for the first stable release, create a commit with a `Release-As: 1.0.0` footer to tell Release Please to cut `1.0.0` intentionally.
+
+Install the published package with:
 
 ```bash
-npm install -g @maxiviper117/devproxy@beta
+npm install -g @maxiviper117/devproxy
 ```
 
 ## Troubleshooting

@@ -15,7 +15,7 @@ Use `TODO.md` for future enhancements, deferred product work, and follow-up hard
 - Linter: Oxlint
 - Formatter: Oxfmt
 - Tests: Vitest
-- Releases: Google Release Please beta prereleases
+- Releases: Google Release Please normal pre-1.0 releases
 - TypeScript config:
   - `tsconfig.json` for editor/workspace diagnostics across source and tests
   - `tsconfig.build.json` for package output
@@ -53,11 +53,17 @@ pnpm pack --dry-run
 ## Releases
 
 - CI workflow lives in `.github/workflows/ci.yml`.
+- `ci / checks` runs only for pull requests targeting `main` (including new commits pushed to those PRs); it does not run again on the merge commit pushed to `main`.
 - Release Please config lives in `release-please-config.json`.
 - Release Please manifest lives in `.release-please-manifest.json`.
 - GitHub Actions workflow lives in `.github/workflows/release-please.yml`.
+- Release Please is manifest-driven for the root Node package and uses normal pre-1.0 releases with the fixed component/tag format `devproxy-v<version>`.
+- `bump-minor-pre-major: true` keeps breaking changes below `1.0.0` until an intentional `1.0.0` release is requested.
 - Release Please creates release PRs and GitHub releases only; do not add automated npm publishing unless explicitly requested.
+- GitHub repository settings must allow GitHub Actions to create and approve pull requests for Release Please to work reliably.
+- The workflow may use an optional `RELEASE_PLEASE_TOKEN` secret; otherwise it falls back to `GITHUB_TOKEN`.
 - npm publishing is manual from a local machine after running the full checks and `pnpm pack --dry-run`.
+- When ready for the first stable release, use a commit footer like `Release-As: 1.0.0`.
 - Keep commits Conventional Commits-compatible so Release Please can infer versions.
 
 ## Architecture

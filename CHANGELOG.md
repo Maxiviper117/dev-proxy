@@ -2,10 +2,9 @@
 
 ## [0.3.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.2.1...devproxy-v0.3.0) (2026-04-30)
 
-
 ### Features
 
-* add devproxy status ([#5](https://github.com/Maxiviper117/dev-proxy/issues/5)) ([e5f10d8](https://github.com/Maxiviper117/dev-proxy/commit/e5f10d870d5bae435a5bf46064220f795b6d9908))
+- add devproxy status ([#5](https://github.com/Maxiviper117/dev-proxy/issues/5)) ([e5f10d8](https://github.com/Maxiviper117/dev-proxy/commit/e5f10d870d5bae435a5bf46064220f795b6d9908))
 
 ## [0.2.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.2.0...devproxy-v0.2.1) (2026-04-30)
 

@@ -2,6 +2,7 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { buildProgram } from "../src/cli.js";
 import {
   addService,
   doctor,
@@ -38,6 +39,14 @@ async function createContextWithRunner(run: CommandRunner): Promise<DevProxyCont
 }
 
 describe("app commands", () => {
+  it("uses the package version for the CLI version flag", async () => {
+    const packageJson = JSON.parse(
+      await readFile(new URL("../package.json", import.meta.url), "utf8"),
+    ) as { version: string };
+
+    expect(buildProgram().version()).toBe(packageJson.version);
+  });
+
   it("adds and lists a service", async () => {
     const context = await createContext();
 

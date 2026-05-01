@@ -52,7 +52,7 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 
 ## Requirements
 
-- Windows
+- Windows 10 or newer
 - Node.js 22 or newer
 - Caddy installed and available on `PATH`
 - Local services reachable from Windows (e.g., WSL-forwarded ports, Docker, or native Windows apps)

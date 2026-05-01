@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.7.0...devproxy-v0.8.0) (2026-05-01)
+
+
+### Features
+
+* generalize WSL-specific messaging to reflect broader Windows support ([#29](https://github.com/Maxiviper117/dev-proxy/issues/29)) ([d2d42b7](https://github.com/Maxiviper117/dev-proxy/commit/d2d42b76af0f1431d59aa7b34aad0185be0fded0))
+
 ## [0.7.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.6.2...devproxy-v0.7.0) (2026-05-01)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.6.0...devproxy-v0.6.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* add explicit --access public to npm publish and clean bin path ([e07f69c](https://github.com/Maxiviper117/dev-proxy/commit/e07f69c20dc6d290a3a8c09551b327d16c8e38a4))
+
 ## [0.6.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.5.2...devproxy-v0.6.0) (2026-05-01)
 
 

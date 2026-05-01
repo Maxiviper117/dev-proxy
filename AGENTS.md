@@ -33,6 +33,9 @@ Use `TODO.md` for future enhancements, deferred product work, and follow-up hard
 - Format check: `pnpm fmt:check`
 - Build: `pnpm build`
 - Package dry run: `pnpm pack --dry-run`
+- Docs dev server: `pnpm docs:dev`
+- Docs build: `pnpm docs:build`
+- Docs preview: `pnpm docs:preview`
 
 Before finishing code changes, run:
 

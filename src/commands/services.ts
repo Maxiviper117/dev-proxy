@@ -8,6 +8,7 @@ import type { DevProxyContext, Service } from "../core/types.js";
 import {
   caddyInstallHint,
   generateCaddyfile,
+  getCaddyCertificateInfo,
   stopCaddy,
   validateAndReloadCaddy,
   writeCaddyfile,
@@ -148,6 +149,34 @@ export async function stopCaddyServer(context: DevProxyContext): Promise<string>
   }
 
   return "Caddy stopped.";
+}
+
+export async function printCertificateInfo(context: DevProxyContext): Promise<string> {
+  ensureWindows(context);
+  const info = await getCaddyCertificateInfo(context.run, context.paths.caddyRootCAPath);
+
+  const lines: string[] = [];
+  lines.push(`info Root CA path: ${info.path}`);
+
+  if (info.exists) {
+    lines.push("ok Root CA certificate found");
+    lines.push(`info Subject: ${info.subject}`);
+    lines.push(`info Issuer: ${info.issuer}`);
+    lines.push(`info Valid from: ${info.validFrom}`);
+    lines.push(`info Valid to: ${info.validTo}`);
+    lines.push(`info Fingerprint (SHA-1): ${info.fingerprint}`);
+    lines.push(`info Fingerprint (SHA-256): ${info.fingerprint256}`);
+    lines.push(
+      "hint If browsers still warn about the certificate, run `caddy trust` from an elevated PowerShell session.",
+    );
+  } else {
+    lines.push("warn Root CA certificate not found");
+    lines.push(
+      "hint Run `caddy trust` from an elevated PowerShell session to generate and install the root CA.",
+    );
+  }
+
+  return lines.join("\n");
 }
 
 export async function status(context: DevProxyContext): Promise<string> {

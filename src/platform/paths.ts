@@ -10,5 +10,6 @@ export function defaultPaths(env: NodeJS.ProcessEnv = process.env): RuntimePaths
     registryFile: join(appDir, "registry.json"),
     caddyFile: join(appDir, "Caddyfile"),
     hostsFile: join(env.SystemRoot ?? "C:\\Windows", "System32", "drivers", "etc", "hosts"),
+    caddyRootCAPath: join(appData, "Caddy", "pki", "authorities", "local", "root.crt"),
   };
 }

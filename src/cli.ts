@@ -5,6 +5,7 @@ import { Command } from "commander";
 import {
   errorMessage,
   formatBanner,
+  formatCerts,
   formatDoctor,
   formatList,
   formatStatus,
@@ -19,6 +20,7 @@ import {
   doctor,
   listServices,
   openServiceInBrowser,
+  printCertificateInfo,
   removeRegisteredService,
   status,
   startCaddyServer,
@@ -94,6 +96,13 @@ export function buildProgram(context = createDefaultContext()): Command {
     .description("Report Caddy, registry, and upstream status.")
     .action(async () => {
       console.log(formatStatus(await status(context)));
+    });
+
+  program
+    .command("certs")
+    .description("Print Caddy root CA certificate information.")
+    .action(async () => {
+      console.log(formatCerts(await printCertificateInfo(context)));
     });
 
   program

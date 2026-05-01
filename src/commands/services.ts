@@ -151,6 +151,100 @@ export async function stopCaddyServer(context: DevProxyContext): Promise<string>
   return "Caddy stopped.";
 }
 
+export async function getListData(context: DevProxyContext): Promise<{ services: Service[] }> {
+  const registry = await readRegistry(context.paths.registryFile);
+  return { services: registry.services };
+}
+
+export type DoctorData = {
+  platform: string;
+  caddyOnPath: boolean;
+  hostsFileWritable: boolean;
+  registryPath: string;
+  caddyfilePath: string;
+  caddyfilePreview: string;
+  hints: string[];
+};
+
+export async function getDoctorData(context: DevProxyContext): Promise<DoctorData> {
+  const caddy = await context.run("caddy", ["version"]);
+  const caddyOnPath = caddy.code === 0;
+  const hints: string[] = [];
+
+  if (!caddyOnPath) {
+    hints.push(caddyInstallHint);
+  }
+
+  return {
+    platform: context.platform,
+    caddyOnPath,
+    hostsFileWritable: await canWriteHosts(context.paths.hostsFile),
+    registryPath: context.paths.registryFile,
+    caddyfilePath: context.paths.caddyFile,
+    caddyfilePreview: generateCaddyfile((await readRegistry(context.paths.registryFile)).services),
+    hints,
+  };
+}
+
+export type StatusServiceData = {
+  name: string;
+  domain: string;
+  port: number;
+  domainReachable: boolean;
+  localhostReachable: boolean;
+  loopbackReachable: boolean;
+};
+
+export type StatusData = {
+  caddyInstalled: boolean;
+  caddyRunning: boolean;
+  serviceCount: number;
+  services: StatusServiceData[];
+  hints: string[];
+};
+
+export async function getStatusData(context: DevProxyContext): Promise<StatusData> {
+  const registry = await readRegistry(context.paths.registryFile);
+  const probeTcp = context.probeTcp ?? probeTcpPort;
+  const probeUrlFn = context.probeUrl ?? probeUrl;
+  const probeHttps = context.probeHttps ?? probeHttpsUrl;
+  const caddyVersion = await context.run("caddy", ["version"]);
+  const caddyInstalled = caddyVersion.code === 0;
+  const caddyRunning = caddyInstalled ? await probeUrlFn("http://localhost:2019/config/") : false;
+
+  const hints: string[] = [];
+  if (!caddyInstalled) {
+    hints.push(caddyInstallHint);
+  }
+
+  const services = await Promise.all(
+    registry.services.map(async (service) => {
+      const [localhostReachable, loopbackReachable] = await Promise.all([
+        probeTcp("localhost", service.port),
+        probeTcp("127.0.0.1", service.port),
+      ]);
+      const domainReachable = await probeHttps(`https://${service.domain}/`);
+
+      return {
+        name: service.name,
+        domain: service.domain,
+        port: service.port,
+        domainReachable,
+        localhostReachable,
+        loopbackReachable,
+      };
+    }),
+  );
+
+  return {
+    caddyInstalled,
+    caddyRunning,
+    serviceCount: registry.services.length,
+    services,
+    hints,
+  };
+}
+
 export async function printCertificateInfo(context: DevProxyContext): Promise<string> {
   ensureWindows(context);
   const info = await getCaddyCertificateInfo(context.run, context.paths.caddyRootCAPath);

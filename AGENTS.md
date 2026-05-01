@@ -67,7 +67,7 @@ pnpm pack --dry-run
 - Release Please creates release PRs and GitHub releases only; do not add automated npm publishing unless explicitly requested.
 - GitHub repository settings must allow GitHub Actions to create and approve pull requests for Release Please to work reliably.
 - The workflow may use an optional `RELEASE_PLEASE_TOKEN` secret; otherwise it falls back to `GITHUB_TOKEN`.
-- npm publishing is manual from a local machine after running the full checks and `pnpm pack --dry-run`.
+- npm publishing is automated via CI using Trusted Publishing (OIDC) when a Release Please PR is merged to `main`. No `NPM_TOKEN` is needed.
 - When ready for the first stable release, use a commit footer like `Release-As: 1.0.0`.
 - Keep commits Conventional Commits-compatible so Release Please can infer versions. Examples:
   - `feat: add devproxy open command`

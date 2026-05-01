@@ -43,17 +43,13 @@
 ## HTTPS
 
 - Improve certificate-trust diagnostics.
-- Add optional mkcert support.
 - Document browser-specific trust/cache troubleshooting.
 - [x] Add a command to print certificate/root CA information.
 
 ## Packaging And Release
 
-- Add changelog generation.
-- Add npm provenance once publishing is ready.
 - Add Windows install smoke tests.
 - Revisit Release Please beta prerelease settings before the first stable release.
-- Decide whether npm publishing should remain manual or move back into CI later.
 
 ## Documentation
 

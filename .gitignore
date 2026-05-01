@@ -11,3 +11,7 @@ Thumbs.db
 
 coverage/
 .vitest/
+
+# VitePress
+docs/.vitepress/cache/
+docs/.vitepress/dist/

@@ -49,7 +49,10 @@
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "pack:dry": "pnpm pack --dry-run"
+    "pack:dry": "pnpm pack --dry-run",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
     "chalk": "^5.6.2",
@@ -60,7 +63,9 @@
     "oxfmt": "^0.47.0",
     "oxlint": "^1.62.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.5"
+    "vitepress": "2.0.0-alpha.17",
+    "vitest": "^4.1.5",
+    "vue": "^3.5.33"
   },
   "engines": {
     "node": ">=22"

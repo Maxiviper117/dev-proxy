@@ -4,10 +4,13 @@ import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import {
   errorMessage,
+  formatBanner,
   formatDoctor,
   formatList,
   formatStatus,
+  formatVersionLine,
   success,
+  withDoctorVersion,
   warning,
 } from "./cli/output.js";
 import {
@@ -34,6 +37,16 @@ export function buildProgram(context = createDefaultContext()): Command {
     .name("devproxy")
     .description("Stable HTTPS local domains for WSL development services.")
     .version(cliVersion);
+
+  program.addHelpText("beforeAll", ({ command }) => {
+    const sections = [formatVersionLine(cliVersion)];
+
+    if (command === program) {
+      sections.unshift(formatBanner());
+    }
+
+    return sections.join("\n");
+  });
 
   program
     .command("add")
@@ -73,7 +86,7 @@ export function buildProgram(context = createDefaultContext()): Command {
     .command("doctor")
     .description("Check local DevProxy prerequisites.")
     .action(async () => {
-      console.log(formatDoctor(await doctor(context)));
+      console.log(formatDoctor(withDoctorVersion(await doctor(context), cliVersion)));
     });
 
   program

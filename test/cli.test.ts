@@ -39,6 +39,40 @@ async function createContextWithRunner(run: CommandRunner): Promise<DevProxyCont
   return { ...context, run };
 }
 
+function captureHelp(command: ReturnType<typeof buildProgram>): string {
+  let output = "";
+  command.configureOutput({
+    writeOut: (str) => {
+      output += str;
+    },
+    writeErr: (str) => {
+      output += str;
+    },
+  });
+  command.outputHelp();
+  return output;
+}
+
+async function captureCommandOutput(
+  command: ReturnType<typeof buildProgram>,
+  argv: string[],
+): Promise<string> {
+  let output = "";
+  const originalLog = console.log;
+
+  console.log = (...values: unknown[]) => {
+    output += `${values.join(" ")}\n`;
+  };
+
+  try {
+    await command.parseAsync(argv);
+  } finally {
+    console.log = originalLog;
+  }
+
+  return output;
+}
+
 describe("app commands", () => {
   it("uses the package version for the CLI version flag", async () => {
     const packageJson = JSON.parse(
@@ -46,6 +80,30 @@ describe("app commands", () => {
     ) as { version: string };
 
     expect(buildProgram().version()).toBe(packageJson.version);
+  });
+
+  it("adds the branded banner to root help output only", () => {
+    const program = buildProgram();
+    const addCommand = program.commands.find((command) => command.name() === "add");
+    const rootHelp = captureHelp(program);
+    const addHelp = addCommand ? captureHelp(addCommand) : "";
+
+    expect(rootHelp).toContain("██████╗ ███████╗██╗   ██╗");
+    expect(rootHelp).toContain("Version ");
+    expect(addHelp).not.toContain("██████╗ ███████╗██╗   ██╗");
+    expect(addHelp).toContain("Version ");
+  });
+
+  it("shows the CLI version in doctor output", async () => {
+    const context = await createContext();
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "doctor",
+    ]);
+
+    expect(output).toContain("DevProxy version:");
+    expect(output).toContain(buildProgram().version());
   });
 
   it("adds and lists a service", async () => {

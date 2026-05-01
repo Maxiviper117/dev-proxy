@@ -44,6 +44,8 @@ pnpm test
 pnpm build
 ```
 
+If `pnpm fmt:check` fails, run `pnpm fmt` and then run `pnpm fmt:check` again to verify.
+
 For publishing-related changes, also run:
 
 ```bash

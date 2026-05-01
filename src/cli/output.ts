@@ -1,5 +1,33 @@
 import chalk from "chalk";
 
+const bannerLines = [
+  "██████╗ ███████╗██╗   ██╗██████╗ ██████╗  ██████╗ ██╗  ██╗██╗   ██╗",
+  "██╔══██╗██╔════╝██║   ██║██╔══██╗██╔══██╗██╔═══██╗╚██╗██╔╝╚██╗ ██╔╝",
+  "██║  ██║█████╗  ██║   ██║██████╔╝██████╔╝██║   ██║ ╚███╔╝  ╚████╔╝ ",
+  "██║  ██║██╔══╝  ╚██╗ ██╔╝██╔═══╝ ██╔══██╗██║   ██║ ██╔██╗   ╚██╔╝  ",
+  "██████╔╝███████╗ ╚████╔╝ ██║     ██║  ██║╚██████╔╝██╔╝ ██╗   ██║   ",
+  "╚═════╝ ╚══════╝  ╚═══╝  ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ",
+] as const;
+
+const bannerPalette = ["#00c2ff", "#3f8cff", "#7c5cff", "#c44dff", "#ff5ca8", "#ff8a5b"] as const;
+
+export function formatBanner(): string {
+  return bannerLines
+    .map((line, index) => {
+      const color = bannerPalette[index] ?? "#ff8a5b";
+      return chalk.hex(color).bold(line);
+    })
+    .join("\n");
+}
+
+export function formatVersionLine(version: string): string {
+  return chalk.dim(`Version ${version}`);
+}
+
+export function withDoctorVersion(output: string, version: string): string {
+  return [`info DevProxy version: ${version}`, output].join("\n");
+}
+
 export function success(message: string): string {
   return `${chalk.green("ok")} ${message}`;
 }

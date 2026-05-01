@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.4.1...devproxy-v0.5.0) (2026-05-01)
+
+
+### Features
+
+* add devproxy certs command to print Caddy root CA information ([#15](https://github.com/Maxiviper117/dev-proxy/issues/15)) ([50e75fb](https://github.com/Maxiviper117/dev-proxy/commit/50e75fb8a70c1ab0d87fdac4904b78beef1f85eb))
+
 ## [0.4.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.4.0...devproxy-v0.4.1) (2026-05-01)
 
 

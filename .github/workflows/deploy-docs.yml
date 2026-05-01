@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs/**'
+      - "docs/**"
+      - ".github/workflows/deploy-docs.yml"
   workflow_dispatch:
 
 permissions:

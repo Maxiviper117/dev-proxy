@@ -2,7 +2,7 @@
 
 ## Project
 
-DevProxy is a Windows-native TypeScript CLI that maps stable HTTPS `.local` domains to development services running in WSL. The npm package is `@maxiviper117/devproxy`; the CLI binary is `devproxy`.
+DevProxy is a Windows-native TypeScript CLI that maps stable HTTPS `.local` domains to local development services. It works with any service reachable from Windows, including apps running in WSL, Docker, or natively on Windows. The npm package is `@maxiviper117/devproxy`; the CLI binary is `devproxy`.
 
 Use `TODO.md` for future enhancements, deferred product work, and follow-up hardening tasks.
 

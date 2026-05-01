@@ -1,10 +1,10 @@
 # DevProxy
 
-### Stable HTTPS local domains for Windows + WSL development
+### Stable HTTPS `.local` domains for Windows development
 
 [![npm](https://img.shields.io/npm/v/@maxiviper117/devproxy)](https://www.npmjs.com/package/@maxiviper117/devproxy) ![status](https://img.shields.io/badge/status-pre--1.0-orange) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](package.json) [![pnpm](https://img.shields.io/badge/pnpm-10.33.0-F69220?logo=pnpm&logoColor=white)](package.json) [![typescript](https://img.shields.io/badge/TypeScript-ESM-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
 
-DevProxy is a Windows-native CLI for stable HTTPS `.local` domains that proxy to development services running in WSL.
+DevProxy is a Windows-native CLI for stable HTTPS `.local` domains that proxy to local development services. It works with any service reachable from Windows, including apps running in WSL, Docker, or natively on Windows.
 
 ## Documentation
 
@@ -55,7 +55,7 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 - Windows
 - Node.js 22 or newer
 - Caddy installed and available on `PATH`
-- WSL service ports forwarded to Windows localhost
+- Local services reachable from Windows (e.g., WSL-forwarded ports, Docker, or native Windows apps)
 
 ## License
 

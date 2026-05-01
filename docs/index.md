@@ -1,6 +1,6 @@
 # DevProxy
 
-Stable HTTPS local domains for Windows + WSL development.
+Stable HTTPS `.local` domains for Windows development.
 
 ## Features
 

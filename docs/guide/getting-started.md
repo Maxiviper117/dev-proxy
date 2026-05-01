@@ -5,7 +5,7 @@
 - Windows
 - Node.js 22 or newer
 - Caddy installed and available on `PATH`
-- WSL service ports forwarded to Windows localhost
+- Local services reachable from Windows (e.g., WSL-forwarded ports, Docker, or native Windows apps)
 
 ## Install Caddy
 
@@ -72,7 +72,7 @@ devproxy --help
 
 ## Register Your First Service
 
-Start your development server in WSL. For example, a Laravel app:
+Start your development server. For example, a Laravel app running in WSL:
 
 ```bash
 php artisan serve --port=8000

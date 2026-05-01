@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.6.2...devproxy-v0.7.0) (2026-05-01)
+
+
+### Features
+
+* add --json output for list, doctor, and status commands ([#27](https://github.com/Maxiviper117/dev-proxy/issues/27)) ([dab5aee](https://github.com/Maxiviper117/dev-proxy/commit/dab5aee1d053eb469f69e778f7a74bb694ccdec3))
+
 ## [0.6.2](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.6.1...devproxy-v0.6.2) (2026-05-01)
 
 

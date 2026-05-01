@@ -40,7 +40,7 @@ export function buildProgram(context = createDefaultContext()): Command {
 
   program
     .name("devproxy")
-    .description("Stable HTTPS local domains for WSL development services.")
+    .description("Stable HTTPS local domains for Windows development.")
     .version(cliVersion);
 
   program.addHelpText("beforeAll", ({ command }) => {
@@ -56,7 +56,7 @@ export function buildProgram(context = createDefaultContext()): Command {
   program
     .command("add")
     .argument("<name>", "service name, for example api.myapp")
-    .requiredOption("-p, --port <port>", "local port forwarded from WSL")
+    .requiredOption("-p, --port <port>", "local port of the service to proxy")
     .description("Register an attach-mode service.")
     .action(async (name: string, options: { port: string }) => {
       console.log(success(await addService(context, { name, port: options.port })));

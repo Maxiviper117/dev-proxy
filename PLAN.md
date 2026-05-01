@@ -2,7 +2,7 @@
 
 ## Summary
 
-Build an attach-first Windows-native CLI using modern TypeScript, Commander, and pnpm. The MVP maps named HTTPS `.local` domains to already-running WSL services by port, manages hosts-file entries, generates a Caddyfile, reloads Caddy, and persists registry state.
+Build an attach-first Windows-native CLI using modern TypeScript, Commander, and pnpm. The MVP maps named HTTPS `.local` domains to already-running local services by port, manages hosts-file entries, generates a Caddyfile, reloads Caddy, and persists registry state.
 
 Package defaults:
 
@@ -114,5 +114,5 @@ devproxy run api.myapp -- php artisan serve --port=8000
 - The public CLI command should stay `devproxy` even though the npm package is scoped.
 - The repo URL should be `https://github.com/Maxiviper117/dev-proxy`.
 - Caddy is installed separately and available on `PATH`.
-- WSL services are reachable from Windows at `127.0.0.1:<port>`.
+- Local services are reachable from Windows at `127.0.0.1:<port>`.
 - Caddy internal CA is the MVP HTTPS mechanism; mkcert, DNS server, UI, process spawning, wildcard DNS, and Caddy Admin API are deferred.

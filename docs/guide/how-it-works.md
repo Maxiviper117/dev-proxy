@@ -2,20 +2,20 @@
 
 ## Overview
 
-When you run a development server inside WSL, Windows can usually reach it through `localhost:<port>`. DevProxy builds on that behavior and keeps the network-facing pieces on Windows:
+When you run a development server on your local machine, Windows can usually reach it through `localhost:<port>`. DevProxy builds on that behavior and keeps the network-facing pieces on Windows:
 
 - hosts-file entries
 - trusted HTTPS certificates
 - Caddy reverse proxy
 - browser-facing `.local` domains
 
-Your app still runs normally in WSL. DevProxy registers a Windows hosts entry such as:
+Your app can run in WSL, Docker, or natively on Windows. DevProxy registers a Windows hosts entry such as:
 
 ```text
 127.0.0.1 api.myapp.local
 ```
 
-Then Caddy receives `https://api.myapp.local` and proxies it back to the WSL-forwarded port `localhost:8000`.
+Then Caddy receives `https://api.myapp.local` and proxies it back to the local port `localhost:8000`.
 
 ## Lifecycle for Adding a Service
 
@@ -73,7 +73,7 @@ Entries outside that block are left alone.
 
 ### Laravel
 
-Start Laravel in WSL:
+Start Laravel (e.g., in WSL):
 
 ```bash
 php artisan serve --port=8000
@@ -96,7 +96,7 @@ Then open `https://api.myapp.local`.
 
 ### Vite Frontend
 
-Start a Vite app in WSL:
+Start a Vite app (e.g., in WSL):
 
 ```bash
 pnpm dev --host 0.0.0.0 --port 5173

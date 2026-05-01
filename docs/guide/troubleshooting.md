@@ -52,7 +52,7 @@ Also run:
 devproxy doctor
 ```
 
-## Proxy cannot reach the WSL app
+## Proxy cannot reach the upstream app
 
 Confirm the service is reachable from Windows:
 
@@ -61,4 +61,4 @@ curl http://localhost:8000
 curl http://127.0.0.1:8000
 ```
 
-If the app only binds to the WSL interface, start it with a host option such as `--host 0.0.0.0` where supported.
+If the app only binds to an internal interface (for example, inside WSL or a container), start it with a host option such as `--host 0.0.0.0` where supported.

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.4.0...devproxy-v0.4.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* Add branded help banner and version output ([#11](https://github.com/Maxiviper117/dev-proxy/issues/11)) ([efe2cc4](https://github.com/Maxiviper117/dev-proxy/commit/efe2cc45ac5b36eccce41e67885e66893888151f))
+
 ## [0.4.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.3.1...devproxy-v0.4.0) (2026-04-30)
 
 

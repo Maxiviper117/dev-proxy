@@ -1,5 +1,7 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { homedir } from "node:os";
+import { X509Certificate } from "node:crypto";
 import { DevProxyError } from "../core/errors.js";
 import type { CommandRunner, Service } from "../core/types.js";
 
@@ -110,4 +112,58 @@ function isCaddyAdminUnavailable(output: string): boolean {
       output.includes("actively refused") ||
       output.includes("connection refused"))
   );
+}
+
+export function getCaddyRootCAPath(): string {
+  const appData = process.env.APPDATA ?? join(homedir(), "AppData", "Roaming");
+  return join(appData, "Caddy", "pki", "authorities", "local", "root.crt");
+}
+
+export type CaddyCertificateInfo = {
+  path: string;
+  exists: boolean;
+  subject?: string;
+  issuer?: string;
+  validFrom?: string;
+  validTo?: string;
+  fingerprint?: string;
+  fingerprint256?: string;
+};
+
+export async function getCaddyCertificateInfo(
+  run: CommandRunner,
+  rootCAPath: string = getCaddyRootCAPath(),
+): Promise<CaddyCertificateInfo> {
+  await ensureCaddyAvailable(run);
+
+  try {
+    const s = await stat(rootCAPath);
+    if (!s.isFile()) {
+      return { path: rootCAPath, exists: false };
+    }
+
+    const pem = await readFile(rootCAPath, "utf8");
+    const cert = new X509Certificate(pem);
+
+    return {
+      path: rootCAPath,
+      exists: true,
+      subject: cert.subject,
+      issuer: cert.issuer,
+      validFrom: cert.validFrom,
+      validTo: cert.validTo,
+      fingerprint: cert.fingerprint,
+      fingerprint256: cert.fingerprint256,
+    };
+  } catch (error) {
+    if (isFileMissing(error)) {
+      return { path: rootCAPath, exists: false };
+    }
+
+    throw error;
+  }
+}
+
+function isFileMissing(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }

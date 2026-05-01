@@ -19,6 +19,7 @@ export type RuntimePaths = {
   registryFile: string;
   caddyFile: string;
   hostsFile: string;
+  caddyRootCAPath: string;
 };
 
 export type CommandRunner = (

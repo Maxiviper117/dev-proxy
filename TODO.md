@@ -45,7 +45,7 @@
 - Improve certificate-trust diagnostics.
 - Add optional mkcert support.
 - Document browser-specific trust/cache troubleshooting.
-- Add a command to print certificate/root CA information.
+- [x] Add a command to print certificate/root CA information.
 
 ## Packaging And Release
 

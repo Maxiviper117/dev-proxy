@@ -22,7 +22,7 @@
     "url": "git+https://github.com/Maxiviper117/dev-proxy.git"
   },
   "bin": {
-    "devproxy": "./dist/cli.js"
+    "devproxy": "dist/cli.js"
   },
   "files": [
     "dist",

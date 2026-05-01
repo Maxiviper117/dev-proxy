@@ -52,4 +52,4 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm pack --dry-run
-      - run: npm publish --provenance
+      - run: npm publish --provenance --access public

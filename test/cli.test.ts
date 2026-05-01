@@ -302,4 +302,104 @@ describe("app commands", () => {
     expect(output).toContain("Fingerprint (SHA-1):");
     expect(output).toContain("Fingerprint (SHA-256):");
   });
+
+  it("list --json returns registered services", async () => {
+    const context = await createContext();
+    await addService(context, { name: "api.myapp", port: "8000" });
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "list",
+      "--json",
+    ]);
+
+    const parsed = JSON.parse(output);
+    expect(parsed.services).toHaveLength(1);
+    expect(parsed.services[0]).toMatchObject({
+      name: "api.myapp",
+      domain: "api.myapp.local",
+      port: 8000,
+      mode: "attach",
+    });
+  });
+
+  it("list --json returns empty array when no services are registered", async () => {
+    const context = await createContext();
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "list",
+      "--json",
+    ]);
+
+    const parsed = JSON.parse(output);
+    expect(parsed.services).toEqual([]);
+  });
+
+  it("doctor --json returns structured checks", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "doctor",
+      "--json",
+    ]);
+
+    const parsed = JSON.parse(output);
+    expect(parsed.version).toBe(buildProgram().version());
+    expect(parsed.platform).toBe("win32");
+    expect(parsed.caddyOnPath).toBe(true);
+    expect(parsed.hostsFileWritable).toBe(true);
+    expect(typeof parsed.registryPath).toBe("string");
+    expect(typeof parsed.caddyfilePath).toBe("string");
+    expect(typeof parsed.caddyfilePreview).toBe("string");
+    expect(parsed.hints).toEqual([]);
+  });
+
+  it("status --json returns structured status", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    context.probeUrl = async (url) => url === "http://localhost:2019/config/";
+    context.probeTcp = async (host, port) => host === "localhost" && port === 8000;
+    context.probeHttps = async (url) => url === "https://api.myapp.local/";
+
+    await addService(context, { name: "api.myapp", port: "8000" });
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "status",
+      "--json",
+    ]);
+
+    const parsed = JSON.parse(output);
+    expect(parsed.caddyInstalled).toBe(true);
+    expect(parsed.caddyRunning).toBe(true);
+    expect(parsed.serviceCount).toBe(1);
+    expect(parsed.services).toHaveLength(1);
+    expect(parsed.services[0]).toMatchObject({
+      name: "api.myapp",
+      domain: "api.myapp.local",
+      port: 8000,
+      domainReachable: true,
+      localhostReachable: true,
+      loopbackReachable: false,
+    });
+    expect(parsed.hints).toEqual([]);
+  });
 });

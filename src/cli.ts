@@ -18,6 +18,9 @@ import {
   addService,
   createDefaultContext,
   doctor,
+  getDoctorData,
+  getListData,
+  getStatusData,
   listServices,
   openServiceInBrowser,
   printCertificateInfo,
@@ -79,23 +82,39 @@ export function buildProgram(context = createDefaultContext()): Command {
   program
     .command("list")
     .alias("ls")
+    .option("--json", "Output in JSON format")
     .description("List registered services.")
-    .action(async () => {
-      console.log(formatList(await listServices(context)));
+    .action(async (options: { json?: boolean }) => {
+      if (options.json) {
+        console.log(JSON.stringify(await getListData(context), null, 2));
+      } else {
+        console.log(formatList(await listServices(context)));
+      }
     });
 
   program
     .command("doctor")
+    .option("--json", "Output in JSON format")
     .description("Check local DevProxy prerequisites.")
-    .action(async () => {
-      console.log(formatDoctor(withDoctorVersion(await doctor(context), cliVersion)));
+    .action(async (options: { json?: boolean }) => {
+      if (options.json) {
+        const data = await getDoctorData(context);
+        console.log(JSON.stringify({ version: cliVersion, ...data }, null, 2));
+      } else {
+        console.log(formatDoctor(withDoctorVersion(await doctor(context), cliVersion)));
+      }
     });
 
   program
     .command("status")
+    .option("--json", "Output in JSON format")
     .description("Report Caddy, registry, and upstream status.")
-    .action(async () => {
-      console.log(formatStatus(await status(context)));
+    .action(async (options: { json?: boolean }) => {
+      if (options.json) {
+        console.log(JSON.stringify(await getStatusData(context), null, 2));
+      } else {
+        console.log(formatStatus(await status(context)));
+      }
     });
 
   program

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.6.1...devproxy-v0.6.2) (2026-05-01)
+
+
+### Bug Fixes
+
+* use Node 24 and remove explicit --provenance for trusted publishing ([9c70cad](https://github.com/Maxiviper117/dev-proxy/commit/9c70cad86d39295b630d2aa5ecbaedfe799b9e26))
+
 ## [0.6.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.6.0...devproxy-v0.6.1) (2026-05-01)
 
 

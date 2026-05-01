@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.5.0...devproxy-v0.5.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* replace static unpublished badge with dynamic npm version shield ([#17](https://github.com/Maxiviper117/dev-proxy/issues/17)) ([1c241eb](https://github.com/Maxiviper117/dev-proxy/commit/1c241eb314b084f0a1a1ae379f3756bc91e5dd84))
+
 ## [0.5.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.4.1...devproxy-v0.5.0) (2026-05-01)
 
 

@@ -3,7 +3,7 @@ import { defineConfig } from "vitepress";
 export default defineConfig({
   title: "DevProxy",
   description:
-    "Windows-native CLI for stable HTTPS local domains that proxy to WSL development services.",
+    "Windows-native CLI for stable HTTPS local domains that proxy to local development services.",
   base: "/dev-proxy/",
   cleanUrls: true,
   lastUpdated: true,

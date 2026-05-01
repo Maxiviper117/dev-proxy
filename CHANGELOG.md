@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.5.1...devproxy-v0.5.2) (2026-05-01)
+
+
+### Bug Fixes
+
+* generalize messaging to clarify WSL is one of several supported targets ([#18](https://github.com/Maxiviper117/dev-proxy/issues/18)) ([27ae81f](https://github.com/Maxiviper117/dev-proxy/commit/27ae81fa6841839949b535a2ed962cbda9bfa844))
+
 ## [0.5.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.5.0...devproxy-v0.5.1) (2026-05-01)
 
 

@@ -71,41 +71,4 @@ Entries outside that block are left alone.
 
 ## Examples
 
-### Laravel
-
-Start Laravel (e.g., in WSL):
-
-```bash
-php artisan serve --port=8000
-```
-
-Register the domain from Windows:
-
-```bash
-devproxy add api.myapp --port 8000
-```
-
-Set Laravel environment values:
-
-```text
-APP_URL=https://api.myapp.local
-SESSION_DOMAIN=.myapp.local
-```
-
-Then open `https://api.myapp.local`.
-
-### Vite Frontend
-
-Start a Vite app (e.g., in WSL):
-
-```bash
-pnpm dev --host 0.0.0.0 --port 5173
-```
-
-Register it:
-
-```bash
-devproxy add web.myapp --port 5173
-```
-
-Then open `https://web.myapp.local`.
+See the [Examples](/examples/) section for step-by-step guides for Laravel, Vite, Express.js, Next.js, and other frameworks.

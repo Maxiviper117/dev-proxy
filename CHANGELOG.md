@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.5.2...devproxy-v0.6.0) (2026-05-01)
+
+
+### Features
+
+* automate npm publishing with Trusted Publishing via Release Please CI ([#22](https://github.com/Maxiviper117/dev-proxy/issues/22)) ([1a3765b](https://github.com/Maxiviper117/dev-proxy/commit/1a3765b534d759bf1cb1db7d644d544056f7cec6))
+
 ## [0.5.2](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.5.1...devproxy-v0.5.2) (2026-05-01)
 
 

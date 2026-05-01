@@ -2,7 +2,7 @@
 
 ### Stable HTTPS local domains for Windows + WSL development
 
-[![CI](https://github.com/Maxiviper117/dev-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/Maxiviper117/dev-proxy/actions/workflows/ci.yml) ![npm](https://img.shields.io/badge/npm-unpublished-lightgrey) ![status](https://img.shields.io/badge/status-pre--1.0-orange) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](package.json) [![pnpm](https://img.shields.io/badge/pnpm-10.33.0-F69220?logo=pnpm&logoColor=white)](package.json) [![typescript](https://img.shields.io/badge/TypeScript-ESM-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
+![npm](https://img.shields.io/badge/npm-unpublished-lightgrey) ![status](https://img.shields.io/badge/status-pre--1.0-orange) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](package.json) [![pnpm](https://img.shields.io/badge/pnpm-10.33.0-F69220?logo=pnpm&logoColor=white)](package.json) [![typescript](https://img.shields.io/badge/TypeScript-ESM-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
 
 DevProxy is a Windows-native CLI for stable HTTPS `.local` domains that proxy to development services running in WSL.
 

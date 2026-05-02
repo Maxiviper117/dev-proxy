@@ -61,4 +61,6 @@ curl http://localhost:8000
 curl http://127.0.0.1:8000
 ```
 
+DevProxy tries both `127.0.0.1:<port>` and `localhost:<port>` through Caddy. It is okay if only one works, which can happen with Vite's default localhost binding on Windows. If neither command works, Caddy cannot reach the app.
+
 If the app only binds to an internal interface (for example, inside WSL or a container), start it with a host option such as `--host 0.0.0.0` where supported.

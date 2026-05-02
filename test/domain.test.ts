@@ -10,8 +10,12 @@ describe("domain helpers", () => {
     expect(domainFromName(" Web.MyApp ")).toBe("web.myapp.local");
   });
 
-  it("requires project-style names", () => {
-    expect(() => domainFromName("api")).toThrow("must include a project label");
+  it("allows single-label names", () => {
+    expect(domainFromName("myapp")).toBe("myapp.local");
+  });
+
+  it("rejects empty names", () => {
+    expect(() => domainFromName("")).toThrow("Service name is required.");
   });
 
   it("parses valid ports", () => {

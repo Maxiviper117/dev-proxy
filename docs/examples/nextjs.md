@@ -27,7 +27,7 @@ devproxy add web.myapp --port 3000
 This creates:
 
 ```text
-https://web.myapp.local -> localhost:3000, 127.0.0.1:3000
+https://web.myapp.local -> 127.0.0.1:3000, localhost:3000
 ```
 
 ## Configure Next.js (optional)

@@ -108,7 +108,7 @@ pnpm pack --dry-run
 - Caddy integration uses generated Caddyfile reloads, not the Caddy Admin API.
 - If `caddy reload` reports that `localhost:2019` is unavailable, DevProxy starts Caddy with the generated config.
 - If Caddy is missing, CLI errors and `doctor` output must include actionable install commands.
-- Proxy upstreams should include both `localhost:<port>` and `127.0.0.1:<port>` so Windows apps that bind IPv6 localhost or IPv4 loopback work.
+- Proxy upstreams should include both `127.0.0.1:<port>` and `localhost:<port>`, with IPv4 loopback first so tools like Vite that bind localhost narrowly work before falling back to IPv6 localhost.
 - HTTPS uses Caddy `tls internal`.
 - Managed process spawning is deferred. `devproxy stop <name>` currently reports that attach services cannot be stopped.
 

@@ -139,7 +139,7 @@ describe("app commands", () => {
     await expect(addService(context, { name: "web.myapp", port: "5173" })).resolves.toContain(
       "(reloaded)",
     );
-    await expect(listServices(context)).resolves.toContain("localhost:8000, 127.0.0.1:8000");
+    await expect(listServices(context)).resolves.toContain("127.0.0.1:8000, localhost:8000");
 
     const caddyfile = await readFile(context.paths.caddyFile, "utf8");
     expect(caddyfile).toContain("api.myapp.local");
@@ -243,7 +243,7 @@ describe("app commands", () => {
     expect(output).toContain("info Registered services: 1");
     expect(output).toContain("ok https://api.myapp.local/ is reachable through Caddy");
     expect(output).toContain(
-      "ok upstream api.myapp.local -> localhost:8000 reachable, 127.0.0.1:8000 unreachable",
+      "ok upstream api.myapp.local -> 127.0.0.1:8000 unreachable, localhost:8000 reachable",
     );
   });
 

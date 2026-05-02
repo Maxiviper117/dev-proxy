@@ -56,7 +56,7 @@ export async function addService(
   await writeCaddyfile(context.paths.caddyFile, next.services);
   const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
 
-  return `Registered ${domain} -> localhost:${port}, 127.0.0.1:${port} (${formatCaddyLifecycle(caddyLifecycle)}).`;
+  return `Registered ${domain} -> 127.0.0.1:${port}, localhost:${port} (${formatCaddyLifecycle(caddyLifecycle)}).`;
 }
 
 export async function removeRegisteredService(
@@ -96,7 +96,7 @@ export async function listServices(context: DevProxyContext): Promise<string> {
   }
 
   const rows = registry.services.map((service) => {
-    return `${service.name.padEnd(24)} https://${service.domain.padEnd(32)} -> localhost:${service.port}, 127.0.0.1:${service.port}`;
+    return `${service.name.padEnd(24)} https://${service.domain.padEnd(32)} -> 127.0.0.1:${service.port}, localhost:${service.port}`;
   });
 
   return ["Registered services:", ...rows].join("\n");
@@ -315,9 +315,9 @@ export async function status(context: DevProxyContext): Promise<string> {
         `${domainReachable ? "ok" : "warn"} https://${service.domain}/ ${
           domainReachable ? "is reachable through Caddy" : "is not reachable through Caddy"
         }`,
-        `${upstreamReachable ? "ok" : "warn"} upstream ${service.domain} -> localhost:${service.port} ${
-          localhostReachable ? "reachable" : "unreachable"
-        }, 127.0.0.1:${service.port} ${loopbackReachable ? "reachable" : "unreachable"}`,
+        `${upstreamReachable ? "ok" : "warn"} upstream ${service.domain} -> 127.0.0.1:${service.port} ${
+          loopbackReachable ? "reachable" : "unreachable"
+        }, localhost:${service.port} ${localhostReachable ? "reachable" : "unreachable"}`,
       ].join("\n");
     }),
   );
@@ -379,7 +379,7 @@ async function probeHttpsUrl(url: string): Promise<boolean> {
       },
       (response) => {
         response.resume();
-        resolve(true);
+        resolve(response.statusCode !== undefined && response.statusCode < 500);
       },
     );
 

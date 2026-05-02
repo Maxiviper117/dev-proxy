@@ -18,8 +18,8 @@ export function validateName(name: string): void {
   }
 
   const labels = name.split(".");
-  if (labels.length < 2) {
-    throw new DevProxyError("Service name must include a project label, for example 'api.myapp'.");
+  if (labels.length < 1 || (labels.length === 1 && labels[0] === "")) {
+    throw new DevProxyError("Service name is required.");
   }
 
   for (const label of labels) {

@@ -55,7 +55,7 @@ export function buildProgram(context = createDefaultContext()): Command {
 
   program
     .command("add")
-    .argument("<name>", "service name, for example api.myapp")
+    .argument("<name>", "service name, for example api.myapp or myapp")
     .requiredOption("-p, --port <port>", "local port of the service to proxy")
     .description("Register an attach-mode service.")
     .action(async (name: string, options: { port: string }) => {

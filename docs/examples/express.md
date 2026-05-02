@@ -30,7 +30,7 @@ devproxy add api.myapp --port 3000
 This creates:
 
 ```text
-https://api.myapp.local -> localhost:3000, 127.0.0.1:3000
+https://api.myapp.local -> 127.0.0.1:3000, localhost:3000
 ```
 
 ## Trust the proxy (optional)

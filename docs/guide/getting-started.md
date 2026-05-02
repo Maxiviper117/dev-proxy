@@ -87,7 +87,7 @@ devproxy add api.myapp --port 8000
 This creates:
 
 ```text
-https://api.myapp.local -> localhost:8000, 127.0.0.1:8000
+https://api.myapp.local -> 127.0.0.1:8000, localhost:8000
 ```
 
 Open the domain:
@@ -100,7 +100,12 @@ Or navigate to `https://api.myapp.local` in your browser.
 
 ## Service Name Rules
 
-Service names must include at least two labels, such as `api.myapp` or `web.myapp`. Do not include the `.local` suffix yourself; DevProxy derives the domain automatically.
+Service names can be a single label or multiple labels separated by dots, such as `myapp`, `api.myapp`, or `web.myapp`. Do not include the `.local` suffix yourself; DevProxy derives the domain automatically.
+
+Examples:
+
+- `myapp` becomes `https://myapp.local`
+- `api.myapp` becomes `https://api.myapp.local`
 
 ## Admin Permissions
 

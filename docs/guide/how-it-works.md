@@ -15,7 +15,7 @@ Your app can run in WSL, Docker, or natively on Windows. DevProxy registers a Wi
 127.0.0.1 api.myapp.local
 ```
 
-Then Caddy receives `https://api.myapp.local` and proxies it back to the local port `localhost:8000`.
+Then Caddy receives `https://api.myapp.local` and proxies it back to the local port through both `127.0.0.1:8000` and `localhost:8000`, retrying the alternate address if one loopback binding is unavailable.
 
 ## Lifecycle for Adding a Service
 

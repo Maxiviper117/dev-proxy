@@ -23,7 +23,9 @@ export function generateCaddyfile(services: readonly Service[]): string {
     lines.push(
       `${service.domain} {`,
       "\ttls internal",
-      `\treverse_proxy localhost:${service.port} 127.0.0.1:${service.port} {`,
+      `\treverse_proxy 127.0.0.1:${service.port} localhost:${service.port} {`,
+      "\t\tlb_try_duration 2s",
+      "\t\tlb_try_interval 100ms",
       "\t\theader_up Host {host}",
       "\t\theader_up X-Forwarded-Host {host}",
       "\t\theader_up X-Forwarded-Proto {scheme}",

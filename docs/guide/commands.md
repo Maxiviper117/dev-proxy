@@ -8,9 +8,9 @@ Register a new service.
 devproxy add api.myapp --port 8000
 ```
 
-This registers `https://api.myapp.local` and proxies it to `localhost:8000` and `127.0.0.1:8000`.
+This registers `https://api.myapp.local` and proxies it to `127.0.0.1:8000` and `localhost:8000`.
 
-Service names must include at least two labels, such as `api.myapp` or `web.myapp`. Do not include the `.local` suffix yourself.
+Service names can be a single label or multiple labels separated by dots, such as `myapp`, `api.myapp`, or `web.myapp`. Do not include the `.local` suffix yourself.
 
 ## `devproxy open <name>`
 

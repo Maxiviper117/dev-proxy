@@ -23,7 +23,9 @@ describe("generateCaddyfile", () => {
     expect(caddyfile).not.toContain("admin off");
     expect(caddyfile).toContain("api.myapp.local {");
     expect(caddyfile).toContain("tls internal");
-    expect(caddyfile).toContain("reverse_proxy localhost:8000 127.0.0.1:8000");
+    expect(caddyfile).toContain("reverse_proxy 127.0.0.1:8000 localhost:8000");
+    expect(caddyfile).toContain("lb_try_duration 2s");
+    expect(caddyfile).toContain("lb_try_interval 100ms");
     expect(caddyfile).toContain("header_up X-Forwarded-Proto {scheme}");
   });
 

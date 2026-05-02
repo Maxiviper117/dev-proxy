@@ -21,7 +21,7 @@ devproxy add api.myapp --port 8000
 This creates:
 
 ```text
-https://api.myapp.local -> localhost:8000, 127.0.0.1:8000
+https://api.myapp.local -> 127.0.0.1:8000, localhost:8000
 ```
 
 ## Configure Laravel

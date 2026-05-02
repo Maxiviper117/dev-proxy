@@ -38,6 +38,12 @@ const testCertificatePem = [
   "-----END CERTIFICATE-----",
 ].join("\n");
 
+/**
+ * Create a temporary {@link DevProxyContext} isolated for a single test.
+ *
+ * Uses a temp directory for all paths and a no-op command runner so tests do
+ * not touch the real filesystem or spawn real processes.
+ */
 async function createContext(): Promise<DevProxyContext> {
   const dir = await mkdtemp(join(tmpdir(), "devproxy-test-"));
   const hostsFile = join(dir, "hosts");
@@ -58,11 +64,23 @@ async function createContext(): Promise<DevProxyContext> {
   };
 }
 
+/**
+ * Create a test context with a custom command runner.
+ *
+ * Delegates to {@link createContext} and replaces the runner so tests can
+ * simulate Caddy presence, absence, or specific failure modes.
+ */
 async function createContextWithRunner(run: CommandRunner): Promise<DevProxyContext> {
   const context = await createContext();
   return { ...context, run };
 }
 
+/**
+ * Capture help output from a Commander program.
+ *
+ * Redirects `writeOut` and `writeErr` into a local string and triggers
+ * `outputHelp()` so assertions can inspect the rendered text.
+ */
 function captureHelp(command: ReturnType<typeof buildProgram>): string {
   let output = "";
   command.configureOutput({
@@ -77,6 +95,12 @@ function captureHelp(command: ReturnType<typeof buildProgram>): string {
   return output;
 }
 
+/**
+ * Capture `console.log` output during command execution.
+ *
+ * Temporarily overrides `console.log`, runs the command, restores the original
+ * logger, and returns everything that was printed.
+ */
 async function captureCommandOutput(
   command: ReturnType<typeof buildProgram>,
   argv: string[],

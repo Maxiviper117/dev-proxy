@@ -16,6 +16,12 @@ export const caddyInstallHint = [
   "After installing, run `caddy trust` from an elevated PowerShell session.",
 ].join("\n");
 
+/**
+ * Generate a Caddyfile from registered services.
+ *
+ * Emits one site block per service with `tls internal`, a `reverse_proxy`
+ * pointing to both `127.0.0.1` and `localhost`, and standard forwarded headers.
+ */
 export function generateCaddyfile(services: readonly Service[]): string {
   const lines: string[] = [];
 
@@ -40,6 +46,12 @@ export function generateCaddyfile(services: readonly Service[]): string {
   return lines.join("\n");
 }
 
+/**
+ * Write the generated Caddyfile to disk.
+ *
+ * Creates parent directories automatically and writes the output of
+ * {@link generateCaddyfile} as UTF-8 text.
+ */
 export async function writeCaddyfile(
   caddyFile: string,
   services: readonly Service[],
@@ -48,6 +60,14 @@ export async function writeCaddyfile(
   await writeFile(caddyFile, generateCaddyfile(services), "utf8");
 }
 
+/**
+ * Verify that Caddy is installed and available on PATH.
+ *
+ * Runs `caddy version` and throws a {@link DevProxyError} with installation
+ * hints when the command fails.
+ *
+ * @throws {DevProxyError} When Caddy is missing.
+ */
 export async function ensureCaddyAvailable(run: CommandRunner): Promise<void> {
   const result = await run("caddy", ["version"]);
   if (result.code !== 0) {
@@ -55,6 +75,16 @@ export async function ensureCaddyAvailable(run: CommandRunner): Promise<void> {
   }
 }
 
+/**
+ * Validate the Caddyfile and reload or start Caddy.
+ *
+ * First checks that Caddy is installed, then validates the config. If reload
+ * fails because the admin endpoint is unavailable, falls back to starting Caddy.
+ *
+ * @returns `"reloaded"` when an existing Caddy instance was reloaded,
+ *   `"started"` when a new instance had to be started.
+ * @throws {DevProxyError} When validation fails, or both reload and start fail.
+ */
 export async function validateAndReloadCaddy(
   caddyFile: string,
   run: CommandRunner,
@@ -88,6 +118,16 @@ export async function validateAndReloadCaddy(
   return "reloaded";
 }
 
+/**
+ * Stop the Caddy server.
+ *
+ * Issues `caddy stop`. If the admin endpoint is unreachable, assumes Caddy is
+ * not running and returns `"not-running"` instead of throwing.
+ *
+ * @returns `"stopped"` when Caddy was running and stopped successfully,
+ *   `"not-running"` when no running instance was detected.
+ * @throws {DevProxyError} When the stop command fails for an unexpected reason.
+ */
 export async function stopCaddy(
   caddyFile: string,
   run: CommandRunner,
@@ -107,6 +147,12 @@ export async function stopCaddy(
   throw new DevProxyError(`Caddy stop failed:\n${output}`);
 }
 
+/**
+ * Determine whether Caddy stderr/stdout indicates the admin endpoint is down.
+ *
+ * Looks for references to `localhost:2019` combined with connection-refused
+ * phrasing.
+ */
 function isCaddyAdminUnavailable(output: string): boolean {
   return (
     output.includes("localhost:2019") &&
@@ -116,6 +162,11 @@ function isCaddyAdminUnavailable(output: string): boolean {
   );
 }
 
+/**
+ * Resolve the default Caddy root CA certificate path.
+ *
+ * Points to `%APPDATA%\Caddy\pki\authorities\local\root.crt`.
+ */
 export function getCaddyRootCAPath(): string {
   const appData = process.env.APPDATA ?? join(homedir(), "AppData", "Roaming");
   return join(appData, "Caddy", "pki", "authorities", "local", "root.crt");
@@ -132,6 +183,14 @@ export type CaddyCertificateInfo = {
   fingerprint256?: string;
 };
 
+/**
+ * Read and parse the Caddy root CA certificate.
+ *
+ * Verifies Caddy is installed, stats the certificate file, and parses the PEM
+ * with Node.js `X509Certificate`. Returns `exists: false` when the file is missing.
+ *
+ * @throws {DevProxyError} When Caddy is not installed.
+ */
 export async function getCaddyCertificateInfo(
   run: CommandRunner,
   rootCAPath: string = getCaddyRootCAPath(),
@@ -166,6 +225,12 @@ export async function getCaddyCertificateInfo(
   }
 }
 
+/**
+ * Determine whether an unknown error indicates a missing file.
+ *
+ * Checks for the `ENOENT` error code commonly raised by Node.js filesystem
+ * operations when a path does not exist.
+ */
 function isFileMissing(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }

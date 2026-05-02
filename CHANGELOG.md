@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.8.0...devproxy-v0.9.0) (2026-05-02)
+
+
+### Features
+
+* improve local domain loopback handling ([#31](https://github.com/Maxiviper117/dev-proxy/issues/31)) ([d5e7ff2](https://github.com/Maxiviper117/dev-proxy/commit/d5e7ff284fbe19a62b35727e9e5d84bef1c4058b))
+
 ## [0.8.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.7.0...devproxy-v0.8.0) (2026-05-01)
 
 

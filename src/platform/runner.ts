@@ -1,6 +1,13 @@
 import { spawn } from "node:child_process";
 import type { CommandRunner } from "../core/types.js";
 
+/**
+ * Spawn a command and capture its exit code, stdout, and stderr.
+ *
+ * Runs the command with `windowsHide: true`, aggregates output streams into
+ * strings, and resolves with the exit code. If the process fails to spawn,
+ * resolves with code `127` and the error message as stderr.
+ */
 export const runCommand: CommandRunner = async (command, args) => {
   return await new Promise((resolve) => {
     const child = spawn(command, args, { windowsHide: true });

@@ -35,6 +35,13 @@ const require = createRequire(import.meta.url);
 const packageJson = require("../package.json") as { version?: string };
 const cliVersion = packageJson.version ?? "0.0.0";
 
+/**
+ * Build and configure the Commander CLI program with all devproxy commands.
+ *
+ * Registers subcommands (add, remove, open, list, doctor, status, certs, start, stop)
+ * and wires each one to the corresponding service workflow. Help text includes a
+ * colored ASCII banner and version line on the root command only.
+ */
 export function buildProgram(context = createDefaultContext()): Command {
   const program = new Command();
 
@@ -143,6 +150,13 @@ export function buildProgram(context = createDefaultContext()): Command {
   return program;
 }
 
+/**
+ * Parse command-line arguments and execute the CLI.
+ *
+ * Builds the program, runs it against the provided argv, and catches any thrown
+ * errors. Prints a colored error message and sets `process.exitCode` so the
+ * process exits with a non-zero status on failure.
+ */
 export async function runCli(argv = process.argv): Promise<void> {
   try {
     await buildProgram().parseAsync(argv);

@@ -18,6 +18,12 @@ import { openDefaultBrowser } from "../platform/browser.js";
 import { defaultPaths } from "../platform/paths.js";
 import { runCommand } from "../platform/runner.js";
 
+/**
+ * Create a default {@link DevProxyContext} backed by real platform integrations.
+ *
+ * Uses actual filesystem paths, process spawning, TCP/HTTPS probes, and the
+ * default browser opener so the CLI behaves correctly in production.
+ */
 export function createDefaultContext(): DevProxyContext {
   return {
     paths: defaultPaths(),
@@ -31,6 +37,16 @@ export function createDefaultContext(): DevProxyContext {
   };
 }
 
+/**
+ * Register an attach-mode service and update all downstream artifacts.
+ *
+ * Validates the name and port, inserts the service into the registry, writes
+ * the registry file, updates the Windows hosts file, generates a new Caddyfile,
+ * and reloads (or starts) Caddy so the domain is immediately reachable.
+ *
+ * @throws {DevProxyError} When the platform is not Windows, the name or port is
+ *   invalid, or the hosts file is not writable.
+ */
 export async function addService(
   context: DevProxyContext,
   input: { name: string; port: string | number },
@@ -59,6 +75,15 @@ export async function addService(
   return `Registered ${domain} -> 127.0.0.1:${port}, localhost:${port} (${formatCaddyLifecycle(caddyLifecycle)}).`;
 }
 
+/**
+ * Remove a registered service by name and update all downstream artifacts.
+ *
+ * Looks up the service in the registry, removes it, rewrites the registry file,
+ * updates the Windows hosts file, regenerates the Caddyfile, and reloads Caddy.
+ *
+ * @throws {DevProxyError} When the platform is not Windows, the service does not
+ *   exist, or the hosts file is not writable.
+ */
 export async function removeRegisteredService(
   context: DevProxyContext,
   name: string,
@@ -76,6 +101,14 @@ export async function removeRegisteredService(
   return `Removed ${removed.domain}`;
 }
 
+/**
+ * Open a service's HTTPS domain in the default browser.
+ *
+ * Derives the `.local` domain from the service name and delegates to the
+ * browser opener defined in the context (or the platform default).
+ *
+ * @throws {DevProxyError} When the platform is not Windows.
+ */
 export async function openServiceInBrowser(
   context: DevProxyContext,
   name: string,
@@ -89,6 +122,12 @@ export async function openServiceInBrowser(
   return `Opened https://${domain}/ in the default browser.`;
 }
 
+/**
+ * Return a human-readable list of registered services.
+ *
+ * Reads the registry and formats each service as a line showing its name,
+ * domain, and upstream ports. Returns a friendly message when empty.
+ */
 export async function listServices(context: DevProxyContext): Promise<string> {
   const registry = await readRegistry(context.paths.registryFile);
   if (registry.services.length === 0) {
@@ -102,6 +141,13 @@ export async function listServices(context: DevProxyContext): Promise<string> {
   return ["Registered services:", ...rows].join("\n");
 }
 
+/**
+ * Run prerequisite checks and return a formatted diagnostic report.
+ *
+ * Verifies the platform, Caddy availability, hosts-file writability, and
+ * displays the current registry and Caddyfile paths. Hints are appended
+ * when Caddy is missing.
+ */
 export async function doctor(context: DevProxyContext): Promise<string> {
   const checks: string[] = [];
   checks.push(
@@ -127,6 +173,14 @@ export async function doctor(context: DevProxyContext): Promise<string> {
   return checks.join("\n");
 }
 
+/**
+ * Start or reload Caddy using the current registry.
+ *
+ * Generates a fresh Caddyfile from the registry and then validates and
+ * reloads Caddy. If Caddy is not yet running, it falls back to starting it.
+ *
+ * @throws {DevProxyError} When no services are registered or the platform is not Windows.
+ */
 export async function startCaddyServer(context: DevProxyContext): Promise<string> {
   ensureWindows(context);
   const registry = await readRegistry(context.paths.registryFile);
@@ -140,6 +194,14 @@ export async function startCaddyServer(context: DevProxyContext): Promise<string
   return `Caddy ${formatCaddyLifecycle(caddyLifecycle)} with ${registry.services.length} registered service(s).`;
 }
 
+/**
+ * Stop the running Caddy server.
+ *
+ * Issues a Caddy stop command. If Caddy is not running, returns a message
+ * indicating so instead of throwing.
+ *
+ * @throws {DevProxyError} When the platform is not Windows.
+ */
 export async function stopCaddyServer(context: DevProxyContext): Promise<string> {
   ensureWindows(context);
   const result = await stopCaddy(context.paths.caddyFile, context.run);
@@ -151,6 +213,11 @@ export async function stopCaddyServer(context: DevProxyContext): Promise<string>
   return "Caddy stopped.";
 }
 
+/**
+ * Return the raw list of registered services for JSON output.
+ *
+ * Reads the registry and returns its services array without formatting.
+ */
 export async function getListData(context: DevProxyContext): Promise<{ services: Service[] }> {
   const registry = await readRegistry(context.paths.registryFile);
   return { services: registry.services };
@@ -166,6 +233,12 @@ export type DoctorData = {
   hints: string[];
 };
 
+/**
+ * Return structured diagnostic data for JSON output.
+ *
+ * Gathers the same information as {@link doctor} but returns it as a typed
+ * object so the CLI can emit clean JSON instead of plain text.
+ */
 export async function getDoctorData(context: DevProxyContext): Promise<DoctorData> {
   const caddy = await context.run("caddy", ["version"]);
   const caddyOnPath = caddy.code === 0;
@@ -203,6 +276,12 @@ export type StatusData = {
   hints: string[];
 };
 
+/**
+ * Return structured status data for JSON output.
+ *
+ * Probes Caddy installation, Caddy runtime, and each registered service's
+ * upstream and domain reachability, returning the results as a typed object.
+ */
 export async function getStatusData(context: DevProxyContext): Promise<StatusData> {
   const registry = await readRegistry(context.paths.registryFile);
   const probeTcp = context.probeTcp ?? probeTcpPort;
@@ -245,6 +324,15 @@ export async function getStatusData(context: DevProxyContext): Promise<StatusDat
   };
 }
 
+/**
+ * Return formatted Caddy root CA certificate information.
+ *
+ * Locates the Caddy internal root CA certificate, parses its metadata, and
+ * returns a multi-line report including path, subject, issuer, validity, and
+ * fingerprints. Hints guide the user to run `caddy trust` when the cert is missing.
+ *
+ * @throws {DevProxyError} When the platform is not Windows.
+ */
 export async function printCertificateInfo(context: DevProxyContext): Promise<string> {
   ensureWindows(context);
   const info = await getCaddyCertificateInfo(context.run, context.paths.caddyRootCAPath);
@@ -273,6 +361,13 @@ export async function printCertificateInfo(context: DevProxyContext): Promise<st
   return lines.join("\n");
 }
 
+/**
+ * Return a human-readable status report for Caddy and all registered services.
+ *
+ * Checks whether Caddy is installed and its admin endpoint is reachable, then
+ * probes each service's upstream TCP ports and HTTPS domain. Results are returned
+ * as colored plain-text lines.
+ */
 export async function status(context: DevProxyContext): Promise<string> {
   const registry = await readRegistry(context.paths.registryFile);
   const probeTcp = context.probeTcp ?? probeTcpPort;
@@ -327,16 +422,32 @@ export async function status(context: DevProxyContext): Promise<string> {
   return lines.join("\n");
 }
 
+/**
+ * Enforce that the runtime platform is Windows.
+ *
+ * @throws {DevProxyError} When `context.platform` is not `"win32"`.
+ */
 function ensureWindows(context: DevProxyContext): void {
   if (context.platform !== "win32") {
     throw new DevProxyError("DevProxy currently supports Windows only.");
   }
 }
 
+/**
+ * Convert a Caddy lifecycle state into a human-readable verb.
+ *
+ * Returns `"started"` when Caddy had to be started fresh, otherwise `"reloaded"`.
+ */
 function formatCaddyLifecycle(lifecycle: "reloaded" | "started"): string {
   return lifecycle === "started" ? "started" : "reloaded";
 }
 
+/**
+ * Probe whether a TCP host:port is reachable.
+ *
+ * Opens a socket with a 750 ms timeout and resolves `true` on connect,
+ * `false` on timeout or error.
+ */
 async function probeTcpPort(host: string, port: number): Promise<boolean> {
   return await new Promise((resolve) => {
     const socket = new Socket();
@@ -360,6 +471,12 @@ async function probeTcpPort(host: string, port: number): Promise<boolean> {
   });
 }
 
+/**
+ * Probe whether a URL responds successfully.
+ *
+ * Performs a `fetch` with a 750 ms timeout and resolves `true` when the
+ * response status is 2xx or greater.
+ */
 async function probeUrl(url: string): Promise<boolean> {
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(750) });
@@ -369,6 +486,13 @@ async function probeUrl(url: string): Promise<boolean> {
   }
 }
 
+/**
+ * Probe whether an HTTPS URL is reachable, ignoring certificate errors.
+ *
+ * Sends a `HEAD` request via `node:https` with a 750 ms timeout and resolves
+ * `true` when the status code is below 500. Used to verify that Caddy is
+ * serving a `.local` domain even before the root CA is trusted.
+ */
 async function probeHttpsUrl(url: string): Promise<boolean> {
   return await new Promise((resolve) => {
     const request = httpsRequest(

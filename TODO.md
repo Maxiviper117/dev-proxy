@@ -18,7 +18,8 @@
 
 ## Managed Processes
 
-- Add `devproxy run <name> -- <command>` to start an app process and register its domain in one command.
+- [x] Add `devproxy run <name> -- <command>` to start an app process and register its domain in one command.
+- [x] Add `devproxy init` to create a `.devproxy/config.json` so `run` and `open` can omit the name and port.
 - Track managed process metadata separately from attach-mode services.
 - Add managed-process stop/restart behavior without affecting attach-mode services.
 - Add port inference for common commands where reliable, while keeping explicit `--port` supported.

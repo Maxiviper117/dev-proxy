@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.2](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.12.1...devproxy-v0.12.2) (2026-05-03)
+
+
+### Bug Fixes
+
+* preserve app data ownership under sudo ([#43](https://github.com/Maxiviper117/dev-proxy/issues/43)) ([bfa7a19](https://github.com/Maxiviper117/dev-proxy/commit/bfa7a1928a366483a926bdcd03d6d6215c548863))
+
 ## [0.12.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.12.0...devproxy-v0.12.1) (2026-05-03)
 
 

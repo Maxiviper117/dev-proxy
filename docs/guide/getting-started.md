@@ -2,14 +2,16 @@
 
 ## Requirements
 
-- Windows
+- Windows, macOS, or Linux
 - Node.js 22 or newer
 - Caddy installed and available on `PATH`
-- Local services reachable from Windows (e.g., WSL-forwarded ports, Docker, or native Windows apps)
+- Local services reachable from the host running DevProxy
 
 ## Install Caddy
 
 DevProxy uses Caddy for HTTPS termination and reverse-proxying.
+
+On Windows:
 
 ```powershell
 winget install CaddyServer.Caddy
@@ -21,9 +23,17 @@ Or using Scoop:
 scoop install caddy
 ```
 
-After installing, trust Caddy's local CA from an elevated PowerShell session:
+On macOS:
 
-```powershell
+```bash
+brew install caddy
+```
+
+On Linux, install Caddy with your distribution package manager or follow Caddy's official install instructions.
+
+After installing, trust Caddy's local CA. Use an elevated PowerShell session on Windows or `sudo` when your macOS/Linux trust store requires it:
+
+```bash
 caddy trust
 ```
 
@@ -119,9 +129,9 @@ Examples:
 - `myapp` becomes `https://myapp.local`
 - `api.myapp` becomes `https://api.myapp.local`
 
-## Admin Permissions
+## Elevated Permissions
 
-Updating the Windows hosts file requires administrator rights. If DevProxy cannot write to the hosts file, it fails with a clear message telling you to rerun the same command from an elevated PowerShell session.
+Updating the system hosts file requires elevated permissions. If DevProxy cannot write to the hosts file, it fails with a clear message telling you to rerun the same command from an elevated shell.
 
 Commands that modify the hosts file include:
 
@@ -131,3 +141,7 @@ Commands that modify the hosts file include:
 - `devproxy start`
 
 Read-only commands like `devproxy list`, `devproxy status`, and `devproxy doctor` do not require elevation.
+
+## Windows and WSL
+
+On Windows, DevProxy runs on the Windows side and can proxy to apps running in WSL when the app's port is reachable from Windows. If a WSL app is not reachable through loopback, bind the dev server to `0.0.0.0` where the framework supports it.

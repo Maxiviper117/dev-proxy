@@ -1,6 +1,6 @@
 # Vite
 
-Vite projects (React, Vue, Svelte, vanilla, etc.) can be served through DevProxy on Vite's default localhost binding. If your app is running inside WSL, Docker, or another environment that Windows cannot reach through loopback, bind the dev server to `0.0.0.0`.
+Vite projects (React, Vue, Svelte, vanilla, etc.) can be served through DevProxy on Vite's default localhost binding. If your app is running inside WSL, Docker, or another environment that the host OS cannot reach through loopback, bind the dev server to `0.0.0.0`.
 
 ## Start the server
 
@@ -18,7 +18,7 @@ npm run dev -- --port 5173
 
 ## Register with DevProxy
 
-From Windows:
+From the host running DevProxy:
 
 ```bash
 devproxy add web.myapp --port 5173
@@ -34,7 +34,7 @@ DevProxy configures Caddy to try both loopback upstreams. If Vite is reachable t
 
 ## Configure Vite (optional)
 
-If your app needs to accept the `.local` host, add it to Vite's `server.allowedHosts`. If Windows cannot reach the server through loopback, also set `server.host` to `"0.0.0.0"`:
+If your app needs to accept the `.local` host, add it to Vite's `server.allowedHosts`. If the host OS cannot reach the server through loopback, also set `server.host` to `"0.0.0.0"`:
 
 ```ts
 export default {
@@ -46,6 +46,10 @@ export default {
   },
 };
 ```
+
+## Windows and WSL
+
+When Vite runs inside WSL, run DevProxy from Windows and make sure Windows can reach the Vite port. If loopback forwarding is not enough for your setup, enable `server.host: "0.0.0.0"` and keep `allowedHosts` set to the `.local` domain.
 
 ## Open the site
 

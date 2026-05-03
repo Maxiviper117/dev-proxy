@@ -14,6 +14,14 @@ Or:
 scoop install caddy
 ```
 
+On macOS:
+
+```bash
+brew install caddy
+```
+
+On Linux, use your distribution package manager or follow Caddy's official install instructions.
+
 Then open a new terminal and run:
 
 ```bash
@@ -30,9 +38,9 @@ caddy start --config "%APPDATA%\devproxy\Caddyfile"
 
 ## Browser does not trust the certificate
 
-Run this from an elevated PowerShell session:
+Run this with the privileges needed to update your operating system trust store:
 
-```powershell
+```bash
 caddy trust
 ```
 
@@ -44,6 +52,7 @@ Check the hosts file contains a DevProxy block for the domain:
 
 ```text
 C:\Windows\System32\drivers\etc\hosts
+/etc/hosts
 ```
 
 Also run:
@@ -54,13 +63,13 @@ devproxy doctor
 
 ## Proxy cannot reach the upstream app
 
-Confirm the service is reachable from Windows:
+Confirm the service is reachable from the host running DevProxy:
 
 ```bash
 curl http://localhost:8000
 curl http://127.0.0.1:8000
 ```
 
-DevProxy tries both `127.0.0.1:<port>` and `localhost:<port>` through Caddy. It is okay if only one works, which can happen with Vite's default localhost binding on Windows. If neither command works, Caddy cannot reach the app.
+DevProxy tries both `127.0.0.1:<port>` and `localhost:<port>` through Caddy. It is okay if only one works, which can happen with framework-specific localhost binding behavior. If neither command works, Caddy cannot reach the app.
 
 If the app only binds to an internal interface (for example, inside WSL or a container), start it with a host option such as `--host 0.0.0.0` where supported.

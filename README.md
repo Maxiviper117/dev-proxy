@@ -1,10 +1,10 @@
 # DevProxy
 
-### Stable HTTPS `.local` domains for Windows development
+### Stable HTTPS `.local` domains for local development
 
 [![npm](https://img.shields.io/npm/v/@maxiviper117/devproxy)](https://www.npmjs.com/package/@maxiviper117/devproxy) ![status](https://img.shields.io/badge/status-pre--1.0-orange) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](package.json) [![pnpm](https://img.shields.io/badge/pnpm-10.33.0-F69220?logo=pnpm&logoColor=white)](package.json) [![typescript](https://img.shields.io/badge/TypeScript-ESM-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
 
-DevProxy is a Windows-native CLI for stable HTTPS `.local` domains that proxy to local development services. It works with any service reachable from Windows, including apps running in WSL, Docker, or natively on Windows.
+DevProxy is a cross-platform CLI for stable HTTPS `.local` domains that proxy to local development services on Windows, macOS, and Linux. On Windows, it also works well with apps running in WSL, Docker, or native Windows processes as long as the service is reachable through loopback.
 
 ## Documentation
 
@@ -18,6 +18,8 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
    winget install CaddyServer.Caddy
    caddy trust
    ```
+
+   On macOS, `brew install caddy` is the common install path. On Linux, use your distribution package manager or Caddy's official install instructions.
 
 2. Install DevProxy:
 
@@ -53,10 +55,10 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 
 ## Requirements
 
-- Windows
+- Windows, macOS, or Linux
 - Node.js 22 or newer
 - Caddy installed and available on `PATH`
-- Local services reachable from Windows (e.g., WSL-forwarded ports, Docker, or native Windows apps)
+- Local services reachable from the host running DevProxy
 
 ## License
 

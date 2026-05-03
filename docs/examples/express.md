@@ -21,7 +21,7 @@ node server.js
 
 ## Register with DevProxy
 
-From Windows:
+From the host running DevProxy:
 
 ```bash
 devproxy add api.myapp --port 3000

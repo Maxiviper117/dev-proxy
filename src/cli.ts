@@ -48,7 +48,7 @@ export function buildProgram(context = createDefaultContext()): Command {
 
   program
     .name("devproxy")
-    .description("Stable HTTPS local domains for Windows development.")
+    .description("Stable HTTPS local domains for local development.")
     .version(cliVersion);
 
   program.addHelpText("beforeAll", ({ command }) => {

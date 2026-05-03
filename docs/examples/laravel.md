@@ -12,7 +12,7 @@ php artisan serve --port=8000
 
 ## Register with DevProxy
 
-From Windows, register a domain for the service:
+From the host running DevProxy, register a domain for the service:
 
 ```bash
 devproxy add api.myapp --port 8000

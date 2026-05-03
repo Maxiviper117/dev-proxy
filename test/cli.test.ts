@@ -273,6 +273,7 @@ describe("app commands", () => {
 
     expect(output).toContain("fail Caddy on PATH");
     expect(output).toContain("winget install CaddyServer.Caddy");
+    expect(output).toContain("brew install caddy");
   });
 
   it("reports Caddy and upstream status", async () => {

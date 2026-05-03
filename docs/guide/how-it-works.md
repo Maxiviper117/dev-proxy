@@ -2,14 +2,14 @@
 
 ## Overview
 
-When you run a development server on your local machine, Windows can usually reach it through `localhost:<port>`. DevProxy builds on that behavior and keeps the network-facing pieces on Windows:
+When you run a development server on your local machine, the host operating system can usually reach it through `localhost:<port>`. DevProxy builds on that behavior and keeps the network-facing pieces on the host:
 
 - hosts-file entries
 - trusted HTTPS certificates
 - Caddy reverse proxy
 - browser-facing `.local` domains
 
-Your app can run in WSL, Docker, or natively on Windows. DevProxy registers a Windows hosts entry such as:
+Your app can run natively, in a container, or in WSL on Windows. DevProxy registers a hosts-file entry such as:
 
 ```text
 127.0.0.1 api.myapp.local
@@ -22,9 +22,9 @@ Then Caddy receives `https://api.myapp.local` and proxies it back to the local p
 For a service named `api.myapp` on port `8000`, DevProxy:
 
 1. Derives the domain `api.myapp.local`.
-2. Stores service metadata in `%APPDATA%/devproxy/registry.json`.
+2. Stores service metadata in the platform data directory.
 3. Adds `127.0.0.1 api.myapp.local` inside its managed hosts-file block.
-4. Generates `%APPDATA%/devproxy/Caddyfile`.
+4. Generates the managed DevProxy Caddyfile.
 5. Runs `caddy validate --config <Caddyfile>`.
 6. Runs `caddy reload --config <Caddyfile>`.
 7. Runs `caddy start --config <Caddyfile>` if reload reports that no Caddy admin endpoint is running yet.
@@ -51,17 +51,13 @@ devproxy open          # domain from config
 
 ### Registry
 
-```text
-%APPDATA%/devproxy/registry.json
-```
+Windows uses `%APPDATA%/devproxy/registry.json`, macOS uses `~/Library/Application Support/devproxy/registry.json`, and Linux uses `${XDG_DATA_HOME:-~/.local/share}/devproxy/registry.json`.
 
 Stores the list of registered services.
 
 ### Caddyfile
 
-```text
-%APPDATA%/devproxy/Caddyfile
-```
+Windows uses `%APPDATA%/devproxy/Caddyfile`, macOS uses `~/Library/Application Support/devproxy/Caddyfile`, and Linux uses `${XDG_DATA_HOME:-~/.local/share}/devproxy/Caddyfile`.
 
 Generated from the registry. Uses `tls internal` and forwards common proxy headers:
 
@@ -73,9 +69,7 @@ Generated from the registry. Uses `tls internal` and forwards common proxy heade
 
 ### Hosts File
 
-```text
-C:\Windows\System32\drivers\etc\hosts
-```
+Windows uses `C:\Windows\System32\drivers\etc\hosts`. macOS and Linux use `/etc/hosts`.
 
 DevProxy only manages entries inside this block:
 

@@ -18,7 +18,7 @@ npm run dev -- --hostname 0.0.0.0 --port 3000
 
 ## Register with DevProxy
 
-From Windows:
+From the host running DevProxy:
 
 ```bash
 devproxy add web.myapp --port 3000

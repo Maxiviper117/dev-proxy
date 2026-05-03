@@ -25,6 +25,7 @@ import { confirm } from "../cli/prompt.js";
 import { openDefaultBrowser } from "../platform/browser.js";
 import { defaultPaths } from "../platform/paths.js";
 import { runCommand } from "../platform/runner.js";
+import { ensureSupportedPlatform, isSupportedPlatform } from "../platform/support.js";
 
 /**
  * Create a default {@link DevProxyContext} backed by real platform integrations.
@@ -33,11 +34,13 @@ import { runCommand } from "../platform/runner.js";
  * default browser opener so the CLI behaves correctly in production.
  */
 export function createDefaultContext(): DevProxyContext {
+  const runtimePlatform = platform();
+
   return {
-    paths: defaultPaths(),
+    paths: defaultPaths(process.env, runtimePlatform),
     run: runCommand,
     now: () => new Date(),
-    platform: platform(),
+    platform: runtimePlatform,
     probeTcp: probeTcpPort,
     probeUrl: probeUrl,
     probeHttps: probeHttpsUrl,
@@ -49,7 +52,7 @@ export function createDefaultContext(): DevProxyContext {
  * Initialize a DevProxy project config and register the service.
  *
  * Validates the name and port, writes `.devproxy/config.json`, registers the
- * service in the DevProxy registry, updates the Windows hosts file, generates
+ * service in the DevProxy registry, updates the hosts file, generates
  * a new Caddyfile, and reloads (or starts) Caddy. The project config enables
  * shorthand commands like `devproxy open` without arguments.
  *
@@ -58,7 +61,7 @@ export function createDefaultContext(): DevProxyContext {
  * existing service has a different port, the user is prompted for confirmation
  * before overwriting.
  *
- * @throws {DevProxyError} When the platform is not Windows, the name or port is
+ * @throws {DevProxyError} When the platform is unsupported, the name or port is
  *   invalid, or the hosts file is not writable.
  */
 export async function initProjectConfig(
@@ -66,7 +69,7 @@ export async function initProjectConfig(
   cwd: string,
   input: { name: string; port: string | number },
 ): Promise<string> {
-  ensureWindows(context);
+  ensureSupportedPlatform(context.platform);
   const domain = domainFromName(input.name);
   const port = parsePort(input.port);
   const registry = await readRegistry(context.paths.registryFile);
@@ -100,10 +103,10 @@ export async function initProjectConfig(
   };
   const next = upsertService(registry, service);
 
-  await ensureHostsWritable(context.paths.hostsFile);
+  await ensureHostsWritable(context.paths.hostsFile, context.platform);
   await writeProjectConfig(projectConfigPath(cwd), { name: service.name, port });
   await writeRegistry(context.paths.registryFile, next);
-  await writeHostsFile(context.paths.hostsFile, next.services);
+  await writeHostsFile(context.paths.hostsFile, next.services, context.platform);
   await writeCaddyfile(context.paths.caddyFile, next.services);
   const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
 
@@ -114,7 +117,7 @@ export async function initProjectConfig(
  * Register an attach-mode service and update all downstream artifacts.
  *
  * Validates the name and port, inserts the service into the registry, writes
- * the registry file, updates the Windows hosts file, generates a new Caddyfile,
+ * the registry file, updates the hosts file, generates a new Caddyfile,
  * and reloads (or starts) Caddy so the domain is immediately reachable.
  *
  * If a service with the same name or domain already exists on the same port,
@@ -122,14 +125,14 @@ export async function initProjectConfig(
  * service has a different port, the user is prompted for confirmation before
  * overwriting.
  *
- * @throws {DevProxyError} When the platform is not Windows, the name or port is
+ * @throws {DevProxyError} When the platform is unsupported, the name or port is
  *   invalid, or the hosts file is not writable.
  */
 export async function addService(
   context: DevProxyContext,
   input: { name: string; port: string | number },
 ): Promise<string> {
-  ensureWindows(context);
+  ensureSupportedPlatform(context.platform);
   const domain = domainFromName(input.name);
   const port = parsePort(input.port);
   const registry = await readRegistry(context.paths.registryFile);
@@ -161,9 +164,9 @@ export async function addService(
   };
   const next = upsertService(registry, service);
 
-  await ensureHostsWritable(context.paths.hostsFile);
+  await ensureHostsWritable(context.paths.hostsFile, context.platform);
   await writeRegistry(context.paths.registryFile, next);
-  await writeHostsFile(context.paths.hostsFile, next.services);
+  await writeHostsFile(context.paths.hostsFile, next.services, context.platform);
   await writeCaddyfile(context.paths.caddyFile, next.services);
   const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
 
@@ -174,22 +177,22 @@ export async function addService(
  * Remove a registered service by name and update all downstream artifacts.
  *
  * Looks up the service in the registry, removes it, rewrites the registry file,
- * updates the Windows hosts file, regenerates the Caddyfile, and reloads Caddy.
+ * updates the hosts file, regenerates the Caddyfile, and reloads Caddy.
  *
- * @throws {DevProxyError} When the platform is not Windows, the service does not
+ * @throws {DevProxyError} When the platform is unsupported, the service does not
  *   exist, or the hosts file is not writable.
  */
 export async function removeRegisteredService(
   context: DevProxyContext,
   name: string,
 ): Promise<string> {
-  ensureWindows(context);
+  ensureSupportedPlatform(context.platform);
   const registry = await readRegistry(context.paths.registryFile);
   const { registry: next, removed } = removeService(registry, name.trim().toLowerCase());
 
-  await ensureHostsWritable(context.paths.hostsFile);
+  await ensureHostsWritable(context.paths.hostsFile, context.platform);
   await writeRegistry(context.paths.registryFile, next);
-  await writeHostsFile(context.paths.hostsFile, next.services);
+  await writeHostsFile(context.paths.hostsFile, next.services, context.platform);
   await writeCaddyfile(context.paths.caddyFile, next.services);
   await validateAndReloadCaddy(context.paths.caddyFile, context.run);
 
@@ -204,7 +207,7 @@ export async function removeRegisteredService(
  * `name` is omitted, reads the project config from the given `cwd` to
  * determine the domain.
  *
- * @throws {DevProxyError} When the platform is not Windows, or when no name
+ * @throws {DevProxyError} When the platform is unsupported, or when no name
  *   is provided and no project config exists.
  */
 export async function openServiceInBrowser(
@@ -212,7 +215,7 @@ export async function openServiceInBrowser(
   name?: string,
   cwd: string = process.cwd(),
 ): Promise<string> {
-  ensureWindows(context);
+  ensureSupportedPlatform(context.platform);
   const resolved = name ?? (await resolveProjectName(cwd));
   const domain = domainFromName(resolved);
   const openUrl = context.openUrl ?? openDefaultBrowser;
@@ -251,7 +254,9 @@ export async function listServices(context: DevProxyContext): Promise<string> {
 export async function doctor(context: DevProxyContext): Promise<string> {
   const checks: string[] = [];
   checks.push(
-    `${context.platform === "win32" ? "ok" : "warn"} Windows platform: ${context.platform}`,
+    `${isSupportedPlatform(context.platform) ? "ok" : "warn"} Supported platform: ${
+      context.platform
+    }`,
   );
 
   const caddy = await context.run("caddy", ["version"]);
@@ -279,10 +284,10 @@ export async function doctor(context: DevProxyContext): Promise<string> {
  * Generates a fresh Caddyfile from the registry and then validates and
  * reloads Caddy. If Caddy is not yet running, it falls back to starting it.
  *
- * @throws {DevProxyError} When no services are registered or the platform is not Windows.
+ * @throws {DevProxyError} When no services are registered or the platform is unsupported.
  */
 export async function startCaddyServer(context: DevProxyContext): Promise<string> {
-  ensureWindows(context);
+  ensureSupportedPlatform(context.platform);
   const registry = await readRegistry(context.paths.registryFile);
   if (registry.services.length === 0) {
     throw new DevProxyError("No services registered. Add a service before starting Caddy.");
@@ -300,10 +305,10 @@ export async function startCaddyServer(context: DevProxyContext): Promise<string
  * Issues a Caddy stop command. If Caddy is not running, returns a message
  * indicating so instead of throwing.
  *
- * @throws {DevProxyError} When the platform is not Windows.
+ * @throws {DevProxyError} When the platform is unsupported.
  */
 export async function stopCaddyServer(context: DevProxyContext): Promise<string> {
-  ensureWindows(context);
+  ensureSupportedPlatform(context.platform);
   const result = await stopCaddy(context.paths.caddyFile, context.run);
 
   if (result === "not-running") {
@@ -431,10 +436,10 @@ export async function getStatusData(context: DevProxyContext): Promise<StatusDat
  * returns a multi-line report including path, subject, issuer, validity, and
  * fingerprints. Hints guide the user to run `caddy trust` when the cert is missing.
  *
- * @throws {DevProxyError} When the platform is not Windows.
+ * @throws {DevProxyError} When the platform is unsupported.
  */
 export async function printCertificateInfo(context: DevProxyContext): Promise<string> {
-  ensureWindows(context);
+  ensureSupportedPlatform(context.platform);
   const info = await getCaddyCertificateInfo(context.run, context.paths.caddyRootCAPath);
 
   const lines: string[] = [];
@@ -449,12 +454,12 @@ export async function printCertificateInfo(context: DevProxyContext): Promise<st
     lines.push(`info Fingerprint (SHA-1): ${info.fingerprint}`);
     lines.push(`info Fingerprint (SHA-256): ${info.fingerprint256}`);
     lines.push(
-      "hint If browsers still warn about the certificate, run `caddy trust` from an elevated PowerShell session.",
+      "hint If browsers still warn about the certificate, run `caddy trust` with the privileges needed to update your trust store.",
     );
   } else {
     lines.push("warn Root CA certificate not found");
     lines.push(
-      "hint Run `caddy trust` from an elevated PowerShell session to generate and install the root CA.",
+      "hint Run `caddy trust` with the privileges needed to generate and install the root CA.",
     );
   }
 
@@ -539,17 +544,6 @@ async function resolveProjectName(cwd: string): Promise<string> {
   }
 
   return config.name;
-}
-
-/**
- * Enforce that the runtime platform is Windows.
- *
- * @throws {DevProxyError} When `context.platform` is not `"win32"`.
- */
-function ensureWindows(context: DevProxyContext): void {
-  if (context.platform !== "win32") {
-    throw new DevProxyError("DevProxy currently supports Windows only.");
-  }
 }
 
 /**

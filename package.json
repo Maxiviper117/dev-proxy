@@ -1,13 +1,15 @@
 {
   "name": "@maxiviper117/devproxy",
   "version": "0.11.0",
-  "description": "Windows-native CLI for stable HTTPS local domains that proxy to local development services.",
+  "description": "Cross-platform CLI for stable HTTPS local domains that proxy to local development services.",
   "keywords": [
     "caddy",
     "cli",
     "https",
     "local-development",
     "reverse-proxy",
+    "linux",
+    "macos",
     "windows",
     "wsl"
   ],

@@ -2,7 +2,7 @@
 
 ## Project
 
-DevProxy is a Windows-native TypeScript CLI that maps stable HTTPS `.local` domains to local development services. It works with any service reachable from Windows, including apps running in WSL, Docker, or natively on Windows. The npm package is `@maxiviper117/devproxy`; the CLI binary is `devproxy`.
+DevProxy is a cross-platform TypeScript CLI that maps stable HTTPS `.local` domains to local development services on Windows, macOS, and Linux. On Windows, it also works with apps running in WSL, Docker, or natively on Windows when they are reachable through loopback. The npm package is `@maxiviper117/devproxy`; the CLI binary is `devproxy`.
 
 Use `TODO.md` for future enhancements, deferred product work, and follow-up hardening tasks.
 
@@ -82,21 +82,21 @@ pnpm pack --dry-run
 - `src/cli/` contains terminal presentation helpers such as colored output.
 - `src/commands/` contains command-level workflows.
 - `src/core/` contains domain validation, registry logic, shared types, and errors.
-- `src/integrations/` contains external integration logic such as Caddy and the Windows hosts file.
+- `src/integrations/` contains external integration logic such as Caddy and hosts-file management.
 - `src/platform/` contains runtime path resolution and child-process execution.
 
 ## Safety Rules
 
 - Keep `AGENTS.md` up to date after any project change that affects setup, commands,
   architecture, safety rules, or contributor workflow.
-- Do not touch the real Windows hosts file in tests.
+- Do not touch the real system hosts file in tests.
 - Keep filesystem paths and command execution injectable through `DevProxyContext`.
 - Tests should use temp directories and mocked `CommandRunner` implementations.
 - DevProxy must only modify hosts entries inside its own marker block:
   - `# BEGIN DEVPROXY`
   - `# END DEVPROXY`
 - Do not add automatic UAC elevation without an explicit product decision.
-- If hosts-file access is missing, fail with a clear administrator rerun instruction.
+- If hosts-file access is missing, fail with clear platform-appropriate elevated-permission instructions.
 
 ## Product Defaults
 

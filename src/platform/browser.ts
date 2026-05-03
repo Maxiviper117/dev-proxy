@@ -1,14 +1,23 @@
 import { spawn } from "node:child_process";
+import { platform as currentPlatform } from "node:os";
+import { ensureSupportedPlatform, type SupportedPlatform } from "./support.js";
 
 /**
- * Open a URL in the default Windows browser.
+ * Open a URL in the platform default browser.
  *
- * Spawns `cmd /c start` detached and hidden so the browser opens without
+ * Spawns the platform-native opener detached so the browser opens without
  * blocking the CLI process.
  */
-export async function openDefaultBrowser(url: string): Promise<void> {
+export async function openDefaultBrowser(
+  url: string,
+  targetPlatform: NodeJS.Platform = currentPlatform(),
+): Promise<void> {
+  ensureSupportedPlatform(targetPlatform);
+  const supportedPlatform = targetPlatform;
+  const command = browserOpenCommand(url, supportedPlatform);
+
   await new Promise<void>((resolve, reject) => {
-    const child = spawn("cmd", ["/c", "start", "", url], {
+    const child = spawn(command.command, command.args, {
       detached: true,
       stdio: "ignore",
       windowsHide: true,
@@ -20,4 +29,18 @@ export async function openDefaultBrowser(url: string): Promise<void> {
       resolve();
     });
   });
+}
+
+export function browserOpenCommand(
+  url: string,
+  targetPlatform: SupportedPlatform,
+): { command: string; args: string[] } {
+  switch (targetPlatform) {
+    case "win32":
+      return { command: "cmd", args: ["/c", "start", "", url] };
+    case "darwin":
+      return { command: "open", args: [url] };
+    case "linux":
+      return { command: "xdg-open", args: [url] };
+  }
 }

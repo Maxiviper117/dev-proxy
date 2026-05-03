@@ -77,7 +77,7 @@ describe("generateCaddyfile", () => {
       stderr: "caddy not found",
     });
 
-    await expect(ensureCaddyAvailable(run)).rejects.toThrow("winget install CaddyServer.Caddy");
+    await expect(ensureCaddyAvailable(run)).rejects.toThrow("brew install caddy");
   });
 
   it("stops Caddy through the generated config", async () => {

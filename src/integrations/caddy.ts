@@ -1,9 +1,9 @@
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { homedir } from "node:os";
+import { dirname } from "node:path";
 import { X509Certificate } from "node:crypto";
 import { DevProxyError } from "../core/errors.js";
 import type { CommandRunner, Service } from "../core/types.js";
+import { defaultPaths } from "../platform/paths.js";
 
 export type CaddyLifecycle = "reloaded" | "started";
 
@@ -13,7 +13,11 @@ export const caddyInstallHint = [
   "Windows options:",
   "  winget install CaddyServer.Caddy",
   "  scoop install caddy",
-  "After installing, run `caddy trust` from an elevated PowerShell session.",
+  "macOS option:",
+  "  brew install caddy",
+  "Linux options:",
+  "  Use your distro package manager or follow https://caddyserver.com/docs/install",
+  "After installing, run `caddy trust` with the privileges needed to update your trust store.",
 ].join("\n");
 
 /**
@@ -168,8 +172,7 @@ function isCaddyAdminUnavailable(output: string): boolean {
  * Points to `%APPDATA%\Caddy\pki\authorities\local\root.crt`.
  */
 export function getCaddyRootCAPath(): string {
-  const appData = process.env.APPDATA ?? join(homedir(), "AppData", "Roaming");
-  return join(appData, "Caddy", "pki", "authorities", "local", "root.crt");
+  return defaultPaths().caddyRootCAPath;
 }
 
 export type CaddyCertificateInfo = {

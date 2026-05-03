@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.12.2...devproxy-v0.13.0) (2026-05-03)
+
+
+### Features
+
+* warn before starting when Caddy root CA is missing ([#45](https://github.com/Maxiviper117/dev-proxy/issues/45)) ([7e7a322](https://github.com/Maxiviper117/dev-proxy/commit/7e7a3224d4684a0af12e1c8a7c74b367d819b6a6))
+
 ## [0.12.2](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.12.1...devproxy-v0.12.2) (2026-05-03)
 
 

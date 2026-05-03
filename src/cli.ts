@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
@@ -183,6 +184,25 @@ export async function runCli(argv = process.argv): Promise<void> {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+/**
+ * Determine whether this module is being executed as the CLI entrypoint.
+ *
+ * Package managers commonly expose bin files as symlinks. Node resolves the
+ * imported module to its real path, while `process.argv[1]` can remain the
+ * symlink path, so both sides are resolved before comparing.
+ */
+export function isCliEntrypoint(argvPath: string | undefined, moduleUrl: string): boolean {
+  if (!argvPath) {
+    return false;
+  }
+
+  try {
+    return realpathSync(argvPath) === realpathSync(fileURLToPath(moduleUrl));
+  } catch {
+    return false;
+  }
+}
+
+if (isCliEntrypoint(process.argv[1], import.meta.url)) {
   await runCli();
 }

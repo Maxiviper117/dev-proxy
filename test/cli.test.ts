@@ -1,8 +1,9 @@
-import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { buildProgram } from "../src/cli.js";
+import { buildProgram, isCliEntrypoint } from "../src/cli.js";
 import {
   addService,
   doctor,
@@ -129,6 +130,16 @@ describe("app commands", () => {
     ) as { version: string };
 
     expect(buildProgram().version()).toBe(packageJson.version);
+  });
+
+  it("detects CLI entrypoint execution through direct and symlinked bin paths", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "devproxy-bin-"));
+    const cliPath = fileURLToPath(new URL("../src/cli.ts", import.meta.url));
+    const binPath = join(dir, "devproxy");
+    await symlink(cliPath, binPath);
+
+    expect(isCliEntrypoint(cliPath, new URL("../src/cli.ts", import.meta.url).href)).toBe(true);
+    expect(isCliEntrypoint(binPath, new URL("../src/cli.ts", import.meta.url).href)).toBe(true);
   });
 
   it("adds the branded banner to root help output only", () => {

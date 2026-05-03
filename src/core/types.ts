@@ -1,13 +1,24 @@
-export type ServiceMode = "attach";
+export type ServiceMode = "attach" | "managed";
 
 export type Service = {
   name: string;
   domain: string;
   port: number;
   mode: ServiceMode;
+  pid?: number;
+  command?: string;
+  cwd?: string;
   createdAt: string;
   updatedAt: string;
 };
+
+export type ManagedProcess = {
+  pid: number;
+  onExit: (callback: (code: number | null, signal: NodeJS.Signals | null) => void) => void;
+  kill: () => Promise<void>;
+};
+
+export type ManagedProcessSpawner = (command: string, args: readonly string[]) => ManagedProcess;
 
 export type Registry = {
   version: 1;
@@ -44,4 +55,5 @@ export type DevProxyContext = {
   probeUrl?: UrlProbe;
   probeHttps?: HttpsProbe;
   openUrl?: BrowserOpener;
+  spawnManaged?: ManagedProcessSpawner;
 };

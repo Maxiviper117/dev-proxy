@@ -63,7 +63,7 @@ devproxy start
 devproxy doctor
 ```
 
-Commands that update the Windows hosts file must be run from an elevated PowerShell session:
+Commands that update the system hosts file must be run from an elevated shell:
 
 ```powershell
 devproxy add api.myapp --port 8000
@@ -86,19 +86,19 @@ Use `node dist/cli.js ...` when you want to test the current build without linki
 - `src/cli/` contains terminal presentation helpers such as colored output.
 - `src/commands/` contains command-level workflows.
 - `src/core/` contains domain validation, registry logic, shared types, and errors.
-- `src/integrations/` contains external integration logic such as Caddy and the Windows hosts file.
+- `src/integrations/` contains external integration logic such as Caddy and hosts-file management.
 - `src/platform/` contains runtime path resolution and child-process execution.
 
 ## Safety Rules
 
-- Do not touch the real Windows hosts file in tests.
+- Do not touch the real system hosts file in tests.
 - Keep filesystem paths and command execution injectable through `DevProxyContext`.
 - Tests should use temp directories and mocked `CommandRunner` implementations.
 - DevProxy must only modify hosts entries inside its own marker block:
   - `# BEGIN DEVPROXY`
   - `# END DEVPROXY`
 - Do not add automatic UAC elevation without an explicit product decision.
-- If hosts-file access is missing, fail with a clear administrator rerun instruction.
+- If hosts-file access is missing, fail with clear platform-appropriate elevated-permission instructions.
 
 ## Docs Development
 

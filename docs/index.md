@@ -1,6 +1,6 @@
 # DevProxy
 
-Stable HTTPS `.local` domains for Windows development.
+Stable HTTPS `.local` domains for local development on Windows, macOS, and Linux.
 
 ## Features
 
@@ -8,7 +8,7 @@ Stable HTTPS `.local` domains for Windows development.
 - **Project-local config** with `.devproxy/config.json` — store name and port so `open` needs zero arguments
 - **Attach-mode services** with `devproxy add` — proxy stable domains to already-running servers
 - **`.local` domain generation** for readable local URLs
-- **Windows hosts-file management** inside a safe, managed block
+- **Hosts-file management** inside a safe, managed block
 - **Caddyfile generation** and lifecycle management
 - **Caddy `tls internal` HTTPS** out of the box
 - **Caddy config validation and reload**
@@ -23,6 +23,8 @@ Install Caddy and trust its local CA:
 winget install CaddyServer.Caddy
 caddy trust
 ```
+
+On macOS, install Caddy with Homebrew. On Linux, use your distribution package manager or Caddy's official install instructions.
 
 Install DevProxy:
 

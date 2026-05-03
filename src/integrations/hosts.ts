@@ -2,6 +2,7 @@ import { access, readFile, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { DevProxyError } from "../core/errors.js";
 import type { Service } from "../core/types.js";
+import { formatPlatformName } from "../platform/support.js";
 
 const startMarker = "# BEGIN DEVPROXY";
 const endMarker = "# END DEVPROXY";
@@ -52,13 +53,14 @@ export function updateHostsContent(content: string, services: readonly Service[]
 export async function writeHostsFile(
   hostsFile: string,
   services: readonly Service[],
+  platform: NodeJS.Platform = process.platform,
 ): Promise<void> {
   try {
     const current = await readFile(hostsFile, "utf8");
     await writeFile(hostsFile, updateHostsContent(current, services), "utf8");
   } catch (error) {
     if (isPermissionError(error)) {
-      throw hostsPermissionError(hostsFile);
+      throw hostsPermissionError(hostsFile, platform);
     }
 
     throw error;
@@ -88,12 +90,15 @@ export async function canWriteHosts(hostsFile: string): Promise<boolean> {
  *
  * @throws {DevProxyError} When the hosts file is not writable.
  */
-export async function ensureHostsWritable(hostsFile: string): Promise<void> {
+export async function ensureHostsWritable(
+  hostsFile: string,
+  platform: NodeJS.Platform = process.platform,
+): Promise<void> {
   if (await canWriteHosts(hostsFile)) {
     return;
   }
 
-  throw new DevProxyError(hostsPermissionMessage(hostsFile));
+  throw new DevProxyError(hostsPermissionMessage(hostsFile, platform));
 }
 
 /**
@@ -111,8 +116,8 @@ function escapeRegExp(value: string): string {
  *
  * Includes the full path so the user knows exactly which file needs elevation.
  */
-function hostsPermissionError(hostsFile: string): DevProxyError {
-  return new DevProxyError(hostsPermissionMessage(hostsFile));
+function hostsPermissionError(hostsFile: string, platform: NodeJS.Platform): DevProxyError {
+  return new DevProxyError(hostsPermissionMessage(hostsFile, platform));
 }
 
 /**
@@ -121,10 +126,18 @@ function hostsPermissionError(hostsFile: string): DevProxyError {
  * Instructs the user to open PowerShell as Administrator and rerun the same
  * command, including the absolute path to the hosts file for clarity.
  */
-function hostsPermissionMessage(hostsFile: string): string {
+export function hostsPermissionMessage(hostsFile: string, platform: NodeJS.Platform): string {
+  if (platform === "win32") {
+    return [
+      "DevProxy needs administrator rights to update the Windows hosts file.",
+      "Open PowerShell as Administrator and rerun the same devproxy command.",
+      `Hosts file: ${hostsFile}`,
+    ].join("\n");
+  }
+
   return [
-    "DevProxy needs administrator rights to update the Windows hosts file.",
-    "Open PowerShell as Administrator and rerun the same devproxy command.",
+    `DevProxy needs elevated permissions to update the ${formatPlatformName(platform)} hosts file.`,
+    "Rerun the same devproxy command with sudo or from an elevated shell.",
     `Hosts file: ${hostsFile}`,
   ].join("\n");
 }

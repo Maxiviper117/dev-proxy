@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { updateHostsContent } from "../src/integrations/hosts.js";
+import { hostsPermissionMessage, updateHostsContent } from "../src/integrations/hosts.js";
 import type { Service } from "../src/core/types.js";
 
 const services = [
@@ -40,5 +40,19 @@ describe("updateHostsContent", () => {
     );
 
     expect(result).toBe("keep.me\n");
+  });
+});
+
+describe("hostsPermissionMessage", () => {
+  it("uses Windows administrator guidance on win32", () => {
+    const message = hostsPermissionMessage("C:\\Windows\\System32\\drivers\\etc\\hosts", "win32");
+
+    expect(message).toContain("administrator rights");
+    expect(message).toContain("Open PowerShell as Administrator");
+  });
+
+  it("uses sudo guidance on macOS and Linux", () => {
+    expect(hostsPermissionMessage("/etc/hosts", "darwin")).toContain("sudo");
+    expect(hostsPermissionMessage("/etc/hosts", "linux")).toContain("sudo");
   });
 });

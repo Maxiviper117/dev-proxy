@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.10.0...devproxy-v0.11.0) (2026-05-03)
+
+
+### Features
+
+* add overwrite confirmation prompt on service re-registration ([#36](https://github.com/Maxiviper117/dev-proxy/issues/36)) ([ecd6b10](https://github.com/Maxiviper117/dev-proxy/commit/ecd6b10e81dbeda6e01d27e8aceb0f60ce77cc18))
+
 ## [0.10.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.9.0...devproxy-v0.10.0) (2026-05-03)
 
 

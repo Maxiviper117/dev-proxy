@@ -1,6 +1,6 @@
 {
   "name": "@maxiviper117/devproxy",
-  "version": "0.12.2",
+  "version": "0.13.0",
   "description": "Cross-platform CLI for stable HTTPS local domains that proxy to local development services.",
   "keywords": [
     "caddy",

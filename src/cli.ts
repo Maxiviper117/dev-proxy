@@ -26,7 +26,6 @@ import {
   openServiceInBrowser,
   printCertificateInfo,
   removeRegisteredService,
-  runManagedService,
   status,
   startCaddyServer,
   stopCaddyServer,
@@ -50,8 +49,7 @@ export function buildProgram(context = createDefaultContext()): Command {
   program
     .name("devproxy")
     .description("Stable HTTPS local domains for Windows development.")
-    .version(cliVersion)
-    .enablePositionalOptions();
+    .version(cliVersion);
 
   program.addHelpText("beforeAll", ({ command }) => {
     const sections = [formatVersionLine(cliVersion)];
@@ -86,27 +84,6 @@ export function buildProgram(context = createDefaultContext()): Command {
     .description("Register an attach-mode service.")
     .action(async (name: string, options: { port: string }) => {
       console.log(success(await addService(context, { name, port: options.port })));
-    });
-
-  program
-    .command("run [name] [args...]")
-    .passThroughOptions()
-    .option("-p, --port <port>", "local port (reads from project config if omitted)")
-    .description("Start an app process and register its domain.")
-    .action(async (name: string | undefined, args: string[], options: { port?: string }) => {
-      if (args.length === 0) {
-        throw new Error("A command is required after the service name.");
-      }
-      const command = args[0]!;
-      const commandArgs = args.slice(1);
-      const handle = await runManagedService(context, {
-        ...(name ? { name } : {}),
-        ...(options.port ? { port: options.port } : {}),
-        command,
-        args: commandArgs,
-      });
-      console.log(success(handle.message));
-      await handle.wait();
     });
 
   program

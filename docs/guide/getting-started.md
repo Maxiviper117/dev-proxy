@@ -70,11 +70,9 @@ pnpm link --global
 devproxy --help
 ```
 
-## One-Command Setup with `init`
+## Project Setup with `init`
 
-The fastest way to set up a project is with the `init` and `run` commands.
-
-From your project root, create a config file:
+From your project root, create a config file so `devproxy open` can find your domain without arguments:
 
 ```bash
 devproxy init --name api.myapp --port 8000
@@ -82,21 +80,7 @@ devproxy init --name api.myapp --port 8000
 
 This creates `.devproxy/config.json` with your project settings.
 
-Then start your dev server through DevProxy:
-
-```bash
-devproxy run -- php artisan serve --port=8000
-```
-
-The domain `https://api.myapp.local` is now live. Press `Ctrl+C` to stop.
-
-```bash
-devproxy open
-```
-
-Opens the domain without needing to repeat the name.
-
-## Register an Existing Service (Attach Mode)
+## Register Your Service
 
 If your dev server is already running separately, attach DevProxy to its port:
 
@@ -106,13 +90,19 @@ devproxy add api.myapp --port 8000
 
 This registers the domain without spawning or managing the process.
 
-Open the domain:
+Open the domain (the name is read from config when omitted):
 
 ```bash
 devproxy open api.myapp
 ```
 
-Or navigate to `https://api.myapp.local` in your browser.
+Or when `.devproxy/config.json` is present:
+
+```bash
+devproxy open
+```
+
+Navigate to `https://api.myapp.local` in your browser.
 
 ## Service Name Rules
 
@@ -130,7 +120,6 @@ Updating the Windows hosts file requires administrator rights. If DevProxy canno
 Commands that modify the hosts file include:
 
 - `devproxy add <name> --port <port>`
-- `devproxy run [name] -p [port] -- <command>`
 - `devproxy remove <name>`
 - `devproxy start`
 

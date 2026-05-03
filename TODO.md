@@ -18,11 +18,9 @@
 
 ## Managed Processes
 
-- [x] Add `devproxy run <name> -- <command>` to start an app process and register its domain in one command.
-- [x] Add `devproxy init` to create a `.devproxy/config.json` so `run` and `open` can omit the name and port.
+- [x] Add `devproxy init` to create a `.devproxy/config.json` so `open` can omit the name.
 - Track managed process metadata separately from attach-mode services.
 - Add managed-process stop/restart behavior without affecting attach-mode services.
-- Add port inference for common commands where reliable, while keeping explicit `--port` supported.
 - Capture stdout/stderr for managed commands without hiding interactive dev-server output.
 
 ## Caddy

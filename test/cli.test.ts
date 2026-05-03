@@ -11,12 +11,11 @@ import {
   openServiceInBrowser,
   printCertificateInfo,
   removeRegisteredService,
-  runManagedService,
   status,
   startCaddyServer,
   stopCaddyServer,
 } from "../src/commands/services.js";
-import type { CommandRunner, DevProxyContext, ManagedProcess } from "../src/core/types.js";
+import type { CommandRunner, DevProxyContext } from "../src/core/types.js";
 
 const testCertificatePem = [
   "-----BEGIN CERTIFICATE-----",
@@ -429,96 +428,6 @@ describe("app commands", () => {
     expect(parsed.hints).toEqual([]);
   });
 
-  it("runs a managed service and clears pid on exit", async () => {
-    const context = await createContext();
-    let exitCb: ((code: number | null, signal: NodeJS.Signals | null) => void) | undefined;
-    context.spawnManaged = (_command, _args): ManagedProcess => ({
-      pid: 12345,
-      onExit: (cb) => {
-        exitCb = cb;
-      },
-      kill: async () => {},
-    });
-
-    const handle = await runManagedService(context, {
-      name: "api",
-      port: "3000",
-      command: "node",
-      args: ["server.js"],
-    });
-
-    expect(handle.message).toContain("Started api.local");
-    expect(handle.message).toContain("PID 12345");
-
-    const registry = await readFile(context.paths.registryFile, "utf8");
-    const parsed = JSON.parse(registry);
-    expect(parsed.services).toHaveLength(1);
-    expect(parsed.services[0]).toMatchObject({
-      name: "api",
-      domain: "api.local",
-      port: 3000,
-      mode: "managed",
-      pid: 12345,
-      command: "node server.js",
-    });
-
-    const waitPromise = handle.wait();
-    exitCb!(0, null);
-    const exitMessage = await waitPromise;
-    expect(exitMessage).toContain("Process exited with code 0");
-
-    const finalRegistry = await readFile(context.paths.registryFile, "utf8");
-    const finalParsed = JSON.parse(finalRegistry);
-    expect(finalParsed.services[0].pid).toBeUndefined();
-  });
-
-  it("lists managed services with tags", async () => {
-    const context = await createContext();
-    context.spawnManaged = (_command, _args): ManagedProcess => ({
-      pid: 12345,
-      onExit: () => {},
-      kill: async () => {},
-    });
-
-    const handle = await runManagedService(context, {
-      name: "api",
-      port: "3000",
-      command: "node",
-      args: ["server.js"],
-    });
-    // do not wait so pid stays present
-    void handle.wait();
-
-    const output = await listServices(context);
-    expect(output).toContain("api");
-    expect(output).toContain("managed");
-    expect(output).toContain("PID 12345");
-  });
-
-  it("allows re-running a managed service over an existing attach service", async () => {
-    const context = await createContext();
-    await addService(context, { name: "api", port: "3000" });
-
-    context.spawnManaged = (_command, _args): ManagedProcess => ({
-      pid: 54321,
-      onExit: () => {},
-      kill: async () => {},
-    });
-
-    const handle = await runManagedService(context, {
-      name: "api",
-      port: "3000",
-      command: "node",
-      args: ["server.js"],
-    });
-    void handle.wait();
-
-    const registry = await readFile(context.paths.registryFile, "utf8");
-    const parsed = JSON.parse(registry);
-    expect(parsed.services[0].mode).toBe("managed");
-    expect(parsed.services[0].pid).toBe(54321);
-  });
-
   it("init creates a .devproxy config file", async () => {
     const dir = await mkdtemp(join(tmpdir(), "devproxy-test-"));
 
@@ -541,68 +450,6 @@ describe("app commands", () => {
     await expect(initProjectConfig(dir, { name: "api", port: "abc" })).rejects.toThrow(
       "Port must be an integer",
     );
-  });
-
-  it("run reads name and port from project config when omitted", async () => {
-    const context = await createContext();
-    const projectDir = context.paths.appDir;
-    await initProjectConfig(projectDir, { name: "my-api", port: "9090" });
-
-    context.spawnManaged = (_command, _args): ManagedProcess => ({
-      pid: 99999,
-      onExit: () => {},
-      kill: async () => {},
-    });
-
-    const handle = await runManagedService(context, {
-      command: "node",
-      args: ["server.js"],
-      cwd: projectDir,
-    });
-    void handle.wait();
-
-    expect(handle.message).toContain("my-api.local");
-    expect(handle.message).toContain("9090");
-
-    const registry = await readFile(context.paths.registryFile, "utf8");
-    const parsed = JSON.parse(registry);
-    expect(parsed.services[0].name).toBe("my-api");
-    expect(parsed.services[0].port).toBe(9090);
-  });
-
-  it("run errors when no config and no explicit name or port", async () => {
-    const context = await createContext();
-
-    await expect(
-      runManagedService(context, {
-        command: "node",
-        args: ["server.js"],
-        cwd: context.paths.appDir,
-      }),
-    ).rejects.toThrow("service name is required");
-  });
-
-  it("run allows CLI name to override config name", async () => {
-    const context = await createContext();
-    const projectDir = context.paths.appDir;
-    await initProjectConfig(projectDir, { name: "config-name", port: "1234" });
-
-    context.spawnManaged = (_command, _args): ManagedProcess => ({
-      pid: 11111,
-      onExit: () => {},
-      kill: async () => {},
-    });
-
-    const handle = await runManagedService(context, {
-      name: "cli-name",
-      command: "node",
-      args: ["server.js"],
-      cwd: projectDir,
-    });
-    void handle.wait();
-
-    expect(handle.message).toContain("cli-name.local");
-    expect(handle.message).toContain("1234");
   });
 
   it("open without name reads domain from project config", async () => {

@@ -5,7 +5,7 @@ import { domainFromName, parsePort } from "../core/domain.js";
 import { DevProxyError } from "../core/errors.js";
 import { readRegistry, removeService, upsertService, writeRegistry } from "../core/registry.js";
 import { projectConfigPath, readProjectConfig, writeProjectConfig } from "../core/config.js";
-import type { DevProxyContext, Service, ServiceMode } from "../core/types.js";
+import type { DevProxyContext, Service } from "../core/types.js";
 import {
   caddyInstallHint,
   generateCaddyfile,
@@ -17,7 +17,7 @@ import {
 import { canWriteHosts, ensureHostsWritable, writeHostsFile } from "../integrations/hosts.js";
 import { openDefaultBrowser } from "../platform/browser.js";
 import { defaultPaths } from "../platform/paths.js";
-import { runCommand, spawnManagedProcess } from "../platform/runner.js";
+import { runCommand } from "../platform/runner.js";
 
 /**
  * Create a default {@link DevProxyContext} backed by real platform integrations.
@@ -35,7 +35,6 @@ export function createDefaultContext(): DevProxyContext {
     probeUrl: probeUrl,
     probeHttps: probeHttpsUrl,
     openUrl: openDefaultBrowser,
-    spawnManaged: spawnManagedProcess,
   };
 }
 
@@ -97,113 +96,6 @@ export async function addService(
   const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
 
   return `Registered ${domain} -> 127.0.0.1:${port}, localhost:${port} (${formatCaddyLifecycle(caddyLifecycle)}).`;
-}
-
-export type ManagedProcessHandle = {
-  message: string;
-  wait: () => Promise<string>;
-};
-
-/**
- * Start a managed process and register its domain in one step.
- *
- * Validates the name and port, spawns the command with inherited stdio, writes
- * the registry entry with mode "managed", updates the hosts file and Caddyfile,
- * and reloads (or starts) Caddy. Returns immediately with a start message and a
- * wait handle that resolves when the child exits, at which point the stored PID
- * is cleared from the registry.
- *
- * When `name` or `port` is omitted, the project config at `.devproxy/config.json`
- * is used as a fallback. At least one source must supply the name and port.
- *
- * @throws {DevProxyError} When the platform is not Windows, the name or port is
- *   invalid, the hosts file is not writable, or no config exists for missing values.
- */
-export async function runManagedService(
-  context: DevProxyContext,
-  input: {
-    name?: string;
-    port?: string | number;
-    command: string;
-    args: string[];
-    cwd?: string;
-  },
-): Promise<ManagedProcessHandle> {
-  ensureWindows(context);
-  const projectDir = input.cwd ?? process.cwd();
-  const config = await readProjectConfig(projectConfigPath(projectDir));
-  const name = input.name ?? config?.name;
-  if (!name) {
-    throw new DevProxyError(
-      "A service name is required. Provide it as an argument or run 'devproxy init' first.",
-    );
-  }
-  const port = input.port ?? config?.port;
-  if (!port) {
-    throw new DevProxyError(
-      "A port is required. Provide it with --port or run 'devproxy init' first.",
-    );
-  }
-
-  const domain = domainFromName(name);
-  const parsedPort = parsePort(port);
-  const registry = await readRegistry(context.paths.registryFile);
-  const timestamp = context.now().toISOString();
-  const service: Service = {
-    name: name.trim().toLowerCase(),
-    domain,
-    port: parsedPort,
-    mode: "managed",
-    command: [input.command, ...input.args].join(" "),
-    cwd: process.cwd(),
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-  const next = upsertService(registry, service);
-
-  await ensureHostsWritable(context.paths.hostsFile);
-  await writeRegistry(context.paths.registryFile, next);
-  await writeHostsFile(context.paths.hostsFile, next.services);
-  await writeCaddyfile(context.paths.caddyFile, next.services);
-  const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
-
-  const spawnManaged = context.spawnManaged ?? spawnManagedProcess;
-  const managed = spawnManaged(input.command, input.args);
-
-  const withPid: typeof next = {
-    ...next,
-    services: next.services.map((s) =>
-      s.name === service.name
-        ? { ...s, pid: managed.pid, updatedAt: context.now().toISOString() }
-        : s,
-    ),
-  };
-  await writeRegistry(context.paths.registryFile, withPid);
-
-  const message = `Started ${domain} -> 127.0.0.1:${parsedPort}, localhost:${parsedPort} (${formatCaddyLifecycle(caddyLifecycle)}). PID ${managed.pid}`;
-
-  const wait = (): Promise<string> =>
-    new Promise((resolve) => {
-      managed.onExit(async (code) => {
-        try {
-          const current = await readRegistry(context.paths.registryFile);
-          const cleaned: typeof current = {
-            ...current,
-            services: current.services.map((s) => {
-              if (s.name !== service.name) return s;
-              const { pid: _pid, ...rest } = s;
-              return { ...rest, updatedAt: context.now().toISOString() };
-            }),
-          };
-          await writeRegistry(context.paths.registryFile, cleaned);
-        } catch {
-          // ignore cleanup errors
-        }
-        resolve(`Process exited with code ${code ?? "unknown"}.`);
-      });
-    });
-
-  return { message, wait };
 }
 
 /**
@@ -271,15 +163,7 @@ export async function listServices(context: DevProxyContext): Promise<string> {
   }
 
   const rows = registry.services.map((service) => {
-    const tags: string[] = [];
-    if (service.mode === "managed") {
-      tags.push("managed");
-    }
-    if (service.pid) {
-      tags.push(`PID ${service.pid}`);
-    }
-    const tagStr = tags.length > 0 ? ` (${tags.join(", ")})` : "";
-    return `${service.name.padEnd(24)} https://${service.domain.padEnd(32)} -> 127.0.0.1:${service.port}, localhost:${service.port}${tagStr}`;
+    return `${service.name.padEnd(24)} https://${service.domain.padEnd(32)} -> 127.0.0.1:${service.port}, localhost:${service.port}`;
   });
 
   return ["Registered services:", ...rows].join("\n");
@@ -407,8 +291,6 @@ export type StatusServiceData = {
   name: string;
   domain: string;
   port: number;
-  mode: ServiceMode;
-  processRunning?: boolean;
   domainReachable: boolean;
   localhostReachable: boolean;
   loopbackReachable: boolean;
@@ -454,8 +336,6 @@ export async function getStatusData(context: DevProxyContext): Promise<StatusDat
         name: service.name,
         domain: service.domain,
         port: service.port,
-        mode: service.mode,
-        ...(service.pid ? { processRunning: isProcessRunning(service.pid) } : {}),
         domainReachable,
         localhostReachable,
         loopbackReachable,
@@ -553,16 +433,11 @@ export async function status(context: DevProxyContext): Promise<string> {
       ]);
       const upstreamReachable = localhostReachable || loopbackReachable;
       const domainReachable = await probeHttps(`https://${service.domain}/`);
-      const modeTag = service.mode === "managed" ? " [managed]" : "";
-      const processTag =
-        service.mode === "managed" && service.pid
-          ? ` (${isProcessRunning(service.pid) ? "running" : "stopped"})`
-          : "";
 
       return [
         `${domainReachable ? "ok" : "warn"} https://${service.domain}/ ${
           domainReachable ? "is reachable through Caddy" : "is not reachable through Caddy"
-        }${modeTag}${processTag}`,
+        }`,
         `${upstreamReachable ? "ok" : "warn"} upstream ${service.domain} -> 127.0.0.1:${service.port} ${
           loopbackReachable ? "reachable" : "unreachable"
         }, localhost:${service.port} ${localhostReachable ? "reachable" : "unreachable"}`,
@@ -592,21 +467,6 @@ async function resolveProjectName(cwd: string): Promise<string> {
   }
 
   return config.name;
-}
-
-/**
- * Check whether a process with the given PID is still running.
- *
- * Uses `process.kill(pid, 0)` which performs an existence check without
- * sending a real signal. Returns `false` for missing or invalid PIDs.
- */
-function isProcessRunning(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 /**

@@ -21,6 +21,7 @@ import {
   getDoctorData,
   getListData,
   getStatusData,
+  initProjectConfig,
   listServices,
   openServiceInBrowser,
   printCertificateInfo,
@@ -61,6 +62,22 @@ export function buildProgram(context = createDefaultContext()): Command {
   });
 
   program
+    .command("init")
+    .requiredOption("--name <name>", "service name, for example api.myapp")
+    .requiredOption("--port <port>", "local port")
+    .description("Initialize DevProxy for the current project and register its domain.")
+    .action(async (options: { name: string; port: string }) => {
+      console.log(
+        success(
+          await initProjectConfig(context, process.cwd(), {
+            name: options.name,
+            port: options.port,
+          }),
+        ),
+      );
+    });
+
+  program
     .command("add")
     .argument("<name>", "service name, for example api.myapp or myapp")
     .requiredOption("-p, --port <port>", "local port of the service to proxy")
@@ -79,10 +96,9 @@ export function buildProgram(context = createDefaultContext()): Command {
     });
 
   program
-    .command("open")
-    .argument("<name>", "service name, for example api.myapp")
+    .command("open [name]")
     .description("Open the service domain in the default browser.")
-    .action(async (name: string) => {
+    .action(async (name?: string) => {
       console.log(success(await openServiceInBrowser(context, name)));
     });
 

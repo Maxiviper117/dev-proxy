@@ -1,5 +1,19 @@
 # Commands
 
+## `devproxy init --name <name> --port <port>`
+
+Create a `.devproxy/config.json` file and register the service in one step.
+
+```bash
+devproxy init --name api.myapp --port 8000
+```
+
+This registers `https://api.myapp.local`, writes the project config file, updates the Windows hosts file, generates the Caddyfile, and reloads Caddy. Once the config file exists, `devproxy open` can omit the name:
+
+```bash
+devproxy open
+```
+
 ## `devproxy add <name> --port <port>`
 
 Register a new service.
@@ -12,7 +26,7 @@ This registers `https://api.myapp.local` and proxies it to `127.0.0.1:8000` and 
 
 Service names can be a single label or multiple labels separated by dots, such as `myapp`, `api.myapp`, or `web.myapp`. Do not include the `.local` suffix yourself.
 
-## `devproxy open <name>`
+## `devproxy open [name]`
 
 Open a registered service in your default browser.
 
@@ -20,7 +34,13 @@ Open a registered service in your default browser.
 devproxy open api.myapp
 ```
 
-This opens `https://api.myapp.local/`.
+When `name` is omitted, it is read from `.devproxy/config.json` (see `init`):
+
+```bash
+devproxy open
+```
+
+This opens `https://<name>.local/`.
 
 ## `devproxy list`
 

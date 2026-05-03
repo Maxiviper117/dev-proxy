@@ -63,13 +63,12 @@ export function upsertService(registry: Registry, service: Service): Registry {
     if (
       existing.name === service.name &&
       existing.domain === service.domain &&
-      existing.port === service.port &&
-      existing.mode === service.mode
+      existing.port === service.port
     ) {
       return {
         ...registry,
         services: registry.services.map((entry) =>
-          entry.name === service.name ? { ...entry, updatedAt: service.updatedAt } : entry,
+          entry.name === service.name ? { ...service, createdAt: entry.createdAt } : entry,
         ),
       };
     }

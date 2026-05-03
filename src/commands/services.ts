@@ -4,6 +4,7 @@ import { platform } from "node:os";
 import { domainFromName, parsePort } from "../core/domain.js";
 import { DevProxyError } from "../core/errors.js";
 import { readRegistry, removeService, upsertService, writeRegistry } from "../core/registry.js";
+import { projectConfigPath, readProjectConfig, writeProjectConfig } from "../core/config.js";
 import type { DevProxyContext, Service } from "../core/types.js";
 import {
   caddyInstallHint,
@@ -35,6 +36,47 @@ export function createDefaultContext(): DevProxyContext {
     probeHttps: probeHttpsUrl,
     openUrl: openDefaultBrowser,
   };
+}
+
+/**
+ * Initialize a DevProxy project config and register the service.
+ *
+ * Validates the name and port, writes `.devproxy/config.json`, registers the
+ * service in the DevProxy registry, updates the Windows hosts file, generates
+ * a new Caddyfile, and reloads (or starts) Caddy. The project config enables
+ * shorthand commands like `devproxy open` without arguments.
+ *
+ * @throws {DevProxyError} When the platform is not Windows, the name or port is
+ *   invalid, or the hosts file is not writable.
+ */
+export async function initProjectConfig(
+  context: DevProxyContext,
+  cwd: string,
+  input: { name: string; port: string | number },
+): Promise<string> {
+  ensureWindows(context);
+  const domain = domainFromName(input.name);
+  const port = parsePort(input.port);
+  const registry = await readRegistry(context.paths.registryFile);
+  const timestamp = context.now().toISOString();
+  const service: Service = {
+    name: input.name.trim().toLowerCase(),
+    domain,
+    port,
+    mode: "attach",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+  const next = upsertService(registry, service);
+
+  await ensureHostsWritable(context.paths.hostsFile);
+  await writeProjectConfig(projectConfigPath(cwd), { name: service.name, port });
+  await writeRegistry(context.paths.registryFile, next);
+  await writeHostsFile(context.paths.hostsFile, next.services);
+  await writeCaddyfile(context.paths.caddyFile, next.services);
+  const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
+
+  return `Registered ${domain} -> 127.0.0.1:${port}, localhost:${port} (${formatCaddyLifecycle(caddyLifecycle)}). Config saved to ${projectConfigPath(cwd)}.`;
 }
 
 /**
@@ -105,16 +147,21 @@ export async function removeRegisteredService(
  * Open a service's HTTPS domain in the default browser.
  *
  * Derives the `.local` domain from the service name and delegates to the
- * browser opener defined in the context (or the platform default).
+ * browser opener defined in the context (or the platform default). When
+ * `name` is omitted, reads the project config from the given `cwd` to
+ * determine the domain.
  *
- * @throws {DevProxyError} When the platform is not Windows.
+ * @throws {DevProxyError} When the platform is not Windows, or when no name
+ *   is provided and no project config exists.
  */
 export async function openServiceInBrowser(
   context: DevProxyContext,
-  name: string,
+  name?: string,
+  cwd: string = process.cwd(),
 ): Promise<string> {
   ensureWindows(context);
-  const domain = domainFromName(name);
+  const resolved = name ?? (await resolveProjectName(cwd));
+  const domain = domainFromName(resolved);
   const openUrl = context.openUrl ?? openDefaultBrowser;
 
   await openUrl(`https://${domain}/`);
@@ -420,6 +467,25 @@ export async function status(context: DevProxyContext): Promise<string> {
   lines.push(...serviceLines);
 
   return lines.join("\n");
+}
+
+/**
+ * Resolve a service name from the project config, or throw.
+ *
+ * Reads `.devproxy/config.json` from the given directory and returns the
+ * `name` field when found.
+ *
+ * @throws {DevProxyError} When no config exists or the config has no name.
+ */
+async function resolveProjectName(cwd: string): Promise<string> {
+  const config = await readProjectConfig(projectConfigPath(cwd));
+  if (!config?.name) {
+    throw new DevProxyError(
+      `No project config found at ${projectConfigPath(cwd)}. Run 'devproxy init' first.`,
+    );
+  }
+
+  return config.name;
 }
 
 /**

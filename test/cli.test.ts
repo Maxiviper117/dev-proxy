@@ -6,6 +6,7 @@ import { buildProgram } from "../src/cli.js";
 import {
   addService,
   doctor,
+  initProjectConfig,
   listServices,
   openServiceInBrowser,
   printCertificateInfo,
@@ -516,5 +517,131 @@ describe("app commands", () => {
     const parsed = JSON.parse(registry);
     expect(parsed.services[0].mode).toBe("managed");
     expect(parsed.services[0].pid).toBe(54321);
+  });
+
+  it("init creates a .devproxy config file", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "devproxy-test-"));
+
+    await expect(initProjectConfig(dir, { name: "my-api", port: "9090" })).resolves.toContain(
+      ".devproxy",
+    );
+
+    const configFile = join(dir, ".devproxy", "config.json");
+    const raw = await readFile(configFile, "utf8");
+    const parsed = JSON.parse(raw);
+    expect(parsed).toEqual({ name: "my-api", port: 9090 });
+  });
+
+  it("init validates the service name and port", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "devproxy-test-"));
+
+    await expect(initProjectConfig(dir, { name: "", port: "8080" })).rejects.toThrow(
+      "Service name is required",
+    );
+    await expect(initProjectConfig(dir, { name: "api", port: "abc" })).rejects.toThrow(
+      "Port must be an integer",
+    );
+  });
+
+  it("run reads name and port from project config when omitted", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await initProjectConfig(projectDir, { name: "my-api", port: "9090" });
+
+    context.spawnManaged = (_command, _args): ManagedProcess => ({
+      pid: 99999,
+      onExit: () => {},
+      kill: async () => {},
+    });
+
+    const handle = await runManagedService(context, {
+      command: "node",
+      args: ["server.js"],
+      cwd: projectDir,
+    });
+    void handle.wait();
+
+    expect(handle.message).toContain("my-api.local");
+    expect(handle.message).toContain("9090");
+
+    const registry = await readFile(context.paths.registryFile, "utf8");
+    const parsed = JSON.parse(registry);
+    expect(parsed.services[0].name).toBe("my-api");
+    expect(parsed.services[0].port).toBe(9090);
+  });
+
+  it("run errors when no config and no explicit name or port", async () => {
+    const context = await createContext();
+
+    await expect(
+      runManagedService(context, {
+        command: "node",
+        args: ["server.js"],
+        cwd: context.paths.appDir,
+      }),
+    ).rejects.toThrow("service name is required");
+  });
+
+  it("run allows CLI name to override config name", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await initProjectConfig(projectDir, { name: "config-name", port: "1234" });
+
+    context.spawnManaged = (_command, _args): ManagedProcess => ({
+      pid: 11111,
+      onExit: () => {},
+      kill: async () => {},
+    });
+
+    const handle = await runManagedService(context, {
+      name: "cli-name",
+      command: "node",
+      args: ["server.js"],
+      cwd: projectDir,
+    });
+    void handle.wait();
+
+    expect(handle.message).toContain("cli-name.local");
+    expect(handle.message).toContain("1234");
+  });
+
+  it("open without name reads domain from project config", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await initProjectConfig(projectDir, { name: "my-app", port: "8080" });
+
+    let openedUrl = "";
+    context.openUrl = async (url) => {
+      openedUrl = url;
+    };
+
+    await expect(openServiceInBrowser(context, undefined, projectDir)).resolves.toBe(
+      "Opened https://my-app.local/ in the default browser.",
+    );
+    expect(openedUrl).toBe("https://my-app.local/");
+  });
+
+  it("open without name errors when no config exists", async () => {
+    const context = await createContext();
+
+    await expect(openServiceInBrowser(context, undefined, context.paths.appDir)).rejects.toThrow(
+      "No project config found",
+    );
+  });
+
+  it("open with explicit name ignores config", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await initProjectConfig(projectDir, { name: "config-name", port: "8080" });
+
+    let openedUrl = "";
+    context.openUrl = async (url) => {
+      openedUrl = url;
+    };
+
+    await expect(openServiceInBrowser(context, "explicit-name", projectDir)).resolves.toBe(
+      "Opened https://explicit-name.local/ in the default browser.",
+    );
+    expect(openedUrl).toBe("https://explicit-name.local/");
   });
 });

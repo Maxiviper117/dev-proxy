@@ -4,6 +4,7 @@ import { platform } from "node:os";
 import { domainFromName, parsePort } from "../core/domain.js";
 import { DevProxyError } from "../core/errors.js";
 import { readRegistry, removeService, upsertService, writeRegistry } from "../core/registry.js";
+import { projectConfigPath, readProjectConfig, writeProjectConfig } from "../core/config.js";
 import type { DevProxyContext, Service, ServiceMode } from "../core/types.js";
 import {
   caddyInstallHint,
@@ -36,6 +37,28 @@ export function createDefaultContext(): DevProxyContext {
     openUrl: openDefaultBrowser,
     spawnManaged: spawnManagedProcess,
   };
+}
+
+/**
+ * Initialize a DevProxy project config in the current directory.
+ *
+ * Validates the name and port, then writes `.devproxy/config.json` with the
+ * project settings so commands like `run` and `open` can pick them up without
+ * requiring explicit arguments.
+ *
+ * @throws {DevProxyError} When the name or port is invalid.
+ */
+export async function initProjectConfig(
+  cwd: string,
+  input: { name: string; port: string | number },
+): Promise<string> {
+  const normalizedName = input.name.trim().toLowerCase();
+  domainFromName(normalizedName);
+  const port = parsePort(input.port);
+  const configFile = projectConfigPath(cwd);
+  await writeProjectConfig(configFile, { name: normalizedName, port });
+
+  return `Project config saved to ${configFile}.`;
 }
 
 /**
@@ -90,22 +113,46 @@ export type ManagedProcessHandle = {
  * wait handle that resolves when the child exits, at which point the stored PID
  * is cleared from the registry.
  *
+ * When `name` or `port` is omitted, the project config at `.devproxy/config.json`
+ * is used as a fallback. At least one source must supply the name and port.
+ *
  * @throws {DevProxyError} When the platform is not Windows, the name or port is
- *   invalid, or the hosts file is not writable.
+ *   invalid, the hosts file is not writable, or no config exists for missing values.
  */
 export async function runManagedService(
   context: DevProxyContext,
-  input: { name: string; port: string | number; command: string; args: string[] },
+  input: {
+    name?: string;
+    port?: string | number;
+    command: string;
+    args: string[];
+    cwd?: string;
+  },
 ): Promise<ManagedProcessHandle> {
   ensureWindows(context);
-  const domain = domainFromName(input.name);
-  const port = parsePort(input.port);
+  const projectDir = input.cwd ?? process.cwd();
+  const config = await readProjectConfig(projectConfigPath(projectDir));
+  const name = input.name ?? config?.name;
+  if (!name) {
+    throw new DevProxyError(
+      "A service name is required. Provide it as an argument or run 'devproxy init' first.",
+    );
+  }
+  const port = input.port ?? config?.port;
+  if (!port) {
+    throw new DevProxyError(
+      "A port is required. Provide it with --port or run 'devproxy init' first.",
+    );
+  }
+
+  const domain = domainFromName(name);
+  const parsedPort = parsePort(port);
   const registry = await readRegistry(context.paths.registryFile);
   const timestamp = context.now().toISOString();
   const service: Service = {
-    name: input.name.trim().toLowerCase(),
+    name: name.trim().toLowerCase(),
     domain,
-    port,
+    port: parsedPort,
     mode: "managed",
     command: [input.command, ...input.args].join(" "),
     cwd: process.cwd(),
@@ -133,7 +180,7 @@ export async function runManagedService(
   };
   await writeRegistry(context.paths.registryFile, withPid);
 
-  const message = `Started ${domain} -> 127.0.0.1:${port}, localhost:${port} (${formatCaddyLifecycle(caddyLifecycle)}). PID ${managed.pid}`;
+  const message = `Started ${domain} -> 127.0.0.1:${parsedPort}, localhost:${parsedPort} (${formatCaddyLifecycle(caddyLifecycle)}). PID ${managed.pid}`;
 
   const wait = (): Promise<string> =>
     new Promise((resolve) => {
@@ -189,16 +236,21 @@ export async function removeRegisteredService(
  * Open a service's HTTPS domain in the default browser.
  *
  * Derives the `.local` domain from the service name and delegates to the
- * browser opener defined in the context (or the platform default).
+ * browser opener defined in the context (or the platform default). When
+ * `name` is omitted, reads the project config from the given `cwd` to
+ * determine the domain.
  *
- * @throws {DevProxyError} When the platform is not Windows.
+ * @throws {DevProxyError} When the platform is not Windows, or when no name
+ *   is provided and no project config exists.
  */
 export async function openServiceInBrowser(
   context: DevProxyContext,
-  name: string,
+  name?: string,
+  cwd: string = process.cwd(),
 ): Promise<string> {
   ensureWindows(context);
-  const domain = domainFromName(name);
+  const resolved = name ?? (await resolveProjectName(cwd));
+  const domain = domainFromName(resolved);
   const openUrl = context.openUrl ?? openDefaultBrowser;
 
   await openUrl(`https://${domain}/`);
@@ -521,6 +573,25 @@ export async function status(context: DevProxyContext): Promise<string> {
   lines.push(...serviceLines);
 
   return lines.join("\n");
+}
+
+/**
+ * Resolve a service name from the project config, or throw.
+ *
+ * Reads `.devproxy/config.json` from the given directory and returns the
+ * `name` field when found.
+ *
+ * @throws {DevProxyError} When no config exists or the config has no name.
+ */
+async function resolveProjectName(cwd: string): Promise<string> {
+  const config = await readProjectConfig(projectConfigPath(cwd));
+  if (!config?.name) {
+    throw new DevProxyError(
+      `No project config found at ${projectConfigPath(cwd)}. Run 'devproxy init' first.`,
+    );
+  }
+
+  return config.name;
 }
 
 /**

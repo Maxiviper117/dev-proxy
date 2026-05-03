@@ -21,6 +21,7 @@ import {
   getDoctorData,
   getListData,
   getStatusData,
+  initProjectConfig,
   listServices,
   openServiceInBrowser,
   printCertificateInfo,
@@ -63,6 +64,22 @@ export function buildProgram(context = createDefaultContext()): Command {
   });
 
   program
+    .command("init")
+    .requiredOption("--name <name>", "service name, for example api.myapp")
+    .requiredOption("--port <port>", "local port")
+    .description("Create a .devproxy config file in the current project.")
+    .action(async (options: { name: string; port: string }) => {
+      console.log(
+        success(
+          await initProjectConfig(process.cwd(), {
+            name: options.name,
+            port: options.port,
+          }),
+        ),
+      );
+    });
+
+  program
     .command("add")
     .argument("<name>", "service name, for example api.myapp or myapp")
     .requiredOption("-p, --port <port>", "local port of the service to proxy")
@@ -72,19 +89,19 @@ export function buildProgram(context = createDefaultContext()): Command {
     });
 
   program
-    .command("run <name> [args...]")
+    .command("run [name] [args...]")
     .passThroughOptions()
-    .requiredOption("-p, --port <port>", "local port of the service to proxy")
+    .option("-p, --port <port>", "local port (reads from project config if omitted)")
     .description("Start an app process and register its domain.")
-    .action(async (name: string, args: string[], options: { port: string }) => {
+    .action(async (name: string | undefined, args: string[], options: { port?: string }) => {
       if (args.length === 0) {
         throw new Error("A command is required after the service name.");
       }
       const command = args[0]!;
       const commandArgs = args.slice(1);
       const handle = await runManagedService(context, {
-        name,
-        port: options.port,
+        ...(name ? { name } : {}),
+        ...(options.port ? { port: options.port } : {}),
         command,
         args: commandArgs,
       });
@@ -102,10 +119,9 @@ export function buildProgram(context = createDefaultContext()): Command {
     });
 
   program
-    .command("open")
-    .argument("<name>", "service name, for example api.myapp")
+    .command("open [name]")
     .description("Open the service domain in the default browser.")
-    .action(async (name: string) => {
+    .action(async (name?: string) => {
       console.log(success(await openServiceInBrowser(context, name)));
     });
 

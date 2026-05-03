@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.9.0...devproxy-v0.10.0) (2026-05-03)
+
+
+### Features
+
+* add devproxy init command with project config, make open name optional ([#34](https://github.com/Maxiviper117/dev-proxy/issues/34)) ([a0c1ac1](https://github.com/Maxiviper117/dev-proxy/commit/a0c1ac1bc8711e26bc127a57ea66dc93fe643736))
+
 ## [0.9.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.8.0...devproxy-v0.9.0) (2026-05-02)
 
 

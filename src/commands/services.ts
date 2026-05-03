@@ -300,6 +300,30 @@ export async function startCaddyServer(context: DevProxyContext): Promise<string
 }
 
 /**
+ * Return warnings that should be shown before starting Caddy.
+ *
+ * Caddy can generate and trust its local root CA automatically when permitted,
+ * but fresh setups or unprivileged Caddy processes may need an explicit
+ * `caddy trust` before browsers accept `tls internal` certificates.
+ */
+export async function getCaddyStartWarnings(context: DevProxyContext): Promise<string[]> {
+  ensureSupportedPlatform(context.platform);
+  const info = await getCaddyCertificateInfo(context.run, context.paths.caddyRootCAPath);
+
+  if (info.exists) {
+    return [];
+  }
+
+  return [
+    [
+      `Caddy local root CA certificate was not found at ${info.path}.`,
+      "Browsers may show HTTPS certificate warnings until the Caddy root CA is trusted.",
+      "Run `caddy trust` with the privileges needed to update your trust store.",
+    ].join("\n"),
+  ];
+}
+
+/**
  * Stop the running Caddy server.
  *
  * Issues a Caddy stop command. If Caddy is not running, returns a message

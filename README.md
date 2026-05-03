@@ -39,10 +39,12 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 
 ## Commands
 
-| Command | Description |
+ | Command | Description |
 | --- | --- |
-| `devproxy add <name> --port <port>` | Register a new service |
-| `devproxy open <name>` | Open a service in your browser |
+| `devproxy init --name <name> --port <port>` | Create project config for zero-argument workflows |
+| `devproxy run [name] -p [port] -- <command>` | Start an app and register its domain in one step |
+| `devproxy add <name> --port <port>` | Register a new attach-mode service |
+| `devproxy open [name]` | Open a service in your browser |
 | `devproxy list` | List all registered services |
 | `devproxy status` | Report Caddy state and upstream health |
 | `devproxy remove <name>` | Remove a registered service |

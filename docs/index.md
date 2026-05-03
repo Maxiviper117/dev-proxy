@@ -4,7 +4,9 @@ Stable HTTPS `.local` domains for Windows development.
 
 ## Features
 
-- **Attach-mode services** with explicit ports
+- **Managed-mode services** with `devproxy run` — start your dev server and register its domain in one command
+- **Attach-mode services** with `devproxy add` — proxy stable domains to already-running servers
+- **Project-local config** with `devproxy init` — store name and port so `run` and `open` need zero arguments
 - **`.local` domain generation** for readable local URLs
 - **Windows hosts-file management** inside a safe, managed block
 - **Caddyfile generation** and lifecycle management

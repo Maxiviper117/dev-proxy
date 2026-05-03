@@ -1,8 +1,37 @@
 # Commands
 
+## `devproxy init --name <name> --port <port>`
+
+Create a `.devproxy/config.json` file in the current working directory. This file stores your project's service name and port so subsequent commands can read them automatically.
+
+```bash
+devproxy init --name api.myapp --port 8000
+```
+
+Once the config file exists, the `run` and `open` commands can omit the name and port:
+
+```bash
+devproxy open
+devproxy run -- npm run dev
+```
+
+## `devproxy run [name] -p [port] -- <command>`
+
+Start an app process and register its domain in one command. The `--` separator is required before the command and its arguments.
+
+```bash
+devproxy run api.myapp --port 8000 -- node server.js
+devproxy run -- npm run dev
+devproxy run -- npx vite --port 5173
+```
+
+When `name` or `--port` is omitted, they are read from `.devproxy/config.json` (see `init`). If no config exists and no explicit values are provided, the command errors with instructions to run `devproxy init`.
+
+The managed process inherits stdio so you see live dev-server output. Press `Ctrl+C` to stop both the managed process and DevProxy. When the process exits, its PID is cleared from the registry.
+
 ## `devproxy add <name> --port <port>`
 
-Register a new service.
+Register a new attach-mode service (without spawning a process).
 
 ```bash
 devproxy add api.myapp --port 8000
@@ -12,7 +41,7 @@ This registers `https://api.myapp.local` and proxies it to `127.0.0.1:8000` and 
 
 Service names can be a single label or multiple labels separated by dots, such as `myapp`, `api.myapp`, or `web.myapp`. Do not include the `.local` suffix yourself.
 
-## `devproxy open <name>`
+## `devproxy open [name]`
 
 Open a registered service in your default browser.
 
@@ -20,7 +49,13 @@ Open a registered service in your default browser.
 devproxy open api.myapp
 ```
 
-This opens `https://api.myapp.local/`.
+When `name` is omitted, it is read from `.devproxy/config.json` (see `init`):
+
+```bash
+devproxy open
+```
+
+This opens `https://<name>.local/`.
 
 ## `devproxy list`
 

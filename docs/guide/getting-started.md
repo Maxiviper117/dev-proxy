@@ -70,25 +70,41 @@ pnpm link --global
 devproxy --help
 ```
 
-## Register Your First Service
+## One-Command Setup with `init`
 
-Start your development server. For example, a Laravel app running in WSL:
+The fastest way to set up a project is with the `init` and `run` commands.
+
+From your project root, create a config file:
 
 ```bash
-php artisan serve --port=8000
+devproxy init --name api.myapp --port 8000
 ```
 
-From Windows, register the domain:
+This creates `.devproxy/config.json` with your project settings.
+
+Then start your dev server through DevProxy:
+
+```bash
+devproxy run -- php artisan serve --port=8000
+```
+
+The domain `https://api.myapp.local` is now live. Press `Ctrl+C` to stop.
+
+```bash
+devproxy open
+```
+
+Opens the domain without needing to repeat the name.
+
+## Register an Existing Service (Attach Mode)
+
+If your dev server is already running separately, attach DevProxy to its port:
 
 ```bash
 devproxy add api.myapp --port 8000
 ```
 
-This creates:
-
-```text
-https://api.myapp.local -> 127.0.0.1:8000, localhost:8000
-```
+This registers the domain without spawning or managing the process.
 
 Open the domain:
 
@@ -114,6 +130,7 @@ Updating the Windows hosts file requires administrator rights. If DevProxy canno
 Commands that modify the hosts file include:
 
 - `devproxy add <name> --port <port>`
+- `devproxy run [name] -p [port] -- <command>`
 - `devproxy remove <name>`
 - `devproxy start`
 

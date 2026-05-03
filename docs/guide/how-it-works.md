@@ -29,6 +29,28 @@ For a service named `api.myapp` on port `8000`, DevProxy:
 6. Runs `caddy reload --config <Caddyfile>`.
 7. Runs `caddy start --config <Caddyfile>` if reload reports that no Caddy admin endpoint is running yet.
 
+## Service Modes
+
+DevProxy supports two service modes:
+
+- **Attach** (`devproxy add`) — registers a domain for an already-running dev server. DevProxy does not manage the server process.
+- **Managed** (`devproxy run`) — starts the dev server as a child process and registers the domain. The process inherits stdio so you see live output. When the process exits, its PID is cleared from the registry.
+
+## Project Config
+
+When you run `devproxy init --name <name> --port <port>` from your project root, DevProxy creates:
+
+```text
+.devproxy/config.json
+```
+
+This file stores the project's service name and port. Once present, commands like `devproxy run` and `devproxy open` can read the name and port from it, letting you omit arguments:
+
+```bash
+devproxy open          # domain from config
+devproxy run -- npm run dev   # name and port from config
+```
+
 ## Managed Files
 
 ### Registry

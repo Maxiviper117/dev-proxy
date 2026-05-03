@@ -9,35 +9,13 @@
 
 ## Install Caddy
 
-DevProxy uses Caddy for HTTPS termination and reverse-proxying.
-
-On Windows:
-
-```powershell
-winget install CaddyServer.Caddy
-```
-
-Or using Scoop:
-
-```powershell
-scoop install caddy
-```
-
-On macOS:
+DevProxy uses Caddy for HTTPS termination and reverse-proxying. Install Caddy for your operating system, then confirm it is available on `PATH`:
 
 ```bash
-brew install caddy
+caddy version
 ```
 
-On Linux, install Caddy with your distribution package manager or follow Caddy's official install instructions.
-
-After installing, trust Caddy's local CA. Use an elevated PowerShell session on Windows or `sudo` when your macOS/Linux trust store requires it:
-
-```bash
-caddy trust
-```
-
-Then restart your browser so it picks up the new trusted root certificate.
+See [Install Caddy](/guide/install-caddy) for Windows, macOS, and Linux commands.
 
 ## Install DevProxy
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.11.0...devproxy-v0.12.0) (2026-05-03)
+
+
+### Features
+
+* add cross-platform support ([#38](https://github.com/Maxiviper117/dev-proxy/issues/38)) ([6d6b2ed](https://github.com/Maxiviper117/dev-proxy/commit/6d6b2ed6bef6cbb3f261a5f4b94cb51811668dab))
+
 ## [0.11.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.10.0...devproxy-v0.11.0) (2026-05-03)
 
 

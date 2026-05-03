@@ -110,6 +110,8 @@ devproxy start
 
 This writes the Caddyfile from the current registry, validates it, reloads Caddy if it is already running, or starts Caddy if no running instance is available.
 
+If Caddy's local root CA certificate has not been generated yet, DevProxy warns before starting because browsers may show HTTPS certificate warnings until you run `caddy trust` with the privileges needed to update your trust store.
+
 ## `devproxy stop`
 
 Stop the Caddy server.

@@ -21,6 +21,7 @@ import {
   doctor,
   getDoctorData,
   getListData,
+  getCaddyStartWarnings,
   getStatusData,
   initProjectConfig,
   listServices,
@@ -152,6 +153,10 @@ export function buildProgram(context = createDefaultContext()): Command {
     .command("start")
     .description("Start Caddy with the current DevProxy config.")
     .action(async () => {
+      for (const message of await getCaddyStartWarnings(context)) {
+        console.log(warning(message));
+      }
+
       console.log(success(await startCaddyServer(context)));
     });
 

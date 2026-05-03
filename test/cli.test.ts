@@ -7,6 +7,7 @@ import { buildProgram, isCliEntrypoint } from "../src/cli.js";
 import {
   addService,
   doctor,
+  getCaddyStartWarnings,
   initProjectConfig,
   listServices,
   openServiceInBrowser,
@@ -250,6 +251,24 @@ describe("app commands", () => {
       "Caddy reloaded with 1 registered service(s).",
     );
     await expect(stopCaddyServer(context)).resolves.toBe("Caddy stopped.");
+  });
+
+  it("warns before starting when the Caddy root CA is missing", async () => {
+    const context = await createContext();
+
+    await expect(getCaddyStartWarnings(context)).resolves.toEqual([
+      expect.stringContaining("Caddy local root CA certificate was not found"),
+    ]);
+  });
+
+  it("does not warn before starting when the Caddy root CA exists", async () => {
+    const context = await createContext();
+    await mkdir(join(context.paths.appDir, "Caddy", "pki", "authorities", "local"), {
+      recursive: true,
+    });
+    await writeFile(context.paths.caddyRootCAPath, testCertificatePem, "utf8");
+
+    await expect(getCaddyStartWarnings(context)).resolves.toEqual([]);
   });
 
   it("reports when Caddy has to start instead of reload", async () => {

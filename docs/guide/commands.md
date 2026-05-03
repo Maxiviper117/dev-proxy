@@ -1,5 +1,11 @@
 # Commands
 
+Only commands that update the system hosts file need elevated permissions:
+`devproxy init`, `devproxy add`, and `devproxy remove`. Commands such as
+`devproxy start`, `devproxy stop`, `devproxy open`, `devproxy list`,
+`devproxy status`, `devproxy doctor`, and `devproxy certs` do not modify the
+hosts file and should run without `sudo` or an elevated shell.
+
 ## `devproxy init --name <name> --port <port>`
 
 Create a `.devproxy/config.json` file and register the service in one step.

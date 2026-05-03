@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { restoreSudoOwner } from "../platform/ownership.js";
 import { DevProxyError } from "./errors.js";
 
 export type DevProxyConfig = {
@@ -57,7 +58,9 @@ export async function writeProjectConfig(
   config: DevProxyConfig,
 ): Promise<void> {
   await mkdir(dirname(configFile), { recursive: true });
+  await restoreSudoOwner(dirname(configFile));
   await writeFile(configFile, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+  await restoreSudoOwner(configFile);
 }
 
 /**

@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { restoreSudoOwner } from "../platform/ownership.js";
 import { DevProxyError } from "./errors.js";
 import type { Registry, Service } from "./types.js";
 
@@ -30,6 +31,10 @@ export async function readRegistry(registryFile: string): Promise<Registry> {
       return { ...emptyRegistry, services: [] };
     }
 
+    if (isPermissionError(error)) {
+      throw new DevProxyError(appDataPermissionMessage(registryFile));
+    }
+
     throw error;
   }
 }
@@ -41,8 +46,18 @@ export async function readRegistry(registryFile: string): Promise<Registry> {
  * fresh application data folder.
  */
 export async function writeRegistry(registryFile: string, registry: Registry): Promise<void> {
-  await mkdir(dirname(registryFile), { recursive: true });
-  await writeFile(registryFile, `${JSON.stringify(registry, null, 2)}\n`, "utf8");
+  try {
+    await mkdir(dirname(registryFile), { recursive: true });
+    await restoreSudoOwner(dirname(registryFile));
+    await writeFile(registryFile, `${JSON.stringify(registry, null, 2)}\n`, "utf8");
+    await restoreSudoOwner(registryFile);
+  } catch (error) {
+    if (isPermissionError(error)) {
+      throw new DevProxyError(appDataPermissionMessage(registryFile));
+    }
+
+    throw error;
+  }
 }
 
 /**
@@ -113,4 +128,22 @@ export function removeService(
  */
 function isFileMissing(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
+}
+
+function isPermissionError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error.code === "EPERM" || error.code === "EACCES")
+  );
+}
+
+function appDataPermissionMessage(path: string): string {
+  return [
+    "DevProxy cannot access its user app-data files.",
+    "This usually happens when a previous command was run with sudo and created root-owned files.",
+    "Fix ownership, then rerun the command:",
+    `  sudo chown -R ${process.env.USER ?? "$USER"}:staff "${dirname(path)}"`,
+  ].join("\n");
 }

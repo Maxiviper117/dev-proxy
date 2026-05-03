@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import { X509Certificate } from "node:crypto";
 import { DevProxyError } from "../core/errors.js";
 import type { CommandRunner, Service } from "../core/types.js";
+import { restoreSudoOwner } from "../platform/ownership.js";
 import { defaultPaths } from "../platform/paths.js";
 
 export type CaddyLifecycle = "reloaded" | "started";
@@ -60,8 +61,18 @@ export async function writeCaddyfile(
   caddyFile: string,
   services: readonly Service[],
 ): Promise<void> {
-  await mkdir(dirname(caddyFile), { recursive: true });
-  await writeFile(caddyFile, generateCaddyfile(services), "utf8");
+  try {
+    await mkdir(dirname(caddyFile), { recursive: true });
+    await restoreSudoOwner(dirname(caddyFile));
+    await writeFile(caddyFile, generateCaddyfile(services), "utf8");
+    await restoreSudoOwner(caddyFile);
+  } catch (error) {
+    if (isPermissionError(error)) {
+      throw new DevProxyError(appDataPermissionMessage(caddyFile));
+    }
+
+    throw error;
+  }
 }
 
 /**
@@ -236,4 +247,22 @@ export async function getCaddyCertificateInfo(
  */
 function isFileMissing(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
+}
+
+function isPermissionError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error.code === "EPERM" || error.code === "EACCES")
+  );
+}
+
+function appDataPermissionMessage(path: string): string {
+  return [
+    "DevProxy cannot write its user app-data files.",
+    "This usually happens when a previous command was run with sudo and created root-owned files.",
+    "Fix ownership, then rerun the command:",
+    `  sudo chown -R ${process.env.USER ?? "$USER"}:staff "${dirname(path)}"`,
+  ].join("\n");
 }

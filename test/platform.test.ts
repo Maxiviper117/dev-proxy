@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { browserOpenCommand } from "../src/platform/browser.js";
+import { sudoOwnerFromEnv } from "../src/platform/ownership.js";
 import { defaultPaths } from "../src/platform/paths.js";
 
 describe("defaultPaths", () => {
@@ -58,5 +59,19 @@ describe("browserOpenCommand", () => {
       command: "xdg-open",
       args: ["https://app.local/"],
     });
+  });
+});
+
+describe("sudoOwnerFromEnv", () => {
+  it("returns the original sudo user ids when present", () => {
+    expect(sudoOwnerFromEnv({ SUDO_UID: "501", SUDO_GID: "20" })).toEqual({
+      uid: 501,
+      gid: 20,
+    });
+  });
+
+  it("ignores missing or invalid sudo ids", () => {
+    expect(sudoOwnerFromEnv({})).toBeUndefined();
+    expect(sudoOwnerFromEnv({ SUDO_UID: "abc", SUDO_GID: "20" })).toBeUndefined();
   });
 });

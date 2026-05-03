@@ -46,36 +46,31 @@ export async function writeRegistry(registryFile: string, registry: Registry): P
 }
 
 /**
+ * Find an existing service in the registry by name or domain.
+ *
+ * Returns the matching service entry or `undefined` when no conflict exists.
+ */
+export function findService(registry: Registry, name: string, domain: string): Service | undefined {
+  return registry.services.find((entry) => entry.name === name || entry.domain === domain);
+}
+
+/**
  * Add or update a service in the registry.
  *
- * If the service already exists with identical properties, only its
- * `updatedAt` timestamp is refreshed. If a conflicting entry (same name or
- * domain but different port) exists, an error is thrown. New entries are
- * appended and the list is sorted alphabetically by name.
- *
- * @throws {DevProxyError} When a conflicting service is already registered.
+ * If a service with the same name or domain already exists, the existing
+ * entry is replaced and the original `createdAt` timestamp is preserved.
+ * New entries are appended and the list is sorted alphabetically by name.
  */
 export function upsertService(registry: Registry, service: Service): Registry {
-  const existing = registry.services.find(
+  const existingIndex = registry.services.findIndex(
     (entry) => entry.name === service.name || entry.domain === service.domain,
   );
-  if (existing) {
-    if (
-      existing.name === service.name &&
-      existing.domain === service.domain &&
-      existing.port === service.port
-    ) {
-      return {
-        ...registry,
-        services: registry.services.map((entry) =>
-          entry.name === service.name ? { ...service, createdAt: entry.createdAt } : entry,
-        ),
-      };
-    }
 
-    throw new DevProxyError(
-      `Service '${existing.name}' already exists for ${existing.domain}. Remove it before changing its port.`,
-    );
+  if (existingIndex !== -1) {
+    const existing = registry.services[existingIndex]!;
+    const updated = [...registry.services];
+    updated[existingIndex] = { ...service, createdAt: existing.createdAt };
+    return { ...registry, services: updated };
   }
 
   return {

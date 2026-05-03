@@ -35,6 +35,8 @@ export type HttpsProbe = (url: string) => Promise<boolean>;
 
 export type BrowserOpener = (url: string) => Promise<void>;
 
+export type ConfirmFn = (message: string) => Promise<boolean>;
+
 export type DevProxyContext = {
   paths: RuntimePaths;
   run: CommandRunner;
@@ -44,4 +46,5 @@ export type DevProxyContext = {
   probeUrl?: UrlProbe;
   probeHttps?: HttpsProbe;
   openUrl?: BrowserOpener;
+  confirm?: ConfirmFn;
 };

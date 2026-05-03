@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.12.0...devproxy-v0.12.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* run cli through package bin symlinks ([#41](https://github.com/Maxiviper117/dev-proxy/issues/41)) ([d9a8362](https://github.com/Maxiviper117/dev-proxy/commit/d9a83620ecf314443dd65d8e55885508ea7875e0))
+
 ## [0.12.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.11.0...devproxy-v0.12.0) (2026-05-03)
 
 

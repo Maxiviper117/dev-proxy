@@ -3,7 +3,13 @@ import { request as httpsRequest } from "node:https";
 import { platform } from "node:os";
 import { domainFromName, parsePort } from "../core/domain.js";
 import { DevProxyError } from "../core/errors.js";
-import { readRegistry, removeService, upsertService, writeRegistry } from "../core/registry.js";
+import {
+  findService,
+  readRegistry,
+  removeService,
+  upsertService,
+  writeRegistry,
+} from "../core/registry.js";
 import { projectConfigPath, readProjectConfig, writeProjectConfig } from "../core/config.js";
 import type { DevProxyContext, Service } from "../core/types.js";
 import {
@@ -15,6 +21,7 @@ import {
   writeCaddyfile,
 } from "../integrations/caddy.js";
 import { canWriteHosts, ensureHostsWritable, writeHostsFile } from "../integrations/hosts.js";
+import { confirm } from "../cli/prompt.js";
 import { openDefaultBrowser } from "../platform/browser.js";
 import { defaultPaths } from "../platform/paths.js";
 import { runCommand } from "../platform/runner.js";
@@ -46,6 +53,11 @@ export function createDefaultContext(): DevProxyContext {
  * a new Caddyfile, and reloads (or starts) Caddy. The project config enables
  * shorthand commands like `devproxy open` without arguments.
  *
+ * If a service with the same name or domain already exists on the same port,
+ * only the project config is written without modifying the registry. If the
+ * existing service has a different port, the user is prompted for confirmation
+ * before overwriting.
+ *
  * @throws {DevProxyError} When the platform is not Windows, the name or port is
  *   invalid, or the hosts file is not writable.
  */
@@ -58,9 +70,28 @@ export async function initProjectConfig(
   const domain = domainFromName(input.name);
   const port = parsePort(input.port);
   const registry = await readRegistry(context.paths.registryFile);
+  const name = input.name.trim().toLowerCase();
+
+  const existing = findService(registry, name, domain);
+  if (existing) {
+    if (existing.port === port) {
+      const configPath = projectConfigPath(cwd);
+      await writeProjectConfig(configPath, { name, port });
+      return `Service '${name}' is already registered on port ${port} for ${domain}. Config saved to ${configPath}.`;
+    }
+
+    const prompt = context.confirm ?? confirm;
+    const confirmed = await prompt(
+      `Service '${existing.name}' already exists for ${existing.domain} on port ${existing.port}. Overwrite with port ${port}? [y/N] `,
+    );
+    if (!confirmed) {
+      return "Registration aborted.";
+    }
+  }
+
   const timestamp = context.now().toISOString();
   const service: Service = {
-    name: input.name.trim().toLowerCase(),
+    name,
     domain,
     port,
     mode: "attach",
@@ -86,6 +117,11 @@ export async function initProjectConfig(
  * the registry file, updates the Windows hosts file, generates a new Caddyfile,
  * and reloads (or starts) Caddy so the domain is immediately reachable.
  *
+ * If a service with the same name or domain already exists on the same port,
+ * a notification is returned without modifying the registry. If the existing
+ * service has a different port, the user is prompted for confirmation before
+ * overwriting.
+ *
  * @throws {DevProxyError} When the platform is not Windows, the name or port is
  *   invalid, or the hosts file is not writable.
  */
@@ -97,9 +133,26 @@ export async function addService(
   const domain = domainFromName(input.name);
   const port = parsePort(input.port);
   const registry = await readRegistry(context.paths.registryFile);
+  const name = input.name.trim().toLowerCase();
+
+  const existing = findService(registry, name, domain);
+  if (existing) {
+    if (existing.port === port) {
+      return `Service '${existing.name}' is already registered on port ${port} for ${domain}.`;
+    }
+
+    const prompt = context.confirm ?? confirm;
+    const confirmed = await prompt(
+      `Service '${existing.name}' already exists for ${existing.domain} on port ${existing.port}. Overwrite with port ${port}? [y/N] `,
+    );
+    if (!confirmed) {
+      return "Registration aborted.";
+    }
+  }
+
   const timestamp = context.now().toISOString();
   const service: Service = {
-    name: input.name.trim().toLowerCase(),
+    name,
     domain,
     port,
     mode: "attach",

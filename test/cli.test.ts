@@ -170,12 +170,41 @@ describe("app commands", () => {
     expect(caddyfile).toContain("api.myapp.local");
   });
 
-  it("allows the same service registration to be reapplied", async () => {
+  it("notifies when registering a service already on the same port", async () => {
     const context = await createContext();
 
     await addService(context, { name: "api.myapp", port: "8000" });
-    await expect(addService(context, { name: "api.myapp", port: "8000" })).resolves.toContain(
+    await expect(addService(context, { name: "api.myapp", port: "8000" })).resolves.toBe(
+      "Service 'api.myapp' is already registered on port 8000 for api.myapp.local.",
+    );
+  });
+
+  it("overwrites existing service when port differs and user confirms", async () => {
+    const context = await createContext();
+    let prompted = false;
+    context.confirm = async () => {
+      prompted = true;
+      return true;
+    };
+
+    await addService(context, { name: "api.myapp", port: "8000" });
+    await expect(addService(context, { name: "api.myapp", port: "9000" })).resolves.toContain(
       "api.myapp.local",
+    );
+    expect(prompted).toBe(true);
+
+    const caddyfile = await readFile(context.paths.caddyFile, "utf8");
+    expect(caddyfile).toContain("api.myapp.local");
+    expect(caddyfile).toContain("reverse_proxy 127.0.0.1:9000");
+  });
+
+  it("aborts registration when overwrite prompt is declined", async () => {
+    const context = await createContext();
+    context.confirm = async () => false;
+
+    await addService(context, { name: "api.myapp", port: "8000" });
+    await expect(addService(context, { name: "api.myapp", port: "9000" })).resolves.toBe(
+      "Registration aborted.",
     );
   });
 

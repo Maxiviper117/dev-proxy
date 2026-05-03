@@ -65,11 +65,11 @@ export function buildProgram(context = createDefaultContext()): Command {
     .command("init")
     .requiredOption("--name <name>", "service name, for example api.myapp")
     .requiredOption("--port <port>", "local port")
-    .description("Create a .devproxy config file in the current project.")
+    .description("Initialize DevProxy for the current project and register its domain.")
     .action(async (options: { name: string; port: string }) => {
       console.log(
         success(
-          await initProjectConfig(process.cwd(), {
+          await initProjectConfig(context, process.cwd(), {
             name: options.name,
             port: options.port,
           }),

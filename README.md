@@ -41,7 +41,7 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 
  | Command | Description |
 | --- | --- |
-| `devproxy init --name <name> --port <port>` | Create project config for zero-argument workflows |
+| `devproxy init --name <name> --port <port>` | Register a service and create project config in one step |
 | `devproxy add <name> --port <port>` | Register a new service |
 | `devproxy open [name]` | Open a service in your browser |
 | `devproxy list` | List all registered services |

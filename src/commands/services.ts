@@ -39,25 +39,44 @@ export function createDefaultContext(): DevProxyContext {
 }
 
 /**
- * Initialize a DevProxy project config in the current directory.
+ * Initialize a DevProxy project config and register the service.
  *
- * Validates the name and port, then writes `.devproxy/config.json` with the
- * project settings so commands like `run` and `open` can pick them up without
- * requiring explicit arguments.
+ * Validates the name and port, writes `.devproxy/config.json`, registers the
+ * service in the DevProxy registry, updates the Windows hosts file, generates
+ * a new Caddyfile, and reloads (or starts) Caddy. The project config enables
+ * shorthand commands like `devproxy open` without arguments.
  *
- * @throws {DevProxyError} When the name or port is invalid.
+ * @throws {DevProxyError} When the platform is not Windows, the name or port is
+ *   invalid, or the hosts file is not writable.
  */
 export async function initProjectConfig(
+  context: DevProxyContext,
   cwd: string,
   input: { name: string; port: string | number },
 ): Promise<string> {
-  const normalizedName = input.name.trim().toLowerCase();
-  domainFromName(normalizedName);
+  ensureWindows(context);
+  const domain = domainFromName(input.name);
   const port = parsePort(input.port);
-  const configFile = projectConfigPath(cwd);
-  await writeProjectConfig(configFile, { name: normalizedName, port });
+  const registry = await readRegistry(context.paths.registryFile);
+  const timestamp = context.now().toISOString();
+  const service: Service = {
+    name: input.name.trim().toLowerCase(),
+    domain,
+    port,
+    mode: "attach",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+  const next = upsertService(registry, service);
 
-  return `Project config saved to ${configFile}.`;
+  await ensureHostsWritable(context.paths.hostsFile);
+  await writeProjectConfig(projectConfigPath(cwd), { name: service.name, port });
+  await writeRegistry(context.paths.registryFile, next);
+  await writeHostsFile(context.paths.hostsFile, next.services);
+  await writeCaddyfile(context.paths.caddyFile, next.services);
+  const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
+
+  return `Registered ${domain} -> 127.0.0.1:${port}, localhost:${port} (${formatCaddyLifecycle(caddyLifecycle)}). Config saved to ${projectConfigPath(cwd)}.`;
 }
 
 /**

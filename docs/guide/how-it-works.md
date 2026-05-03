@@ -35,7 +35,7 @@ DevProxy works in attach mode: you start your dev server separately, then regist
 
 ## Project Config
 
-When you run `devproxy init --name <name> --port <port>` from your project root, DevProxy creates:
+When you run `devproxy init --name <name> --port <port>` from your project root, DevProxy registers the service and creates:
 
 ```text
 .devproxy/config.json

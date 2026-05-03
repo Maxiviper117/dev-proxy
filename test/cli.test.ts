@@ -428,34 +428,48 @@ describe("app commands", () => {
     expect(parsed.hints).toEqual([]);
   });
 
-  it("init creates a .devproxy config file", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "devproxy-test-"));
+  it("init creates a config file and registers the service", async () => {
+    const context = await createContext();
 
-    await expect(initProjectConfig(dir, { name: "my-api", port: "9090" })).resolves.toContain(
-      ".devproxy",
-    );
+    await expect(
+      initProjectConfig(context, context.paths.appDir, { name: "my-api", port: "9090" }),
+    ).resolves.toContain("my-api.local");
 
-    const configFile = join(dir, ".devproxy", "config.json");
+    const configFile = join(context.paths.appDir, ".devproxy", "config.json");
     const raw = await readFile(configFile, "utf8");
     const parsed = JSON.parse(raw);
     expect(parsed).toEqual({ name: "my-api", port: 9090 });
+
+    const registry = await readFile(context.paths.registryFile, "utf8");
+    const registryParsed = JSON.parse(registry);
+    expect(registryParsed.services).toHaveLength(1);
+    expect(registryParsed.services[0]).toMatchObject({
+      name: "my-api",
+      domain: "my-api.local",
+      port: 9090,
+      mode: "attach",
+    });
+
+    const caddyfile = await readFile(context.paths.caddyFile, "utf8");
+    expect(caddyfile).toContain("my-api.local");
+    expect(caddyfile).toContain("reverse_proxy 127.0.0.1:9090");
   });
 
   it("init validates the service name and port", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "devproxy-test-"));
+    const context = await createContext();
 
-    await expect(initProjectConfig(dir, { name: "", port: "8080" })).rejects.toThrow(
-      "Service name is required",
-    );
-    await expect(initProjectConfig(dir, { name: "api", port: "abc" })).rejects.toThrow(
-      "Port must be an integer",
-    );
+    await expect(
+      initProjectConfig(context, context.paths.appDir, { name: "", port: "8080" }),
+    ).rejects.toThrow("Service name is required");
+    await expect(
+      initProjectConfig(context, context.paths.appDir, { name: "api", port: "abc" }),
+    ).rejects.toThrow("Port must be an integer");
   });
 
   it("open without name reads domain from project config", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
-    await initProjectConfig(projectDir, { name: "my-app", port: "8080" });
+    await initProjectConfig(context, projectDir, { name: "my-app", port: "8080" });
 
     let openedUrl = "";
     context.openUrl = async (url) => {
@@ -479,7 +493,7 @@ describe("app commands", () => {
   it("open with explicit name ignores config", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
-    await initProjectConfig(projectDir, { name: "config-name", port: "8080" });
+    await initProjectConfig(context, projectDir, { name: "config-name", port: "8080" });
 
     let openedUrl = "";
     context.openUrl = async (url) => {

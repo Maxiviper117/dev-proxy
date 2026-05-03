@@ -2,13 +2,13 @@
 
 ## `devproxy init --name <name> --port <port>`
 
-Create a `.devproxy/config.json` file in the current working directory. This file stores your project's service name and port so subsequent commands can read them automatically.
+Create a `.devproxy/config.json` file and register the service in one step.
 
 ```bash
 devproxy init --name api.myapp --port 8000
 ```
 
-Once the config file exists, `devproxy open` can omit the name:
+This registers `https://api.myapp.local`, writes the project config file, updates the Windows hosts file, generates the Caddyfile, and reloads Caddy. Once the config file exists, `devproxy open` can omit the name:
 
 ```bash
 devproxy open

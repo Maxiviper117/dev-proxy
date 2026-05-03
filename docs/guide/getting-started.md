@@ -72,17 +72,23 @@ devproxy --help
 
 ## Project Setup with `init`
 
-From your project root, create a config file so `devproxy open` can find your domain without arguments:
+From your project root, the easiest way to get started is:
 
 ```bash
 devproxy init --name api.myapp --port 8000
 ```
 
-This creates `.devproxy/config.json` with your project settings.
+This creates `.devproxy/config.json` and registers the service in one step. Your domain is live immediately.
 
-## Register Your Service
+```bash
+devproxy open
+```
 
-If your dev server is already running separately, attach DevProxy to its port:
+Opens the domain (reads the name from config).
+
+## Register a Service Manually
+
+You can also register a service separately:
 
 ```bash
 devproxy add api.myapp --port 8000
@@ -119,6 +125,7 @@ Updating the Windows hosts file requires administrator rights. If DevProxy canno
 
 Commands that modify the hosts file include:
 
+- `devproxy init --name <name> --port <port>`
 - `devproxy add <name> --port <port>`
 - `devproxy remove <name>`
 - `devproxy start`

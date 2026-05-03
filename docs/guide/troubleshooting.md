@@ -2,25 +2,9 @@
 
 ## Caddy is not found
 
-Install Caddy and confirm it is on `PATH`:
+Install Caddy for your operating system, then confirm it is on `PATH`.
 
-```powershell
-winget install CaddyServer.Caddy
-```
-
-Or:
-
-```powershell
-scoop install caddy
-```
-
-On macOS:
-
-```bash
-brew install caddy
-```
-
-On Linux, use your distribution package manager or follow Caddy's official install instructions.
+See [Install Caddy](/guide/install-caddy) for Windows, macOS, and Linux commands.
 
 Then open a new terminal and run:
 

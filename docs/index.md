@@ -20,11 +20,11 @@ Stable HTTPS `.local` domains for local development on Windows, macOS, and Linux
 Install Caddy and trust its local CA:
 
 ```powershell
-winget install CaddyServer.Caddy
+scoop install caddy
 caddy trust
 ```
 
-On macOS, install Caddy with Homebrew. On Linux, use your distribution package manager or Caddy's official install instructions.
+See [Install Caddy](/guide/install-caddy) for Windows, macOS, and Linux setup commands.
 
 Install DevProxy:
 
@@ -47,6 +47,7 @@ https://api.myapp.local
 ## Next Steps
 
 - [Getting Started](/guide/getting-started)
+- [Install Caddy](/guide/install-caddy)
 - [Commands](/guide/commands)
 - [How It Works](/guide/how-it-works)
 - [Troubleshooting](/guide/troubleshooting)

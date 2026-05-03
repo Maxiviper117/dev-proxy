@@ -15,11 +15,11 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 1. Install [Caddy](https://caddyserver.com/) and trust its CA:
 
    ```powershell
-   winget install CaddyServer.Caddy
+   scoop install caddy
    caddy trust
    ```
 
-   On macOS, `brew install caddy` is the common install path. On Linux, use your distribution package manager or Caddy's official install instructions.
+   On macOS, `brew install caddy` is the common install path. On Linux, use the official packages for your distribution. See the docs for the full Windows, macOS, and Linux setup guide.
 
 2. Install DevProxy:
 

@@ -116,9 +116,8 @@ Commands that modify the hosts file include:
 - `devproxy init --name <name> --port <port>`
 - `devproxy add <name> --port <port>`
 - `devproxy remove <name>`
-- `devproxy start`
 
-Read-only commands like `devproxy list`, `devproxy status`, and `devproxy doctor` do not require elevation.
+Commands like `devproxy start`, `devproxy stop`, `devproxy list`, `devproxy status`, and `devproxy doctor` do not modify the hosts file and should not require elevation.
 
 ## Windows and WSL
 

@@ -267,9 +267,6 @@ export async function doctor(context: DevProxyContext): Promise<string> {
   );
   checks.push(`info Registry: ${context.paths.registryFile}`);
   checks.push(`info Caddyfile: ${context.paths.caddyFile}`);
-  checks.push(
-    `info Generated Caddyfile preview:\n${generateCaddyfile((await readRegistry(context.paths.registryFile)).services)}`,
-  );
 
   if (caddy.code !== 0) {
     checks.push(`hint ${caddyInstallHint}`);

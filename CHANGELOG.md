@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.13.0...devproxy-v0.13.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* hide doctor caddyfile preview ([#47](https://github.com/Maxiviper117/dev-proxy/issues/47)) ([b6ae491](https://github.com/Maxiviper117/dev-proxy/commit/b6ae4911d7c079a873075be085a97932cb9b4280))
+
 ## [0.13.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.12.2...devproxy-v0.13.0) (2026-05-03)
 
 

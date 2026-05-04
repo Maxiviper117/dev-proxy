@@ -157,6 +157,8 @@ describe("app commands", () => {
 
   it("shows the CLI version in doctor output", async () => {
     const context = await createContext();
+    await addService(context, { name: "api.myapp", port: "8000" });
+
     const output = await captureCommandOutput(buildProgram(context), [
       "node",
       "devproxy",
@@ -165,6 +167,10 @@ describe("app commands", () => {
 
     expect(output).toContain("DevProxy version:");
     expect(output).toContain(buildProgram().version());
+    expect(output).toContain("Registry:");
+    expect(output).toContain("Caddyfile:");
+    expect(output).not.toContain("Generated Caddyfile preview");
+    expect(output).not.toContain("reverse_proxy 127.0.0.1:8000");
   });
 
   it("adds and lists a service", async () => {

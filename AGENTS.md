@@ -12,6 +12,7 @@ Use `TODO.md` for future enhancements, deferred product work, and follow-up hard
 - Runtime: Node.js 22+
 - Module format: native ESM
 - CLI framework: Commander
+- CLI UI rendering: Ink + React via `renderToString()` for formatted command/help output
 - Linter: Oxlint
 - Formatter: Oxfmt
 - Tests: Vitest
@@ -79,7 +80,7 @@ pnpm pack --dry-run
 ## Architecture
 
 - `src/cli.ts` is the npm binary entrypoint and defines the Commander CLI.
-- `src/cli/` contains terminal presentation helpers such as colored output.
+- `src/cli/` contains terminal presentation helpers and Ink-based UI renderers.
 - `src/commands/` contains command-level workflows.
 - `src/core/` contains domain validation, registry logic, shared types, and errors.
 - `src/integrations/` contains external integration logic such as Caddy and hosts-file management.

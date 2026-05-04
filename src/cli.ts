@@ -4,31 +4,27 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import {
-  errorMessage,
-  formatBanner,
-  formatCerts,
-  formatDoctor,
-  formatList,
-  formatStatus,
-  formatVersionLine,
-  success,
-  withDoctorVersion,
-  warning,
-} from "./cli/output.js";
+  renderBanner,
+  renderCerts,
+  renderDoctor,
+  renderErrorMessage,
+  renderList,
+  renderStatus,
+  renderSuccess,
+  renderVersionLine,
+  renderWarning,
+} from "./cli/ui.js";
 import {
   addService,
   createDefaultContext,
-  doctor,
   getDoctorData,
-  getListData,
   getCaddyStartWarnings,
+  getListData,
   getStatusData,
   initProjectConfig,
-  listServices,
   openServiceInBrowser,
   printCertificateInfo,
   removeRegisteredService,
-  status,
   startCaddyServer,
   stopCaddyServer,
 } from "./commands/services.js";
@@ -54,10 +50,10 @@ export function buildProgram(context = createDefaultContext()): Command {
     .version(cliVersion);
 
   program.addHelpText("beforeAll", ({ command }) => {
-    const sections = [formatVersionLine(cliVersion)];
+    const sections = [renderVersionLine(cliVersion)];
 
     if (command === program) {
-      sections.unshift(formatBanner());
+      sections.unshift(renderBanner());
     }
 
     return sections.join("\n");
@@ -70,7 +66,7 @@ export function buildProgram(context = createDefaultContext()): Command {
     .description("Initialize DevProxy for the current project and register its domain.")
     .action(async (options: { name: string; port: string }) => {
       console.log(
-        success(
+        renderSuccess(
           await initProjectConfig(context, process.cwd(), {
             name: options.name,
             port: options.port,
@@ -85,7 +81,7 @@ export function buildProgram(context = createDefaultContext()): Command {
     .requiredOption("-p, --port <port>", "local port of the service to proxy")
     .description("Register an attach-mode service.")
     .action(async (name: string, options: { port: string }) => {
-      console.log(success(await addService(context, { name, port: options.port })));
+      console.log(renderSuccess(await addService(context, { name, port: options.port })));
     });
 
   program
@@ -94,14 +90,14 @@ export function buildProgram(context = createDefaultContext()): Command {
     .alias("rm")
     .description("Remove a registered service.")
     .action(async (name: string) => {
-      console.log(success(await removeRegisteredService(context, name)));
+      console.log(renderSuccess(await removeRegisteredService(context, name)));
     });
 
   program
     .command("open [name]")
     .description("Open the service domain in the default browser.")
     .action(async (name?: string) => {
-      console.log(success(await openServiceInBrowser(context, name)));
+      console.log(renderSuccess(await openServiceInBrowser(context, name)));
     });
 
   program
@@ -113,7 +109,7 @@ export function buildProgram(context = createDefaultContext()): Command {
       if (options.json) {
         console.log(JSON.stringify(await getListData(context), null, 2));
       } else {
-        console.log(formatList(await listServices(context)));
+        console.log(renderList(await getListData(context)));
       }
     });
 
@@ -126,7 +122,7 @@ export function buildProgram(context = createDefaultContext()): Command {
         const data = await getDoctorData(context);
         console.log(JSON.stringify({ version: cliVersion, ...data }, null, 2));
       } else {
-        console.log(formatDoctor(withDoctorVersion(await doctor(context), cliVersion)));
+        console.log(renderDoctor(await getDoctorData(context), cliVersion));
       }
     });
 
@@ -138,7 +134,7 @@ export function buildProgram(context = createDefaultContext()): Command {
       if (options.json) {
         console.log(JSON.stringify(await getStatusData(context), null, 2));
       } else {
-        console.log(formatStatus(await status(context)));
+        console.log(renderStatus(await getStatusData(context)));
       }
     });
 
@@ -146,7 +142,7 @@ export function buildProgram(context = createDefaultContext()): Command {
     .command("certs")
     .description("Print Caddy root CA certificate information.")
     .action(async () => {
-      console.log(formatCerts(await printCertificateInfo(context)));
+      console.log(renderCerts(await printCertificateInfo(context)));
     });
 
   program
@@ -154,10 +150,10 @@ export function buildProgram(context = createDefaultContext()): Command {
     .description("Start Caddy with the current DevProxy config.")
     .action(async () => {
       for (const message of await getCaddyStartWarnings(context)) {
-        console.log(warning(message));
+        console.log(renderWarning(message));
       }
 
-      console.log(success(await startCaddyServer(context)));
+      console.log(renderSuccess(await startCaddyServer(context)));
     });
 
   program
@@ -165,7 +161,7 @@ export function buildProgram(context = createDefaultContext()): Command {
     .description("Stop the Caddy server.")
     .action(async () => {
       const message = await stopCaddyServer(context);
-      const format = message.includes("not running") ? warning : success;
+      const format = message.includes("not running") ? renderWarning : renderSuccess;
       console.log(format(message));
     });
 
@@ -184,7 +180,7 @@ export async function runCli(argv = process.argv): Promise<void> {
     await buildProgram().parseAsync(argv);
   } catch (error) {
     const normalized = normalizeError(error);
-    console.error(errorMessage(normalized.message));
+    console.error(renderErrorMessage(normalized.message));
     process.exitCode = normalized instanceof DevProxyError ? normalized.exitCode : 1;
   }
 }

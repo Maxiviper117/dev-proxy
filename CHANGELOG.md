@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.13.1...devproxy-v0.14.0) (2026-05-04)
+
+
+### Features
+
+* migrate CLI rendering to Ink and React ([#49](https://github.com/Maxiviper117/dev-proxy/issues/49)) ([67dbeff](https://github.com/Maxiviper117/dev-proxy/commit/67dbeffd82eee778b54aca196b29139957320eb5))
+
 ## [0.13.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.13.0...devproxy-v0.13.1) (2026-05-04)
 
 

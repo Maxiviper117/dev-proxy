@@ -1,10 +1,11 @@
 # Commands
 
-Only commands that update the system hosts file need elevated permissions:
-`devproxy init`, `devproxy add`, and `devproxy remove`. Commands such as
-`devproxy start`, `devproxy stop`, `devproxy open`, `devproxy list`,
-`devproxy status`, `devproxy doctor`, and `devproxy certs` do not modify the
-hosts file and should run without `sudo` or an elevated shell.
+Commands that update the system hosts file or the system trust store need
+elevated permissions: `devproxy init`, `devproxy add`, `devproxy remove`, and
+`devproxy trust`. Commands such as `devproxy start`, `devproxy stop`,
+`devproxy open`, `devproxy list`, `devproxy status`, `devproxy doctor`, and
+`devproxy certs` do not modify the hosts file or trust store and should run
+without `sudo` or an elevated shell.
 
 ## `devproxy init --name <name> --port <port>`
 
@@ -14,7 +15,9 @@ Create a `.devproxy/config.json` file and register the service in one step.
 devproxy init --name api.myapp --port 8000
 ```
 
-This registers `https://api.myapp.local`, writes the project config file, updates the hosts file, generates the Caddyfile, and reloads Caddy. Once the config file exists, `devproxy open` can omit the name:
+This registers `https://api.myapp.local`, writes the project config file, updates the hosts file, generates the Caddyfile, and reloads Caddy. If the terminal is already running with elevated permissions (Administrator on Windows, `sudo` on macOS/Linux), it also runs `caddy trust` automatically so the local CA is trusted immediately.
+
+Once the config file exists, `devproxy open` can omit the name:
 
 ```bash
 devproxy open
@@ -28,7 +31,7 @@ Register a new service.
 devproxy add api.myapp --port 8000
 ```
 
-This registers `https://api.myapp.local` and proxies it to `127.0.0.1:8000` and `localhost:8000`.
+This registers `https://api.myapp.local` and proxies it to `127.0.0.1:8000` and `localhost:8000`. If the terminal is already running with elevated permissions, it also runs `caddy trust` automatically so the local CA is trusted immediately.
 
 Service names can be a single label or multiple labels separated by dots, such as `myapp`, `api.myapp`, or `web.myapp`. Do not include the `.local` suffix yourself.
 
@@ -110,7 +113,26 @@ devproxy start
 
 This writes the Caddyfile from the current registry, validates it, reloads Caddy if it is already running, or starts Caddy if no running instance is available.
 
-If Caddy's local root CA certificate has not been generated yet, DevProxy warns before starting because browsers may show HTTPS certificate warnings until you run `caddy trust` with the privileges needed to update your trust store.
+If Caddy's local root CA certificate has not been generated yet and you are
+not running from an elevated shell, DevProxy warns before starting because
+browsers may show HTTPS certificate warnings until you run `devproxy trust` or
+`caddy trust` with the privileges needed to update your trust store.
+
+## `devproxy trust`
+
+Trust the Caddy local root CA certificate.
+
+```bash
+devproxy trust
+```
+
+When run from an elevated terminal (Administrator on Windows, `sudo` on
+macOS/Linux), this runs `caddy trust` directly. When not elevated, it prints
+platform-specific instructions telling you how to rerun the command with the
+required privileges.
+
+This is useful when you did not run `devproxy init` or `devproxy add` from an
+elevated shell and your browser still warns about the HTTPS certificate.
 
 ## `devproxy stop`
 

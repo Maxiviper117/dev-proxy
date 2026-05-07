@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import {
   ensureCaddyAvailable,
+  ensureCaddyTrusted,
   generateCaddyfile,
   stopCaddy,
   validateAndReloadCaddy,
@@ -106,5 +110,55 @@ describe("generateCaddyfile", () => {
     };
 
     await expect(stopCaddy("C:\\devproxy\\Caddyfile", run)).resolves.toBe("not-running");
+  });
+});
+
+describe("ensureCaddyTrusted", () => {
+  it("returns already-trusted when the certificate exists", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "devproxy-caddy-test-"));
+    const rootCAPath = join(dir, "root.crt");
+    await mkdir(dirname(rootCAPath), { recursive: true });
+    await writeFile(rootCAPath, "test-cert", "utf8");
+
+    const run: CommandRunner = async () => ({ code: 0, stdout: "", stderr: "" });
+
+    await expect(ensureCaddyTrusted(run, rootCAPath, async () => true)).resolves.toBe(
+      "already-trusted",
+    );
+  });
+
+  it("returns not-elevated when the process is not admin/root", async () => {
+    const run: CommandRunner = async () => ({ code: 0, stdout: "", stderr: "" });
+
+    await expect(ensureCaddyTrusted(run, "/nonexistent/root.crt", async () => false)).resolves.toBe(
+      "not-elevated",
+    );
+  });
+
+  it("runs caddy trust when elevated and cert is missing", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "devproxy-caddy-test-"));
+    const rootCAPath = join(dir, "root.crt");
+
+    const calls: string[] = [];
+    const run: CommandRunner = async (command, args) => {
+      calls.push([command, ...args].join(" "));
+      if (command === "caddy" && args[0] === "trust") {
+        await mkdir(dirname(rootCAPath), { recursive: true });
+        await writeFile(rootCAPath, "test-cert", "utf8");
+      }
+      return { code: 0, stdout: "trusted", stderr: "" };
+    };
+
+    const result = await ensureCaddyTrusted(run, rootCAPath, async () => true);
+    expect(calls).toContain("caddy trust");
+    expect(result).toBe("trusted");
+  });
+
+  it("returns trust-failed when caddy trust does not create the cert", async () => {
+    const run: CommandRunner = async () => ({ code: 0, stdout: "", stderr: "" });
+
+    await expect(ensureCaddyTrusted(run, "/nonexistent/root.crt", async () => true)).resolves.toBe(
+      "trust-failed",
+    );
   });
 });

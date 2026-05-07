@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readFile, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { buildProgram, isCliEntrypoint } from "../src/cli.js";
@@ -64,6 +64,7 @@ async function createContext(): Promise<DevProxyContext> {
     run,
     now: () => new Date("2026-04-29T00:00:00.000Z"),
     platform: "win32",
+    isElevated: async () => false,
   };
 }
 
@@ -570,5 +571,70 @@ describe("app commands", () => {
       "Opened https://explicit-name.local/ in the default browser.",
     );
     expect(openedUrl).toBe("https://explicit-name.local/");
+  });
+
+  it("trust command reports already trusted when certificate exists", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+    context.isElevated = async () => true;
+    await mkdir(join(dirname(context.paths.caddyRootCAPath)), { recursive: true });
+    await writeFile(context.paths.caddyRootCAPath, testCertificatePem, "utf8");
+
+    const output = await captureCommandOutput(buildProgram(context), ["node", "devproxy", "trust"]);
+
+    expect(output).toContain("already trusted");
+  });
+
+  it("trust command prints instructions when not elevated", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    const output = await captureCommandOutput(buildProgram(context), ["node", "devproxy", "trust"]);
+
+    expect(output).toContain("administrator rights");
+    expect(output).toContain("devproxy trust");
+  });
+
+  it("runs caddy trust automatically during add when elevated and cert is missing", async () => {
+    let trustCalled = false;
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "trust") {
+        trustCalled = true;
+        return { code: 0, stdout: "trusted", stderr: "" };
+      }
+
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+    context.isElevated = async () => true;
+
+    await addService(context, { name: "api.myapp", port: "8000" });
+
+    expect(trustCalled).toBe(true);
+  });
+
+  it("skips caddy trust during add when not elevated", async () => {
+    let trustCalled = false;
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "trust") {
+        trustCalled = true;
+        return { code: 0, stdout: "trusted", stderr: "" };
+      }
+
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    await addService(context, { name: "api.myapp", port: "8000" });
+
+    expect(trustCalled).toBe(false);
   });
 });

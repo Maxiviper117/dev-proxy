@@ -34,6 +34,8 @@ Then trust Caddy's local CA from an elevated PowerShell session:
 caddy trust
 ```
 
+If you run `devproxy init` or `devproxy add` from an elevated PowerShell session, DevProxy automatically runs `caddy trust` for you when the local CA certificate has not been generated yet.
+
 Restart your browser after trusting the CA.
 
 ## macOS
@@ -56,7 +58,9 @@ Then trust Caddy's local CA:
 caddy trust
 ```
 
-If your trust store requires administrator privileges, rerun the trust command with `sudo`. Restart your browser after trusting the CA.
+If your trust store requires administrator privileges, rerun the trust command with `sudo`. If you run `devproxy init` or `devproxy add` from an elevated terminal, DevProxy automatically runs `caddy trust` for you when the local CA certificate has not been generated yet.
+
+Restart your browser after trusting the CA.
 
 ## Linux
 
@@ -107,6 +111,8 @@ Then trust Caddy's local CA:
 ```bash
 sudo caddy trust
 ```
+
+If you run `devproxy init` or `devproxy add` from an elevated terminal, DevProxy automatically runs `caddy trust` for you when the local CA certificate has not been generated yet.
 
 Restart your browser after trusting the CA.
 

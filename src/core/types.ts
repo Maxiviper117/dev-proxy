@@ -37,6 +37,8 @@ export type BrowserOpener = (url: string) => Promise<void>;
 
 export type ConfirmFn = (message: string) => Promise<boolean>;
 
+export type ElevationChecker = () => Promise<boolean>;
+
 export type DevProxyContext = {
   paths: RuntimePaths;
   run: CommandRunner;
@@ -47,4 +49,5 @@ export type DevProxyContext = {
   probeHttps?: HttpsProbe;
   openUrl?: BrowserOpener;
   confirm?: ConfirmFn;
+  isElevated?: ElevationChecker;
 };

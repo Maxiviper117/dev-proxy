@@ -14,6 +14,8 @@ import { projectConfigPath, readProjectConfig, writeProjectConfig } from "../cor
 import type { DevProxyContext, Service } from "../core/types.js";
 import {
   caddyInstallHint,
+  ensureCaddyAvailable,
+  ensureCaddyTrusted,
   generateCaddyfile,
   getCaddyCertificateInfo,
   stopCaddy,
@@ -22,6 +24,7 @@ import {
 } from "../integrations/caddy.js";
 import { canWriteHosts, ensureHostsWritable, writeHostsFile } from "../integrations/hosts.js";
 import { confirm } from "../cli/prompt.js";
+import { createElevationChecker } from "../platform/elevation.js";
 import { openDefaultBrowser } from "../platform/browser.js";
 import { defaultPaths } from "../platform/paths.js";
 import { runCommand } from "../platform/runner.js";
@@ -45,6 +48,7 @@ export function createDefaultContext(): DevProxyContext {
     probeUrl: probeUrl,
     probeHttps: probeHttpsUrl,
     openUrl: openDefaultBrowser,
+    isElevated: createElevationChecker(runtimePlatform, runCommand),
   };
 }
 
@@ -108,6 +112,9 @@ export async function initProjectConfig(
   await writeRegistry(context.paths.registryFile, next);
   await writeHostsFile(context.paths.hostsFile, next.services, context.platform);
   await writeCaddyfile(context.paths.caddyFile, next.services);
+  if (context.isElevated) {
+    await ensureCaddyTrusted(context.run, context.paths.caddyRootCAPath, context.isElevated);
+  }
   const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
 
   return `Registered ${domain} -> 127.0.0.1:${port}, localhost:${port} (${formatCaddyLifecycle(caddyLifecycle)}). Config saved to ${projectConfigPath(cwd)}.`;
@@ -168,6 +175,9 @@ export async function addService(
   await writeRegistry(context.paths.registryFile, next);
   await writeHostsFile(context.paths.hostsFile, next.services, context.platform);
   await writeCaddyfile(context.paths.caddyFile, next.services);
+  if (context.isElevated) {
+    await ensureCaddyTrusted(context.run, context.paths.caddyRootCAPath, context.isElevated);
+  }
   const caddyLifecycle = await validateAndReloadCaddy(context.paths.caddyFile, context.run);
 
   return `Registered ${domain} -> 127.0.0.1:${port}, localhost:${port} (${formatCaddyLifecycle(caddyLifecycle)}).`;
@@ -318,6 +328,55 @@ export async function getCaddyStartWarnings(context: DevProxyContext): Promise<s
       "Run `caddy trust` with the privileges needed to update your trust store.",
     ].join("\n"),
   ];
+}
+
+/**
+ * Trust the Caddy local root CA certificate.
+ *
+ * Checks whether Caddy is installed, whether the certificate already exists,
+ * and whether the process is elevated. When elevated, runs `caddy trust`
+ * directly. When not elevated, returns platform-specific instructions.
+ *
+ * @throws {DevProxyError} When the platform is unsupported or Caddy is missing.
+ */
+export async function trustCaddyCertificate(context: DevProxyContext): Promise<string> {
+  ensureSupportedPlatform(context.platform);
+  await ensureCaddyAvailable(context.run);
+
+  const result = await ensureCaddyTrusted(
+    context.run,
+    context.paths.caddyRootCAPath,
+    context.isElevated ?? (async () => false),
+  );
+
+  if (result === "already-trusted") {
+    return "Caddy root CA certificate is already trusted.";
+  }
+
+  if (result === "trusted") {
+    return "Caddy root CA certificate trusted successfully.";
+  }
+
+  if (result === "not-elevated") {
+    if (context.platform === "win32") {
+      return [
+        "DevProxy needs administrator rights to trust the Caddy root CA certificate.",
+        "Open PowerShell or Command Prompt as Administrator and run:",
+        "  devproxy trust",
+      ].join("\n");
+    }
+
+    return [
+      "DevProxy needs elevated permissions to trust the Caddy root CA certificate.",
+      "Rerun the same command with sudo:",
+      "  sudo devproxy trust",
+    ].join("\n");
+  }
+
+  return [
+    "Caddy root CA certificate could not be trusted automatically.",
+    "Try running `caddy trust` manually with the privileges needed to update your trust store.",
+  ].join("\n");
 }
 
 /**

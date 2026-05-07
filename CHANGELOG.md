@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.15.0...devproxy-v0.16.0) (2026-05-07)
+
+
+### Features
+
+* lazy load CLI context ([#55](https://github.com/Maxiviper117/dev-proxy/issues/55)) ([817fdaf](https://github.com/Maxiviper117/dev-proxy/commit/817fdaf2dc0e8856a2e9d854f2398dd854ec49a9))
+* simplify CLI rendering ([#53](https://github.com/Maxiviper117/dev-proxy/issues/53)) ([67261d7](https://github.com/Maxiviper117/dev-proxy/commit/67261d7399d1d338ce60338303e3de1cbededb40))
+
 ## [0.15.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.14.0...devproxy-v0.15.0) (2026-05-07)
 
 

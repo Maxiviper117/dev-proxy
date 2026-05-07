@@ -84,7 +84,7 @@ pnpm pack --dry-run
 - `src/commands/` contains command-level workflows.
 - `src/core/` contains domain validation, registry logic, shared types, and errors.
 - `src/integrations/` contains external integration logic such as Caddy and hosts-file management.
-- `src/platform/` contains runtime path resolution and child-process execution.
+- `src/platform/` contains runtime path resolution, default context creation, probe helpers, and child-process execution.
 
 ## Safety Rules
 

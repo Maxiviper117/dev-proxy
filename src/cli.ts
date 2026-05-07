@@ -3,33 +3,9 @@ import { realpathSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
-import {
-  renderBanner,
-  renderCerts,
-  renderDoctor,
-  renderErrorMessage,
-  renderList,
-  renderStatus,
-  renderSuccess,
-  renderVersionLine,
-  renderWarning,
-} from "./cli/ui.js";
-import {
-  addService,
-  createDefaultContext,
-  getDoctorData,
-  getCaddyStartWarnings,
-  getListData,
-  getStatusData,
-  initProjectConfig,
-  openServiceInBrowser,
-  printCertificateInfo,
-  removeRegisteredService,
-  startCaddyServer,
-  stopCaddyServer,
-  trustCaddyCertificate,
-} from "./commands/services.js";
+import { renderBanner, renderVersionLine } from "./cli/help-text.js";
 import { DevProxyError, normalizeError } from "./core/errors.js";
+import type { DevProxyContext } from "./core/types.js";
 
 const require = createRequire(import.meta.url);
 const packageJson = require("../package.json") as { version?: string };
@@ -42,7 +18,7 @@ const cliVersion = packageJson.version ?? "0.0.0";
  * and wires each one to the corresponding service workflow. Help text includes a
  * colored ASCII banner and version line on the root command only.
  */
-export function buildProgram(context = createDefaultContext()): Command {
+export function buildProgram(context: DevProxyContext): Command {
   const program = new Command();
 
   program
@@ -60,12 +36,31 @@ export function buildProgram(context = createDefaultContext()): Command {
     return sections.join("\n");
   });
 
+  let servicesModule: typeof import("./commands/services.js") | undefined;
+  let uiModule: typeof import("./cli/ui.js") | undefined;
+
+  async function getServices() {
+    if (!servicesModule) {
+      servicesModule = await import("./commands/services.js");
+    }
+    return servicesModule;
+  }
+
+  async function getUi() {
+    if (!uiModule) {
+      uiModule = await import("./cli/ui.js");
+    }
+    return uiModule;
+  }
+
   program
     .command("init")
     .requiredOption("--name <name>", "service name, for example api.myapp")
     .requiredOption("--port <port>", "local port")
     .description("Initialize DevProxy for the current project and register its domain.")
     .action(async (options: { name: string; port: string }) => {
+      const { initProjectConfig } = await getServices();
+      const { renderSuccess } = await getUi();
       console.log(
         renderSuccess(
           await initProjectConfig(context, process.cwd(), {
@@ -82,6 +77,8 @@ export function buildProgram(context = createDefaultContext()): Command {
     .requiredOption("-p, --port <port>", "local port of the service to proxy")
     .description("Register an attach-mode service.")
     .action(async (name: string, options: { port: string }) => {
+      const { addService } = await getServices();
+      const { renderSuccess } = await getUi();
       console.log(renderSuccess(await addService(context, { name, port: options.port })));
     });
 
@@ -91,6 +88,8 @@ export function buildProgram(context = createDefaultContext()): Command {
     .alias("rm")
     .description("Remove a registered service.")
     .action(async (name: string) => {
+      const { removeRegisteredService } = await getServices();
+      const { renderSuccess } = await getUi();
       console.log(renderSuccess(await removeRegisteredService(context, name)));
     });
 
@@ -98,6 +97,8 @@ export function buildProgram(context = createDefaultContext()): Command {
     .command("open [name]")
     .description("Open the service domain in the default browser.")
     .action(async (name?: string) => {
+      const { openServiceInBrowser } = await getServices();
+      const { renderSuccess } = await getUi();
       console.log(renderSuccess(await openServiceInBrowser(context, name)));
     });
 
@@ -107,9 +108,11 @@ export function buildProgram(context = createDefaultContext()): Command {
     .option("--json", "Output in JSON format")
     .description("List registered services.")
     .action(async (options: { json?: boolean }) => {
+      const { getListData } = await getServices();
       if (options.json) {
         console.log(JSON.stringify(await getListData(context), null, 2));
       } else {
+        const { renderList } = await getUi();
         console.log(renderList(await getListData(context)));
       }
     });
@@ -119,10 +122,12 @@ export function buildProgram(context = createDefaultContext()): Command {
     .option("--json", "Output in JSON format")
     .description("Check local DevProxy prerequisites.")
     .action(async (options: { json?: boolean }) => {
+      const { getDoctorData } = await getServices();
       if (options.json) {
         const data = await getDoctorData(context);
         console.log(JSON.stringify({ version: cliVersion, ...data }, null, 2));
       } else {
+        const { renderDoctor } = await getUi();
         console.log(renderDoctor(await getDoctorData(context), cliVersion));
       }
     });
@@ -132,9 +137,11 @@ export function buildProgram(context = createDefaultContext()): Command {
     .option("--json", "Output in JSON format")
     .description("Report Caddy, registry, and upstream status.")
     .action(async (options: { json?: boolean }) => {
+      const { getStatusData } = await getServices();
       if (options.json) {
         console.log(JSON.stringify(await getStatusData(context), null, 2));
       } else {
+        const { renderStatus } = await getUi();
         console.log(renderStatus(await getStatusData(context)));
       }
     });
@@ -143,6 +150,8 @@ export function buildProgram(context = createDefaultContext()): Command {
     .command("certs")
     .description("Print Caddy root CA certificate information.")
     .action(async () => {
+      const { printCertificateInfo } = await getServices();
+      const { renderCerts } = await getUi();
       console.log(renderCerts(await printCertificateInfo(context)));
     });
 
@@ -150,6 +159,8 @@ export function buildProgram(context = createDefaultContext()): Command {
     .command("trust")
     .description("Trust the Caddy local root CA certificate.")
     .action(async () => {
+      const { trustCaddyCertificate } = await getServices();
+      const { renderSuccess, renderWarning } = await getUi();
       const message = await trustCaddyCertificate(context);
       const isSuccess =
         message.includes("already trusted") || message.includes("trusted successfully");
@@ -160,6 +171,8 @@ export function buildProgram(context = createDefaultContext()): Command {
     .command("start")
     .description("Start Caddy with the current DevProxy config.")
     .action(async () => {
+      const { getCaddyStartWarnings, startCaddyServer } = await getServices();
+      const { renderSuccess, renderWarning } = await getUi();
       for (const message of await getCaddyStartWarnings(context)) {
         console.log(renderWarning(message));
       }
@@ -171,6 +184,8 @@ export function buildProgram(context = createDefaultContext()): Command {
     .command("stop")
     .description("Stop the Caddy server.")
     .action(async () => {
+      const { stopCaddyServer } = await getServices();
+      const { renderSuccess, renderWarning } = await getUi();
       const message = await stopCaddyServer(context);
       const format = message.includes("not running") ? renderWarning : renderSuccess;
       console.log(format(message));
@@ -188,10 +203,16 @@ export function buildProgram(context = createDefaultContext()): Command {
  */
 export async function runCli(argv = process.argv): Promise<void> {
   try {
-    await buildProgram().parseAsync(argv);
+    const { createDefaultContext } = await import("./commands/services.js");
+    await buildProgram(createDefaultContext()).parseAsync(argv);
   } catch (error) {
     const normalized = normalizeError(error);
-    console.error(renderErrorMessage(normalized.message));
+    try {
+      const { renderErrorMessage } = await import("./cli/ui.js");
+      console.error(renderErrorMessage(normalized.message));
+    } catch {
+      console.error(normalized.message);
+    }
     process.exitCode = normalized instanceof DevProxyError ? normalized.exitCode : 1;
   }
 }

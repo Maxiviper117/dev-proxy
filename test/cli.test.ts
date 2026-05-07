@@ -131,7 +131,7 @@ describe("app commands", () => {
       await readFile(new URL("../package.json", import.meta.url), "utf8"),
     ) as { version: string };
 
-    expect(buildProgram().version()).toBe(packageJson.version);
+    expect(buildProgram({} as DevProxyContext).version()).toBe(packageJson.version);
   });
 
   it("detects CLI entrypoint execution through direct and symlinked bin paths", async () => {
@@ -145,7 +145,7 @@ describe("app commands", () => {
   });
 
   it("adds the branded banner to root help output only", () => {
-    const program = buildProgram();
+    const program = buildProgram({} as DevProxyContext);
     const addCommand = program.commands.find((command) => command.name() === "add");
     const rootHelp = captureHelp(program);
     const addHelp = addCommand ? captureHelp(addCommand) : "";
@@ -167,7 +167,7 @@ describe("app commands", () => {
     ]);
 
     expect(output).toContain("DevProxy version:");
-    expect(output).toContain(buildProgram().version());
+    expect(output).toContain(buildProgram(context).version());
     expect(output).toContain("Registry:");
     expect(output).toContain("Caddyfile:");
     expect(output).not.toContain("Generated Caddyfile preview");
@@ -447,7 +447,7 @@ describe("app commands", () => {
     ]);
 
     const parsed = JSON.parse(output);
-    expect(parsed.version).toBe(buildProgram().version());
+    expect(parsed.version).toBe(buildProgram(context).version());
     expect(parsed.platform).toBe("win32");
     expect(parsed.caddyOnPath).toBe(true);
     expect(parsed.hostsFileWritable).toBe(true);

@@ -66,7 +66,7 @@ From your project root, the easiest way to get started is:
 devproxy init --name api.myapp --port 8000
 ```
 
-This creates `.devproxy/config.json` and registers the service in one step. Your domain is live immediately.
+This creates `.devproxy/config.json` and registers the service in one step. If the terminal is already elevated (Administrator on Windows, `sudo` on macOS/Linux), it also runs `caddy trust` automatically so the local CA is trusted immediately. Your domain is live immediately.
 
 ```bash
 devproxy open
@@ -117,7 +117,11 @@ Commands that modify the hosts file include:
 - `devproxy add <name> --port <port>`
 - `devproxy remove <name>`
 
-Commands like `devproxy start`, `devproxy stop`, `devproxy list`, `devproxy status`, and `devproxy doctor` do not modify the hosts file and should not require elevation.
+`devproxy trust` also requires elevation because it updates the system trust store.
+
+Commands like `devproxy start`, `devproxy stop`, `devproxy list`, `devproxy status`, and `devproxy doctor` do not modify the hosts file or trust store and should not require elevation.
+
+When you run `devproxy init` or `devproxy add` from an already-elevated terminal, DevProxy automatically runs `caddy trust` for you if the local CA certificate has not been generated yet. This means you usually do not need to run `devproxy trust` separately.
 
 ## Windows and WSL
 

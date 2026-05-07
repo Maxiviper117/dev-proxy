@@ -22,7 +22,16 @@ caddy start --config "%APPDATA%\devproxy\Caddyfile"
 
 ## Browser does not trust the certificate
 
-Run this with the privileges needed to update your operating system trust store:
+If you ran `devproxy init` or `devproxy add` from an elevated terminal, the
+local CA should already be trusted automatically. If not, run:
+
+```bash
+devproxy trust
+```
+
+When not elevated, this prints instructions for your platform. You can also run
+the underlying Caddy command directly with the privileges needed to update your
+operating system trust store:
 
 ```bash
 caddy trust

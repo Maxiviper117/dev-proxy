@@ -97,6 +97,7 @@ pnpm pack --dry-run
   - `# BEGIN DEVPROXY`
   - `# END DEVPROXY`
 - Do not add automatic UAC elevation without an explicit product decision.
+- DevProxy may run `caddy trust` automatically when the process is already elevated, but it never triggers an elevation prompt itself.
 - If hosts-file access is missing, fail with clear platform-appropriate elevated-permission instructions.
 
 ## Product Defaults

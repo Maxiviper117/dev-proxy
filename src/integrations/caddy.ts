@@ -8,6 +8,8 @@ import { defaultPaths } from "../platform/paths.js";
 
 export type CaddyLifecycle = "reloaded" | "started";
 
+export type CaddyTrustResult = "already-trusted" | "not-elevated" | "trusted" | "trust-failed";
+
 export const caddyInstallHint = [
   "Caddy is required but was not found on PATH.",
   "Install Caddy, then open a new terminal and run `caddy version` to confirm it is available.",
@@ -88,6 +90,49 @@ export async function ensureCaddyAvailable(run: CommandRunner): Promise<void> {
   if (result.code !== 0) {
     throw new DevProxyError(caddyInstallHint);
   }
+}
+
+/**
+ * Attempt to install the Caddy root CA into the system trust store.
+ *
+ * Only runs when the process is elevated (admin/root). Checks whether the
+ * root CA certificate file already exists before running `caddy trust`.
+ *
+ * @returns `"already-trusted"` if the certificate is present,
+ *   `"not-elevated"` if elevation is missing,
+ *   `"trusted"` if `caddy trust` succeeded and the cert is now present,
+ *   `"trust-failed"` if `caddy trust` ran but the cert is still missing.
+ */
+export async function ensureCaddyTrusted(
+  run: CommandRunner,
+  rootCAPath: string,
+  isElevated: () => Promise<boolean>,
+): Promise<CaddyTrustResult> {
+  try {
+    const s = await stat(rootCAPath);
+    if (s.isFile()) {
+      return "already-trusted";
+    }
+  } catch {
+    /* file missing — proceed */
+  }
+
+  if (!(await isElevated())) {
+    return "not-elevated";
+  }
+
+  await run("caddy", ["trust"]);
+
+  try {
+    const s = await stat(rootCAPath);
+    if (s.isFile()) {
+      return "trusted";
+    }
+  } catch {
+    /* trust did not produce the cert file */
+  }
+
+  return "trust-failed";
 }
 
 /**

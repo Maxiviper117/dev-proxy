@@ -27,6 +27,7 @@ import {
   removeRegisteredService,
   startCaddyServer,
   stopCaddyServer,
+  trustCaddyCertificate,
 } from "./commands/services.js";
 import { DevProxyError, normalizeError } from "./core/errors.js";
 
@@ -143,6 +144,16 @@ export function buildProgram(context = createDefaultContext()): Command {
     .description("Print Caddy root CA certificate information.")
     .action(async () => {
       console.log(renderCerts(await printCertificateInfo(context)));
+    });
+
+  program
+    .command("trust")
+    .description("Trust the Caddy local root CA certificate.")
+    .action(async () => {
+      const message = await trustCaddyCertificate(context);
+      const isSuccess =
+        message.includes("already trusted") || message.includes("trusted successfully");
+      console.log(isSuccess ? renderSuccess(message) : renderWarning(message));
     });
 
   program

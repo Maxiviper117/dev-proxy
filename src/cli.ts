@@ -10,6 +10,7 @@ import type { DevProxyContext } from "./core/types.js";
 const require = createRequire(import.meta.url);
 const packageJson = require("../package.json") as { version?: string };
 const cliVersion = packageJson.version ?? "0.0.0";
+type GetContext = () => DevProxyContext | Promise<DevProxyContext>;
 
 /**
  * Build and configure the Commander CLI program with all devproxy commands.
@@ -18,7 +19,7 @@ const cliVersion = packageJson.version ?? "0.0.0";
  * and wires each one to the corresponding service workflow. Help text includes a
  * colored ASCII banner and version line on the root command only.
  */
-export function buildProgram(context: DevProxyContext): Command {
+export function buildProgram(contextOrGetContext: DevProxyContext | GetContext): Command {
   const program = new Command();
 
   program
@@ -53,6 +54,14 @@ export function buildProgram(context: DevProxyContext): Command {
     return uiModule;
   }
 
+  async function getContext(): Promise<DevProxyContext> {
+    if (typeof contextOrGetContext === "function") {
+      return await contextOrGetContext();
+    }
+
+    return contextOrGetContext;
+  }
+
   program
     .command("init")
     .requiredOption("--name <name>", "service name, for example api.myapp")
@@ -61,6 +70,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .action(async (options: { name: string; port: string }) => {
       const { initProjectConfig } = await getServices();
       const { renderSuccess } = await getUi();
+      const context = await getContext();
       console.log(
         renderSuccess(
           await initProjectConfig(context, process.cwd(), {
@@ -79,6 +89,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .action(async (name: string, options: { port: string }) => {
       const { addService } = await getServices();
       const { renderSuccess } = await getUi();
+      const context = await getContext();
       console.log(renderSuccess(await addService(context, { name, port: options.port })));
     });
 
@@ -90,6 +101,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .action(async (name: string) => {
       const { removeRegisteredService } = await getServices();
       const { renderSuccess } = await getUi();
+      const context = await getContext();
       console.log(renderSuccess(await removeRegisteredService(context, name)));
     });
 
@@ -99,6 +111,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .action(async (name?: string) => {
       const { openServiceInBrowser } = await getServices();
       const { renderSuccess } = await getUi();
+      const context = await getContext();
       console.log(renderSuccess(await openServiceInBrowser(context, name)));
     });
 
@@ -109,6 +122,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .description("List registered services.")
     .action(async (options: { json?: boolean }) => {
       const { getListData } = await getServices();
+      const context = await getContext();
       if (options.json) {
         console.log(JSON.stringify(await getListData(context), null, 2));
       } else {
@@ -123,6 +137,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .description("Check local DevProxy prerequisites.")
     .action(async (options: { json?: boolean }) => {
       const { getDoctorData } = await getServices();
+      const context = await getContext();
       if (options.json) {
         const data = await getDoctorData(context);
         console.log(JSON.stringify({ version: cliVersion, ...data }, null, 2));
@@ -138,6 +153,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .description("Report Caddy, registry, and upstream status.")
     .action(async (options: { json?: boolean }) => {
       const { getStatusData } = await getServices();
+      const context = await getContext();
       if (options.json) {
         console.log(JSON.stringify(await getStatusData(context), null, 2));
       } else {
@@ -152,6 +168,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .action(async () => {
       const { printCertificateInfo } = await getServices();
       const { renderCerts } = await getUi();
+      const context = await getContext();
       console.log(renderCerts(await printCertificateInfo(context)));
     });
 
@@ -161,6 +178,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .action(async () => {
       const { trustCaddyCertificate } = await getServices();
       const { renderSuccess, renderWarning } = await getUi();
+      const context = await getContext();
       const message = await trustCaddyCertificate(context);
       const isSuccess =
         message.includes("already trusted") || message.includes("trusted successfully");
@@ -173,6 +191,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .action(async () => {
       const { getCaddyStartWarnings, startCaddyServer } = await getServices();
       const { renderSuccess, renderWarning } = await getUi();
+      const context = await getContext();
       for (const message of await getCaddyStartWarnings(context)) {
         console.log(renderWarning(message));
       }
@@ -186,6 +205,7 @@ export function buildProgram(context: DevProxyContext): Command {
     .action(async () => {
       const { stopCaddyServer } = await getServices();
       const { renderSuccess, renderWarning } = await getUi();
+      const context = await getContext();
       const message = await stopCaddyServer(context);
       const format = message.includes("not running") ? renderWarning : renderSuccess;
       console.log(format(message));
@@ -203,8 +223,15 @@ export function buildProgram(context: DevProxyContext): Command {
  */
 export async function runCli(argv = process.argv): Promise<void> {
   try {
-    const { createDefaultContext } = await import("./commands/services.js");
-    await buildProgram(createDefaultContext()).parseAsync(argv);
+    let context: DevProxyContext | undefined;
+    await buildProgram(async () => {
+      if (!context) {
+        const { createDefaultContext } = await import("./platform/context.js");
+        context = createDefaultContext();
+      }
+
+      return context;
+    }).parseAsync(argv);
   } catch (error) {
     const normalized = normalizeError(error);
     try {

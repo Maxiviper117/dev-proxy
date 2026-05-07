@@ -1,6 +1,5 @@
 export {
   addService,
-  createDefaultContext,
   doctor,
   listServices,
   removeRegisteredService,
@@ -8,6 +7,7 @@ export {
   startCaddyServer,
   stopCaddyServer,
 } from "./commands/services.js";
+export { createDefaultContext } from "./platform/context.js";
 export { generateCaddyfile } from "./integrations/caddy.js";
 export { domainFromName, parsePort, validateName } from "./core/domain.js";
 export { updateHostsContent } from "./integrations/hosts.js";

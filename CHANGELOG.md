@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.14.0...devproxy-v0.15.0) (2026-05-07)
+
+
+### Features
+
+* auto-run caddy trust during add/init when elevated ([#51](https://github.com/Maxiviper117/dev-proxy/issues/51)) ([cbe93b6](https://github.com/Maxiviper117/dev-proxy/commit/cbe93b6fec3863012f1e51a2c4799a630ee6daca))
+
 ## [0.14.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.13.1...devproxy-v0.14.0) (2026-05-04)
 
 

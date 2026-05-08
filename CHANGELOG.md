@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.19.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.18.0...devproxy-v0.19.0) (2026-05-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* Exported service functions like addService(context, input)
+
+### Features
+
+* refactor command services into domain-specific classes ([#60](https://github.com/Maxiviper117/dev-proxy/issues/60)) ([ba21ad0](https://github.com/Maxiviper117/dev-proxy/commit/ba21ad02bd58468dad38f2d87a6faf7a3816f313))
+
 ## [0.18.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.17.0...devproxy-v0.18.0) (2026-05-08)
 
 

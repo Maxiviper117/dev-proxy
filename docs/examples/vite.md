@@ -32,9 +32,9 @@ https://web.myapp.local -> 127.0.0.1:5173, localhost:5173
 
 DevProxy configures Caddy to try both loopback upstreams. If Vite is reachable through `localhost:5173` but not `127.0.0.1:5173`, or the other way around, Caddy retries the working address instead of returning intermittent `502` responses.
 
-## Configure Vite (optional)
+## Configure Vite
 
-If your app needs to accept the `.local` host, add it to Vite's `server.allowedHosts`. If the host OS cannot reach the server through loopback, also set `server.host` to `"0.0.0.0"`:
+Vite blocks requests for hosts that are not explicitly allowed. Add your DevProxy `.local` domain to `server.allowedHosts`. If the host OS cannot reach the server through loopback, also set `server.host` to `"0.0.0.0"`:
 
 ```ts
 export default {
@@ -43,6 +43,27 @@ export default {
     port: 5173,
     allowedHosts: ["web.myapp.local"],
     // host: "0.0.0.0",
+  },
+};
+```
+
+When `devproxy open` runs from a project with `.devproxy/config.json`, DevProxy checks common Vite config files and warns if `server.allowedHosts` is missing or does not include the configured domain.
+
+## Blocked host warning
+
+If Vite is missing the DevProxy host, the browser usually shows:
+
+```text
+Blocked request. This host ("your-host") is not allowed.
+To allow this host, add "your-host" to `server.allowedHosts` in vite.config.js.
+```
+
+Use the exact `.local` domain from DevProxy, for example:
+
+```ts
+export default {
+  server: {
+    allowedHosts: ["web.myapp.local"],
   },
 };
 ```

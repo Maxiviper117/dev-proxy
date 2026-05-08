@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.19.0...devproxy-v0.20.0) (2026-05-08)
+
+
+### Features
+
+* add sync-hosts command and hosts drift detection ([#62](https://github.com/Maxiviper117/dev-proxy/issues/62)) ([042ecd0](https://github.com/Maxiviper117/dev-proxy/commit/042ecd09187aa1618edd505b13cc915b1c51cf46))
+
 ## [0.19.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.18.0...devproxy-v0.19.0) (2026-05-08)
 
 

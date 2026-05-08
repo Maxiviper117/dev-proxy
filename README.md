@@ -30,10 +30,10 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 3. Run your local project on a port (for example, `8000`).
 
 
+> [!IMPORTANT]
+> **Elevated permissions required:** This next step (4) modifies your system hosts file, so you must run it in an **administrator / elevated terminal session** (Windows: run Terminal/PowerShell as Administrator; macOS/Linux: use `sudo`).
 4. Register the service:
 
-   > [!IMPORTANT]
-   > **Elevated permissions required:** This step modifies your system hosts file, so you must run it in an **administrator / elevated terminal session** (Windows: run Terminal/PowerShell as Administrator; macOS/Linux: use `sudo`).
 
    **Option A — Quick registration (can be run from anywhere):**
 
@@ -59,7 +59,8 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
    https://api.myapp.local
    ```
 
-   > **Tip:** If you registered with `init`, you can also run `devproxy open` from your project root (where `.devproxy/config.json` exists) and it will open the domain directly in your browser.
+> [!TIP] 
+> If you registered with `init`, you can also run `devproxy open` from your project root (where `.devproxy/config.json` exists) and it will open the domain directly in your browser.
 
 ## Commands
 

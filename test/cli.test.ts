@@ -549,6 +549,88 @@ describe("app commands", () => {
     expect(openedUrl).toBe("https://my-app.local/");
   });
 
+  it("open without name warns when Vite allowedHosts is missing", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await initProjectConfig(context, projectDir, { name: "my-app", port: "8080" });
+    await writeFile(
+      join(projectDir, "vite.config.ts"),
+      [
+        "import { defineConfig } from 'vite';",
+        "export default defineConfig({",
+        "  server: { port: 8080 },",
+        "});",
+      ].join("\n"),
+      "utf8",
+    );
+
+    context.openUrl = async () => {};
+
+    await expect(openServiceInBrowser(context, undefined, projectDir)).resolves.toContain(
+      'server.allowedHosts is not set. Add "my-app.local"',
+    );
+  });
+
+  it("open without name ignores commented Vite allowedHosts", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await initProjectConfig(context, projectDir, { name: "my-app", port: "8080" });
+    await writeFile(
+      join(projectDir, "vite.config.ts"),
+      [
+        "import { defineConfig } from 'vite';",
+        "export default defineConfig({",
+        "  server: {",
+        "    // host: '0.0.0.0',",
+        "    // port: 8080,",
+        "    // allowedHosts: ['my-app.local'],",
+        "  },",
+        "});",
+      ].join("\n"),
+      "utf8",
+    );
+
+    context.openUrl = async () => {};
+
+    await expect(openServiceInBrowser(context, undefined, projectDir)).resolves.toContain(
+      'server.allowedHosts is not set. Add "my-app.local"',
+    );
+  });
+
+  it("open without name warns when Vite allowedHosts omits the project domain", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await initProjectConfig(context, projectDir, { name: "my-app", port: "8080" });
+    await writeFile(
+      join(projectDir, "vite.config.js"),
+      "export default { server: { allowedHosts: ['other.local'] } };\n",
+      "utf8",
+    );
+
+    context.openUrl = async () => {};
+
+    await expect(openServiceInBrowser(context, undefined, projectDir)).resolves.toContain(
+      'server.allowedHosts does not include "my-app.local"',
+    );
+  });
+
+  it("open without name does not warn when Vite allowedHosts includes the project domain", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await initProjectConfig(context, projectDir, { name: "my-app", port: "8080" });
+    await writeFile(
+      join(projectDir, "vite.config.ts"),
+      "export default { server: { allowedHosts: ['my-app.local'] } };\n",
+      "utf8",
+    );
+
+    context.openUrl = async () => {};
+
+    await expect(openServiceInBrowser(context, undefined, projectDir)).resolves.toBe(
+      "Opened https://my-app.local/ in the default browser.",
+    );
+  });
+
   it("open without name errors when no config exists", async () => {
     const context = await createContext();
 

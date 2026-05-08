@@ -152,7 +152,17 @@ export function renderCerts(output: string): string {
 }
 
 function renderNotice(tone: Tone, message: string): string {
-  return renderStatusRow(tone, message);
+  return message
+    .split("\n")
+    .map((line, index) => {
+      const parsed = parsePrefixedLine(line);
+      if (parsed.tone) {
+        return renderParsedOutputLine(parsed);
+      }
+
+      return renderStatusRow(index === 0 ? tone : "info", line);
+    })
+    .join("\n");
 }
 
 function renderSection(title: string, color: string, body: string): string {

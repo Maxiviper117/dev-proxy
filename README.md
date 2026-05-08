@@ -1,3 +1,5 @@
+![Alt text for screen readers](./assets/images/dev-proxy-banner.png)
+
 # DevProxy
 
 ### Stable HTTPS `.local` domains for local development

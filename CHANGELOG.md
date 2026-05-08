@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.17.0...devproxy-v0.18.0) (2026-05-08)
+
+
+### Features
+
+* warn for missing vite allowed hosts ([#58](https://github.com/Maxiviper117/dev-proxy/issues/58)) ([3fb74b2](https://github.com/Maxiviper117/dev-proxy/commit/3fb74b29593f6857d6cdf99fb7410bd22b2ff942))
+
 ## [0.17.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.16.0...devproxy-v0.17.0) (2026-05-08)
 
 

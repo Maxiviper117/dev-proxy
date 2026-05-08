@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.16.0...devproxy-v0.17.0) (2026-05-08)
+
+
+### Features
+
+* add integration test mode with temp paths and stub Caddy ([#56](https://github.com/Maxiviper117/dev-proxy/issues/56)) ([4967aec](https://github.com/Maxiviper117/dev-proxy/commit/4967aecd35232c3373bb93124148ed73bad543f9))
+
 ## [0.16.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.15.0...devproxy-v0.16.0) (2026-05-07)
 
 

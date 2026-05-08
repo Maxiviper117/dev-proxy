@@ -31,9 +31,15 @@ export class AttachServiceRegistrar {
     if (existing) {
       if (existing.port === port) {
         await options.writeProjectConfig?.(existing);
+        await ensureHostsWritable(this.context.paths.hostsFile, this.context.platform);
+        await writeProxyArtifacts(this.context, registry);
+        const caddyLifecycle = await validateAndReloadCaddy(
+          this.context.paths.caddyFile,
+          this.context.run,
+        );
         return {
           changed: false,
-          message: `Service '${existing.name}' is already registered on port ${port} for ${domain}.`,
+          message: `Service '${existing.name}' is already registered on port ${port} for ${domain} (${formatCaddyLifecycle(caddyLifecycle)}).`,
           service: existing,
         };
       }

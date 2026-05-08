@@ -108,6 +108,8 @@ pnpm pack --dry-run
 - Domain derivation is `<name>.local`; for example, `api.myapp` becomes `api.myapp.local`.
 - `devproxy start` starts or reloads Caddy from the current registry.
 - `devproxy status` reports Caddy running state, registered services, and upstream reachability.
+- `devproxy doctor` warns when the DevProxy-owned hosts block has drifted from the global registry.
+- `devproxy sync-hosts` rewrites the DevProxy-owned hosts block so it matches the global registry.
 - `devproxy stop` stops Caddy; it does not stop attach-mode app processes.
 - Caddy integration uses generated Caddyfile reloads, not the Caddy Admin API.
 - If `caddy reload` reports that `localhost:2019` is unavailable, DevProxy starts Caddy with the generated config.

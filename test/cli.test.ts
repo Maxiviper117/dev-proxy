@@ -190,7 +190,9 @@ describe("app commands", () => {
     await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
     await expect(
       new RegistryService(context).addService({ name: "api.myapp", port: "8000" }),
-    ).resolves.toBe("Service 'api.myapp' is already registered on port 8000 for api.myapp.local.");
+    ).resolves.toBe(
+      "Service 'api.myapp' is already registered on port 8000 for api.myapp.local (reloaded).",
+    );
   });
 
   it("overwrites existing service when port differs and user confirms", async () => {
@@ -305,7 +307,7 @@ describe("app commands", () => {
 
     const output = await new DiagnosticsService(context).doctor();
 
-    expect(output).toContain("fail Caddy on PATH");
+    expect(output).toContain("fail Caddy not on PATH");
     expect(output).toContain("winget install CaddyServer.Caddy");
     expect(output).toContain("brew install caddy");
   });
@@ -448,10 +450,79 @@ describe("app commands", () => {
     expect(parsed.platform).toBe("win32");
     expect(parsed.caddyOnPath).toBe(true);
     expect(parsed.hostsFileWritable).toBe(true);
+    expect(parsed.hostsDrift).toMatchObject({
+      actual: [],
+      expected: [],
+      extra: [],
+      inSync: true,
+      missing: [],
+    });
     expect(typeof parsed.registryPath).toBe("string");
     expect(typeof parsed.caddyfilePath).toBe("string");
     expect(typeof parsed.caddyfilePreview).toBe("string");
     expect(parsed.hints).toEqual([]);
+  });
+
+  it("doctor --json warns when hosts entries drift from the registry", async () => {
+    const context = await createContext();
+    const registry = new RegistryService(context);
+    await registry.addService({ name: "api.myapp", port: "8000" });
+    await writeFile(
+      context.paths.hostsFile,
+      [
+        "127.0.0.1 localhost",
+        "# BEGIN DEVPROXY",
+        "127.0.0.1 stale.local",
+        "# END DEVPROXY",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "doctor",
+      "--json",
+    ]);
+
+    const parsed = JSON.parse(output);
+    expect(parsed.hostsDrift).toMatchObject({
+      extra: ["stale.local"],
+      inSync: false,
+      missing: ["api.myapp.local"],
+    });
+    expect(parsed.hints).toContain(
+      "Run 'devproxy sync-hosts' from an elevated terminal to align hosts.",
+    );
+  });
+
+  it("sync-hosts aligns hosts entries with the registry", async () => {
+    const context = await createContext();
+    const registry = new RegistryService(context);
+    await registry.addService({ name: "api.myapp", port: "8000" });
+    await writeFile(
+      context.paths.hostsFile,
+      [
+        "127.0.0.1 localhost",
+        "# BEGIN DEVPROXY",
+        "127.0.0.1 stale.local",
+        "# END DEVPROXY",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "sync-hosts",
+    ]);
+
+    expect(output).toContain("Hosts file aligned with 1 registered service");
+    const hosts = await readFile(context.paths.hostsFile, "utf8");
+    expect(hosts).toContain("127.0.0.1 api.myapp.local");
+    expect(hosts).not.toContain("stale.local");
   });
 
   it("status --json returns structured status", async () => {
@@ -516,6 +587,32 @@ describe("app commands", () => {
       port: 9090,
       mode: "attach",
     });
+
+    const caddyfile = await readFile(context.paths.caddyFile, "utf8");
+    expect(caddyfile).toContain("my-api.local");
+    expect(caddyfile).toContain("reverse_proxy 127.0.0.1:9090");
+  });
+
+  it("init repairs hosts and Caddyfile when the service is already registered", async () => {
+    const context = await createContext();
+    const registry = new RegistryService(context);
+
+    await registry.initProjectConfig(context.paths.appDir, {
+      name: "my-api",
+      port: "9090",
+    });
+    await writeFile(context.paths.hostsFile, "127.0.0.1 localhost\n", "utf8");
+    await writeFile(context.paths.caddyFile, "", "utf8");
+
+    await expect(
+      registry.initProjectConfig(context.paths.appDir, {
+        name: "my-api",
+        port: "9090",
+      }),
+    ).resolves.toContain("already registered");
+
+    const hosts = await readFile(context.paths.hostsFile, "utf8");
+    expect(hosts).toContain("127.0.0.1 my-api.local");
 
     const caddyfile = await readFile(context.paths.caddyFile, "utf8");
     expect(caddyfile).toContain("my-api.local");

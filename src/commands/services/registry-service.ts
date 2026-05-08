@@ -2,7 +2,7 @@ import { ensureSupportedPlatform } from "../../platform/support.js";
 import { projectConfigPath, writeProjectConfig } from "../../core/config.js";
 import { readRegistry, removeService } from "../../core/registry.js";
 import type { DevProxyContext, Service } from "../../core/types.js";
-import { ensureHostsWritable } from "../../integrations/hosts.js";
+import { ensureHostsWritable, writeHostsFile } from "../../integrations/hosts.js";
 import { validateAndReloadCaddy } from "../../integrations/caddy.js";
 import { AttachServiceRegistrar, writeProxyArtifacts, type ServiceInput } from "./shared.js";
 
@@ -41,6 +41,16 @@ export class RegistryService {
     await validateAndReloadCaddy(this.context.paths.caddyFile, this.context.run);
 
     return `Removed ${removed.domain}`;
+  }
+
+  async syncHosts(): Promise<string> {
+    ensureSupportedPlatform(this.context.platform);
+    const registry = await readRegistry(this.context.paths.registryFile);
+
+    await ensureHostsWritable(this.context.paths.hostsFile, this.context.platform);
+    await writeHostsFile(this.context.paths.hostsFile, registry.services, this.context.platform);
+
+    return `Hosts file aligned with ${registry.services.length} registered service(s).`;
   }
 
   async listServices(): Promise<string> {

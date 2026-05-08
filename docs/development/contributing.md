@@ -89,11 +89,36 @@ Use `node dist/cli.js ...` when you want to test the current build without linki
 - `src/integrations/` contains external integration logic such as Caddy and hosts-file management.
 - `src/platform/` contains runtime path resolution, default context creation, probe helpers, and child-process execution.
 
+## Testing
+
+### Unit Tests
+
+Unit tests live alongside the integration tests in `test/` and cover pure functions (`updateHostsContent`, `generateCaddyfile`) and individual modules with mocked dependencies (`CommandRunner`, filesystem I/O).
+
+```bash
+pnpm test
+```
+
+### Integration Tests
+
+Integration tests in `test/integration.test.ts` exercise the full command stack — registry writes, hosts-file updates, Caddyfile generation, and Caddy lifecycle — using isolated temp directories that never touch the real system.
+
+The `test/helpers/temp-context.ts` module provides `createTempContext()` which builds a `DevProxyContext` backed by:
+
+- A temp directory for the registry, Caddyfile, and hosts file
+- A stub `CommandRunner` that simulates Caddy subcommands without requiring a real Caddy binary
+- Overrideable probes (`probeTcp`, `probeUrl`, `probeHttps`) for status checks
+
+### Caddyfile Admin Port Isolation
+
+`generateCaddyfile` and `writeCaddyfile` accept an optional `CaddyfileOptions` with an `adminPort` field. When set, the generated Caddyfile includes an `admin localhost:<port>` block so integration Caddy instances do not conflict with any real Caddy running on the default `localhost:2019` endpoint.
+
 ## Safety Rules
 
 - Do not touch the real system hosts file in tests.
 - Keep filesystem paths and command execution injectable through `DevProxyContext`.
-- Tests should use temp directories and mocked `CommandRunner` implementations.
+- Use `createTempContext()` from `test/helpers/temp-context.ts` for integration tests — it creates temp directories and stub command runners that never touch the real system.
+- Unit tests should use temp directories and mocked `CommandRunner` implementations.
 - DevProxy must only modify hosts entries inside its own marker block:
   - `# BEGIN DEVPROXY`
   - `# END DEVPROXY`

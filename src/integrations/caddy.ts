@@ -10,6 +10,10 @@ export type CaddyLifecycle = "reloaded" | "started";
 
 export type CaddyTrustResult = "already-trusted" | "not-elevated" | "trusted" | "trust-failed";
 
+export type CaddyfileOptions = {
+  adminPort?: number;
+};
+
 export const caddyInstallHint = [
   "Caddy is required but was not found on PATH.",
   "Install Caddy, then open a new terminal and run `caddy version` to confirm it is available.",
@@ -29,8 +33,15 @@ export const caddyInstallHint = [
  * Emits one site block per service with `tls internal`, a `reverse_proxy`
  * pointing to both `127.0.0.1` and `localhost`, and standard forwarded headers.
  */
-export function generateCaddyfile(services: readonly Service[]): string {
+export function generateCaddyfile(
+  services: readonly Service[],
+  options?: CaddyfileOptions,
+): string {
   const lines: string[] = [];
+
+  if (options?.adminPort !== undefined) {
+    lines.push("{", `\tadmin localhost:${options.adminPort}`, "}", "");
+  }
 
   for (const service of services) {
     lines.push(
@@ -62,11 +73,12 @@ export function generateCaddyfile(services: readonly Service[]): string {
 export async function writeCaddyfile(
   caddyFile: string,
   services: readonly Service[],
+  options?: CaddyfileOptions,
 ): Promise<void> {
   try {
     await mkdir(dirname(caddyFile), { recursive: true });
     await restoreSudoOwner(dirname(caddyFile));
-    await writeFile(caddyFile, generateCaddyfile(services), "utf8");
+    await writeFile(caddyFile, generateCaddyfile(services, options), "utf8");
     await restoreSudoOwner(caddyFile);
   } catch (error) {
     if (isPermissionError(error)) {

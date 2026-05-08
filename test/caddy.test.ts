@@ -33,6 +33,13 @@ describe("generateCaddyfile", () => {
     expect(caddyfile).toContain("header_up X-Forwarded-Proto {scheme}");
   });
 
+  it("includes admin block when adminPort is specified", () => {
+    const caddyfile = generateCaddyfile([service], { adminPort: 2020 });
+
+    expect(caddyfile).toContain("admin localhost:2020");
+    expect(caddyfile).toContain("api.myapp.local {");
+  });
+
   it("reports when reload succeeds without starting a new instance", async () => {
     const calls: string[] = [];
     const run: CommandRunner = async (command, args) => {

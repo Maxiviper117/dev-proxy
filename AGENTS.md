@@ -85,6 +85,8 @@ pnpm pack --dry-run
 - `src/core/` contains domain validation, registry logic, shared types, and errors.
 - `src/integrations/` contains external integration logic such as Caddy and hosts-file management.
 - `src/platform/` contains runtime path resolution, default context creation, probe helpers, and child-process execution.
+- `test/helpers/temp-context.ts` provides `createTempContext()` for integration tests; it creates a `DevProxyContext` backed by temp directories that never touch the real system.
+- `test/integration.test.ts` contains full-stack integration tests using `createTempContext()` with stub Caddy commands and temp file paths.
 
 ## Safety Rules
 

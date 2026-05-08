@@ -39,6 +39,15 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
 
   let servicesModule: typeof import("./commands/services.js") | undefined;
   let uiModule: typeof import("./cli/ui.js") | undefined;
+  let serviceInstances:
+    | {
+        context: DevProxyContext;
+        registry: import("./commands/services.js").RegistryService;
+        project: import("./commands/services.js").ProjectService;
+        caddy: import("./commands/services.js").CaddyService;
+        diagnostics: import("./commands/services.js").DiagnosticsService;
+      }
+    | undefined;
 
   async function getServices() {
     if (!servicesModule) {
@@ -62,18 +71,35 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     return contextOrGetContext;
   }
 
+  async function getServiceInstances() {
+    const context = await getContext();
+    if (serviceInstances?.context === context) {
+      return serviceInstances;
+    }
+
+    const { CaddyService, DiagnosticsService, ProjectService, RegistryService } =
+      await getServices();
+    serviceInstances = {
+      caddy: new CaddyService(context),
+      context,
+      diagnostics: new DiagnosticsService(context),
+      project: new ProjectService(context),
+      registry: new RegistryService(context),
+    };
+    return serviceInstances;
+  }
+
   program
     .command("init")
     .requiredOption("--name <name>", "service name, for example api.myapp")
     .requiredOption("--port <port>", "local port")
     .description("Initialize DevProxy for the current project and register its domain.")
     .action(async (options: { name: string; port: string }) => {
-      const { initProjectConfig } = await getServices();
       const { renderSuccess } = await getUi();
-      const context = await getContext();
+      const { registry } = await getServiceInstances();
       console.log(
         renderSuccess(
-          await initProjectConfig(context, process.cwd(), {
+          await registry.initProjectConfig(process.cwd(), {
             name: options.name,
             port: options.port,
           }),
@@ -87,10 +113,9 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     .requiredOption("-p, --port <port>", "local port of the service to proxy")
     .description("Register an attach-mode service.")
     .action(async (name: string, options: { port: string }) => {
-      const { addService } = await getServices();
       const { renderSuccess } = await getUi();
-      const context = await getContext();
-      console.log(renderSuccess(await addService(context, { name, port: options.port })));
+      const { registry } = await getServiceInstances();
+      console.log(renderSuccess(await registry.addService({ name, port: options.port })));
     });
 
   program
@@ -99,20 +124,18 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     .alias("rm")
     .description("Remove a registered service.")
     .action(async (name: string) => {
-      const { removeRegisteredService } = await getServices();
       const { renderSuccess } = await getUi();
-      const context = await getContext();
-      console.log(renderSuccess(await removeRegisteredService(context, name)));
+      const { registry } = await getServiceInstances();
+      console.log(renderSuccess(await registry.removeRegisteredService(name)));
     });
 
   program
     .command("open [name]")
     .description("Open the service domain in the default browser.")
     .action(async (name?: string) => {
-      const { openServiceInBrowser } = await getServices();
       const { renderSuccess } = await getUi();
-      const context = await getContext();
-      console.log(renderSuccess(await openServiceInBrowser(context, name)));
+      const { project } = await getServiceInstances();
+      console.log(renderSuccess(await project.openInBrowser(name)));
     });
 
   program
@@ -121,13 +144,12 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     .option("--json", "Output in JSON format")
     .description("List registered services.")
     .action(async (options: { json?: boolean }) => {
-      const { getListData } = await getServices();
-      const context = await getContext();
+      const { registry } = await getServiceInstances();
       if (options.json) {
-        console.log(JSON.stringify(await getListData(context), null, 2));
+        console.log(JSON.stringify(await registry.getListData(), null, 2));
       } else {
         const { renderList } = await getUi();
-        console.log(renderList(await getListData(context)));
+        console.log(renderList(await registry.getListData()));
       }
     });
 
@@ -136,14 +158,13 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     .option("--json", "Output in JSON format")
     .description("Check local DevProxy prerequisites.")
     .action(async (options: { json?: boolean }) => {
-      const { getDoctorData } = await getServices();
-      const context = await getContext();
+      const { diagnostics } = await getServiceInstances();
       if (options.json) {
-        const data = await getDoctorData(context);
+        const data = await diagnostics.getDoctorData();
         console.log(JSON.stringify({ version: cliVersion, ...data }, null, 2));
       } else {
         const { renderDoctor } = await getUi();
-        console.log(renderDoctor(await getDoctorData(context), cliVersion));
+        console.log(renderDoctor(await diagnostics.getDoctorData(), cliVersion));
       }
     });
 
@@ -152,13 +173,12 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     .option("--json", "Output in JSON format")
     .description("Report Caddy, registry, and upstream status.")
     .action(async (options: { json?: boolean }) => {
-      const { getStatusData } = await getServices();
-      const context = await getContext();
+      const { diagnostics } = await getServiceInstances();
       if (options.json) {
-        console.log(JSON.stringify(await getStatusData(context), null, 2));
+        console.log(JSON.stringify(await diagnostics.getStatusData(), null, 2));
       } else {
         const { renderStatus } = await getUi();
-        console.log(renderStatus(await getStatusData(context)));
+        console.log(renderStatus(await diagnostics.getStatusData()));
       }
     });
 
@@ -166,20 +186,18 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     .command("certs")
     .description("Print Caddy root CA certificate information.")
     .action(async () => {
-      const { printCertificateInfo } = await getServices();
       const { renderCerts } = await getUi();
-      const context = await getContext();
-      console.log(renderCerts(await printCertificateInfo(context)));
+      const { caddy } = await getServiceInstances();
+      console.log(renderCerts(await caddy.printCertificateInfo()));
     });
 
   program
     .command("trust")
     .description("Trust the Caddy local root CA certificate.")
     .action(async () => {
-      const { trustCaddyCertificate } = await getServices();
       const { renderSuccess, renderWarning } = await getUi();
-      const context = await getContext();
-      const message = await trustCaddyCertificate(context);
+      const { caddy } = await getServiceInstances();
+      const message = await caddy.trustCertificate();
       const isSuccess =
         message.includes("already trusted") || message.includes("trusted successfully");
       console.log(isSuccess ? renderSuccess(message) : renderWarning(message));
@@ -189,24 +207,22 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     .command("start")
     .description("Start Caddy with the current DevProxy config.")
     .action(async () => {
-      const { getCaddyStartWarnings, startCaddyServer } = await getServices();
       const { renderSuccess, renderWarning } = await getUi();
-      const context = await getContext();
-      for (const message of await getCaddyStartWarnings(context)) {
+      const { caddy } = await getServiceInstances();
+      for (const message of await caddy.getStartWarnings()) {
         console.log(renderWarning(message));
       }
 
-      console.log(renderSuccess(await startCaddyServer(context)));
+      console.log(renderSuccess(await caddy.start()));
     });
 
   program
     .command("stop")
     .description("Stop the Caddy server.")
     .action(async () => {
-      const { stopCaddyServer } = await getServices();
       const { renderSuccess, renderWarning } = await getUi();
-      const context = await getContext();
-      const message = await stopCaddyServer(context);
+      const { caddy } = await getServiceInstances();
+      const message = await caddy.stop();
       const format = message.includes("not running") ? renderWarning : renderSuccess;
       console.log(format(message));
     });

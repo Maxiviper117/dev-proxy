@@ -100,8 +100,24 @@ This reports:
 - Platform and Node version
 - Caddy availability
 - Hosts-file write access
+- Whether DevProxy hosts entries match the registry
 - Registry path and contents
 - Caddyfile path and a generated preview
+
+If the DevProxy hosts block has drifted from the registry, `doctor` warns and
+suggests `devproxy sync-hosts`.
+
+## `devproxy sync-hosts`
+
+Align the DevProxy-owned hosts-file block with the global registry.
+
+```bash
+devproxy sync-hosts
+```
+
+This rewrites only the entries between `# BEGIN DEVPROXY` and
+`# END DEVPROXY` so they match `registry.json`. Run it from an elevated
+terminal when hosts-file write access requires administrator or sudo rights.
 
 ## `devproxy start`
 

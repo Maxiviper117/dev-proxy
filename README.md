@@ -75,6 +75,7 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 | `devproxy status` | Report Caddy state and upstream health |
 | `devproxy remove <name>` | Remove a registered service |
 | `devproxy doctor` | Check setup and diagnostics |
+| `devproxy sync-hosts` | Align DevProxy hosts entries with the registry |
 | `devproxy start` | Start or reload Caddy |
 | `devproxy stop` | Stop Caddy |
 

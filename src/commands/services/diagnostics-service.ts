@@ -1,5 +1,5 @@
 import { caddyInstallHint, generateCaddyfile } from "../../integrations/caddy.js";
-import { canWriteHosts } from "../../integrations/hosts.js";
+import { canWriteHosts, readHostsDrift, type HostsDrift } from "../../integrations/hosts.js";
 import { probeHttpsUrl, probeTcpPort, probeUrl } from "../../platform/probes.js";
 import { isSupportedPlatform } from "../../platform/support.js";
 import { readRegistry } from "../../core/registry.js";
@@ -9,6 +9,7 @@ export type DoctorData = {
   platform: string;
   caddyOnPath: boolean;
   hostsFileWritable: boolean;
+  hostsDrift: HostsDrift;
   registryPath: string;
   caddyfilePath: string;
   caddyfilePreview: string;
@@ -37,23 +38,39 @@ export class DiagnosticsService {
 
   async doctor(): Promise<string> {
     const checks: string[] = [];
+    const supportedPlatform = isSupportedPlatform(this.context.platform);
     checks.push(
-      `${isSupportedPlatform(this.context.platform) ? "ok" : "warn"} Supported platform: ${
-        this.context.platform
-      }`,
+      `${supportedPlatform ? "ok" : "warn"} ${
+        supportedPlatform ? "Supported platform" : "Unsupported platform"
+      }: ${this.context.platform}`,
     );
 
     const caddy = await this.context.run("caddy", ["version"]);
-    checks.push(`${caddy.code === 0 ? "ok" : "fail"} Caddy on PATH`);
-
+    const registry = await readRegistry(this.context.paths.registryFile);
+    const hostsDrift = await readHostsDrift(this.context.paths.hostsFile, registry.services);
     checks.push(
-      `${(await canWriteHosts(this.context.paths.hostsFile)) ? "ok" : "warn"} Hosts file writable`,
+      `${caddy.code === 0 ? "ok" : "fail"} Caddy ${caddy.code === 0 ? "on" : "not on"} PATH`,
+    );
+
+    const hostsFileWritable = await canWriteHosts(this.context.paths.hostsFile);
+    checks.push(
+      `${hostsFileWritable ? "ok" : "warn"} Hosts file ${
+        hostsFileWritable ? "writable" : "not writable"
+      }`,
+    );
+    checks.push(
+      `${hostsDrift.inSync ? "ok" : "warn"} ${
+        hostsDrift.inSync ? "Hosts entries match registry" : "Hosts drift detected"
+      }`,
     );
     checks.push(`info Registry: ${this.context.paths.registryFile}`);
     checks.push(`info Caddyfile: ${this.context.paths.caddyFile}`);
 
     if (caddy.code !== 0) {
       checks.push(`hint ${caddyInstallHint}`);
+    }
+    if (!hostsDrift.inSync) {
+      checks.push("hint Run 'devproxy sync-hosts' from an elevated terminal to align hosts.");
     }
 
     return checks.join("\n");
@@ -62,21 +79,25 @@ export class DiagnosticsService {
   async getDoctorData(): Promise<DoctorData> {
     const caddy = await this.context.run("caddy", ["version"]);
     const caddyOnPath = caddy.code === 0;
+    const registry = await readRegistry(this.context.paths.registryFile);
+    const hostsDrift = await readHostsDrift(this.context.paths.hostsFile, registry.services);
     const hints: string[] = [];
 
     if (!caddyOnPath) {
       hints.push(caddyInstallHint);
+    }
+    if (!hostsDrift.inSync) {
+      hints.push("Run 'devproxy sync-hosts' from an elevated terminal to align hosts.");
     }
 
     return {
       platform: this.context.platform,
       caddyOnPath,
       hostsFileWritable: await canWriteHosts(this.context.paths.hostsFile),
+      hostsDrift,
       registryPath: this.context.paths.registryFile,
       caddyfilePath: this.context.paths.caddyFile,
-      caddyfilePreview: generateCaddyfile(
-        (await readRegistry(this.context.paths.registryFile)).services,
-      ),
+      caddyfilePreview: generateCaddyfile(registry.services),
       hints,
     };
   }

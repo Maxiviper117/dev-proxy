@@ -66,9 +66,24 @@ export function renderDoctor(data: DoctorData, version: string): string {
       "blue",
       [
         renderInfoRow("DevProxy version", version),
-        renderStatusRow(supportedPlatform ? "ok" : "warn", `Supported platform: ${data.platform}`),
-        renderStatusRow(data.caddyOnPath ? "ok" : "fail", "Caddy on PATH"),
-        renderStatusRow(data.hostsFileWritable ? "ok" : "warn", "Hosts file writable"),
+        renderStatusRow(
+          supportedPlatform ? "ok" : "warn",
+          supportedPlatform
+            ? `Supported platform: ${data.platform}`
+            : `Unsupported platform: ${data.platform}`,
+        ),
+        renderStatusRow(
+          data.caddyOnPath ? "ok" : "fail",
+          data.caddyOnPath ? "Caddy on PATH" : "Caddy not on PATH",
+        ),
+        renderStatusRow(
+          data.hostsFileWritable ? "ok" : "warn",
+          data.hostsFileWritable ? "Hosts file writable" : "Hosts file not writable",
+        ),
+        renderStatusRow(
+          data.hostsDrift.inSync ? "ok" : "warn",
+          data.hostsDrift.inSync ? "Hosts entries match registry" : "Hosts drift detected",
+        ),
         renderInfoRow("Registry", data.registryPath),
         renderInfoRow("Caddyfile", data.caddyfilePath),
       ].join("\n"),

@@ -7,6 +7,14 @@ import { formatPlatformName } from "../platform/support.js";
 const startMarker = "# BEGIN DEVPROXY";
 const endMarker = "# END DEVPROXY";
 
+export type HostsDrift = {
+  inSync: boolean;
+  expected: string[];
+  actual: string[];
+  missing: string[];
+  extra: string[];
+};
+
 /**
  * Render the DevProxy hosts block for given services.
  *
@@ -39,6 +47,61 @@ export function updateHostsContent(content: string, services: readonly Service[]
   }
 
   return `${withoutBlock}\n\n${block}\n`;
+}
+
+/**
+ * Extract domains from the DevProxy-owned hosts block.
+ *
+ * Ignores entries outside the `# BEGIN DEVPROXY` / `# END DEVPROXY` marker
+ * pair so DevProxy never treats user-managed hosts lines as its own state.
+ */
+export function extractDevProxyHostsDomains(content: string): string[] {
+  const normalized = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const pattern = new RegExp(
+    `${escapeRegExp(startMarker)}\\n([\\s\\S]*?)\\n${escapeRegExp(endMarker)}`,
+    "m",
+  );
+  const match = normalized.match(pattern);
+
+  if (!match?.[1]) {
+    return [];
+  }
+
+  return match[1]
+    .split("\n")
+    .map((line) => line.trim().match(/^127\.0\.0\.1\s+(\S+)$/)?.[1])
+    .filter((domain): domain is string => domain !== undefined);
+}
+
+/**
+ * Compare DevProxy-owned hosts entries against registry services.
+ */
+export function getHostsDrift(hostsContent: string, services: readonly Service[]): HostsDrift {
+  const expected = uniqueSorted(services.map((service) => service.domain));
+  const actual = uniqueSorted(extractDevProxyHostsDomains(hostsContent));
+  const actualSet = new Set(actual);
+  const expectedSet = new Set(expected);
+  const missing = expected.filter((domain) => !actualSet.has(domain));
+  const extra = actual.filter((domain) => !expectedSet.has(domain));
+
+  return {
+    actual,
+    expected,
+    extra,
+    inSync: missing.length === 0 && extra.length === 0,
+    missing,
+  };
+}
+
+/**
+ * Read the hosts file and compare DevProxy entries with registry services.
+ */
+export async function readHostsDrift(
+  hostsFile: string,
+  services: readonly Service[],
+): Promise<HostsDrift> {
+  const current = await readFile(hostsFile, "utf8");
+  return getHostsDrift(current, services);
 }
 
 /**
@@ -109,6 +172,10 @@ export async function ensureHostsWritable(
  */
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function uniqueSorted(values: readonly string[]): string[] {
+  return [...new Set(values)].sort((a, b) => a.localeCompare(b));
 }
 
 /**

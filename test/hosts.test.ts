@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { hostsPermissionMessage, updateHostsContent } from "../src/integrations/hosts.js";
+import {
+  extractDevProxyHostsDomains,
+  getHostsDrift,
+  hostsPermissionMessage,
+  updateHostsContent,
+} from "../src/integrations/hosts.js";
 import type { Service } from "../src/core/types.js";
 
 const services = [
@@ -40,6 +45,31 @@ describe("updateHostsContent", () => {
     );
 
     expect(result).toBe("keep.me\n");
+  });
+});
+
+describe("DevProxy hosts drift", () => {
+  it("extracts only domains inside the DevProxy hosts block", () => {
+    const content = [
+      "127.0.0.1 manually-managed.local",
+      "# BEGIN DEVPROXY",
+      "127.0.0.1 api.myapp.local",
+      "# END DEVPROXY",
+    ].join("\n");
+
+    expect(extractDevProxyHostsDomains(content)).toEqual(["api.myapp.local"]);
+  });
+
+  it("reports missing and extra DevProxy hosts entries", () => {
+    const content = ["# BEGIN DEVPROXY", "127.0.0.1 stale.local", "# END DEVPROXY"].join("\n");
+
+    expect(getHostsDrift(content, services)).toMatchObject({
+      actual: ["stale.local"],
+      expected: ["api.myapp.local"],
+      extra: ["stale.local"],
+      inSync: false,
+      missing: ["api.myapp.local"],
+    });
   });
 });
 

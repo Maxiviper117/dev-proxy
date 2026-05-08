@@ -169,6 +169,15 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     });
 
   program
+    .command("sync-hosts")
+    .description("Align the DevProxy hosts-file block with the registry.")
+    .action(async () => {
+      const { renderSuccess } = await getUi();
+      const { registry } = await getServiceInstances();
+      console.log(renderSuccess(await registry.syncHosts()));
+    });
+
+  program
     .command("status")
     .option("--json", "Output in JSON format")
     .description("Report Caddy, registry, and upstream status.")

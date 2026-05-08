@@ -1,15 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readFile } from "node:fs/promises";
 import { createTempContext, type TempContext } from "./helpers/temp-context.js";
-import {
-  addService,
-  removeRegisteredService,
-  listServices,
-  startCaddyServer,
-  stopCaddyServer,
-  doctor,
-  getStatusData,
-} from "../src/commands/services.js";
+import { CaddyService, DiagnosticsService, RegistryService } from "../src/commands/services.js";
 import { DevProxyError } from "../src/core/errors.js";
 import { generateCaddyfile, writeCaddyfile } from "../src/integrations/caddy.js";
 import { readRegistry, writeRegistry } from "../src/core/registry.js";
@@ -143,7 +135,7 @@ describe("integration: add and remove services through command stack", () => {
   });
 
   it("registers a service end-to-end", async () => {
-    const result = await addService(temp.ctx, { name: "api", port: 3000 });
+    const result = await new RegistryService(temp.ctx).addService({ name: "api", port: 3000 });
 
     expect(result).toContain("api.local");
     expect(result).toContain("3000");
@@ -160,7 +152,7 @@ describe("integration: add and remove services through command stack", () => {
   });
 
   it("prevents duplicate registration on the same port", async () => {
-    const result = await addService(temp.ctx, { name: "api", port: 3000 });
+    const result = await new RegistryService(temp.ctx).addService({ name: "api", port: 3000 });
 
     expect(result).toContain("already registered");
 
@@ -169,7 +161,7 @@ describe("integration: add and remove services through command stack", () => {
   });
 
   it("removes a service end-to-end", async () => {
-    const result = await removeRegisteredService(temp.ctx, "api");
+    const result = await new RegistryService(temp.ctx).removeRegisteredService("api");
 
     expect(result).toContain("Removed api.local");
 
@@ -181,7 +173,9 @@ describe("integration: add and remove services through command stack", () => {
   });
 
   it("throws when removing a non-existent service", async () => {
-    await expect(removeRegisteredService(temp.ctx, "missing")).rejects.toThrow(DevProxyError);
+    await expect(new RegistryService(temp.ctx).removeRegisteredService("missing")).rejects.toThrow(
+      DevProxyError,
+    );
   });
 });
 
@@ -197,38 +191,38 @@ describe("integration: list and status with stub Caddy", () => {
   });
 
   it("lists zero services when registry is empty", async () => {
-    const result = await listServices(temp.ctx);
+    const result = await new RegistryService(temp.ctx).listServices();
 
     expect(result).toContain("No services registered");
   });
 
   it("lists registered services", async () => {
-    await addService(temp.ctx, { name: "myapp", port: 4000 });
+    await new RegistryService(temp.ctx).addService({ name: "myapp", port: 4000 });
 
-    const result = await listServices(temp.ctx);
+    const result = await new RegistryService(temp.ctx).listServices();
 
     expect(result).toContain("myapp");
     expect(result).toContain("myapp.local");
 
-    await removeRegisteredService(temp.ctx, "myapp");
+    await new RegistryService(temp.ctx).removeRegisteredService("myapp");
   });
 
   it("runs doctor with stub Caddy", async () => {
-    const result = await doctor(temp.ctx);
+    const result = await new DiagnosticsService(temp.ctx).doctor();
 
     expect(result).toContain("ok Supported platform");
     expect(result).toContain("ok Caddy on PATH");
   });
 
   it("returns status data with stub probes", async () => {
-    await addService(temp.ctx, { name: "status-app", port: 5000 });
+    await new RegistryService(temp.ctx).addService({ name: "status-app", port: 5000 });
 
-    const data = await getStatusData({
+    const data = await new DiagnosticsService({
       ...temp.ctx,
       probeTcp: async () => true,
       probeUrl: async () => true,
       probeHttps: async () => false,
-    });
+    }).getStatusData();
 
     expect(data.caddyInstalled).toBe(true);
     expect(data.caddyRunning).toBe(true);
@@ -236,7 +230,7 @@ describe("integration: list and status with stub Caddy", () => {
     expect(data.services[0]!.domainReachable).toBe(false);
     expect(data.services[0]!.localhostReachable).toBe(true);
 
-    await removeRegisteredService(temp.ctx, "status-app");
+    await new RegistryService(temp.ctx).removeRegisteredService("status-app");
   });
 });
 
@@ -252,17 +246,17 @@ describe("integration: Caddy lifecycle through command stack", () => {
   });
 
   it("starts Caddy with registered services", async () => {
-    await addService(temp.ctx, { name: "starttest", port: 6000 });
+    await new RegistryService(temp.ctx).addService({ name: "starttest", port: 6000 });
 
-    const result = await startCaddyServer(temp.ctx);
+    const result = await new CaddyService(temp.ctx).start();
 
     expect(result).toContain("1 registered service(s).");
 
-    await removeRegisteredService(temp.ctx, "starttest");
+    await new RegistryService(temp.ctx).removeRegisteredService("starttest");
   });
 
   it("stops Caddy", async () => {
-    const result = await stopCaddyServer(temp.ctx);
+    const result = await new CaddyService(temp.ctx).stop();
 
     expect(result).toContain("stopped");
   });
@@ -283,7 +277,7 @@ describe("integration: Caddy lifecycle through command stack", () => {
         return notRunningRun(command, args);
       },
     };
-    const result = await stopCaddyServer(ctx);
+    const result = await new CaddyService(ctx).stop();
 
     expect(result).toContain("not running");
   });

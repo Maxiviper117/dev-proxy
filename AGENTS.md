@@ -81,7 +81,7 @@ pnpm pack --dry-run
 
 - `src/cli.ts` is the npm binary entrypoint and defines the Commander CLI.
 - `src/cli/` contains terminal presentation helpers and Ink-based UI renderers.
-- `src/commands/` contains command-level workflows.
+- `src/commands/` contains command-level workflows. `src/commands/services.ts` is a barrel for the class-based service API; implementation lives in `src/commands/services/` by domain (`RegistryService`, `ProjectService`, `CaddyService`, and `DiagnosticsService`).
 - `src/core/` contains domain validation, registry logic, shared types, and errors.
 - `src/integrations/` contains external integration logic such as Caddy and hosts-file management.
 - `src/platform/` contains runtime path resolution, default context creation, probe helpers, and child-process execution.

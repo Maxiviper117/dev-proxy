@@ -1,11 +1,11 @@
 export {
-  addService,
-  doctor,
-  listServices,
-  removeRegisteredService,
-  status,
-  startCaddyServer,
-  stopCaddyServer,
+  CaddyService,
+  DiagnosticsService,
+  ProjectService,
+  RegistryService,
+  type DoctorData,
+  type StatusData,
+  type StatusServiceData,
 } from "./commands/services.js";
 export { createDefaultContext } from "./platform/context.js";
 export { generateCaddyfile, type CaddyfileOptions } from "./integrations/caddy.js";

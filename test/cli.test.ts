@@ -5,17 +5,10 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { buildProgram, isCliEntrypoint } from "../src/cli.js";
 import {
-  addService,
-  doctor,
-  getCaddyStartWarnings,
-  initProjectConfig,
-  listServices,
-  openServiceInBrowser,
-  printCertificateInfo,
-  removeRegisteredService,
-  status,
-  startCaddyServer,
-  stopCaddyServer,
+  CaddyService,
+  DiagnosticsService,
+  ProjectService,
+  RegistryService,
 } from "../src/commands/services.js";
 import type { CommandRunner, DevProxyContext } from "../src/core/types.js";
 
@@ -158,7 +151,7 @@ describe("app commands", () => {
 
   it("shows the CLI version in doctor output", async () => {
     const context = await createContext();
-    await addService(context, { name: "api.myapp", port: "8000" });
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
 
     const output = await captureCommandOutput(buildProgram(context), [
       "node",
@@ -177,13 +170,15 @@ describe("app commands", () => {
   it("adds and lists a service", async () => {
     const context = await createContext();
 
-    await expect(addService(context, { name: "api.myapp", port: "8000" })).resolves.toContain(
-      "api.myapp.local",
+    await expect(
+      new RegistryService(context).addService({ name: "api.myapp", port: "8000" }),
+    ).resolves.toContain("api.myapp.local");
+    await expect(
+      new RegistryService(context).addService({ name: "web.myapp", port: "5173" }),
+    ).resolves.toContain("(reloaded)");
+    await expect(new RegistryService(context).listServices()).resolves.toContain(
+      "127.0.0.1:8000, localhost:8000",
     );
-    await expect(addService(context, { name: "web.myapp", port: "5173" })).resolves.toContain(
-      "(reloaded)",
-    );
-    await expect(listServices(context)).resolves.toContain("127.0.0.1:8000, localhost:8000");
 
     const caddyfile = await readFile(context.paths.caddyFile, "utf8");
     expect(caddyfile).toContain("api.myapp.local");
@@ -192,10 +187,10 @@ describe("app commands", () => {
   it("notifies when registering a service already on the same port", async () => {
     const context = await createContext();
 
-    await addService(context, { name: "api.myapp", port: "8000" });
-    await expect(addService(context, { name: "api.myapp", port: "8000" })).resolves.toBe(
-      "Service 'api.myapp' is already registered on port 8000 for api.myapp.local.",
-    );
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+    await expect(
+      new RegistryService(context).addService({ name: "api.myapp", port: "8000" }),
+    ).resolves.toBe("Service 'api.myapp' is already registered on port 8000 for api.myapp.local.");
   });
 
   it("overwrites existing service when port differs and user confirms", async () => {
@@ -206,10 +201,10 @@ describe("app commands", () => {
       return true;
     };
 
-    await addService(context, { name: "api.myapp", port: "8000" });
-    await expect(addService(context, { name: "api.myapp", port: "9000" })).resolves.toContain(
-      "api.myapp.local",
-    );
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+    await expect(
+      new RegistryService(context).addService({ name: "api.myapp", port: "9000" }),
+    ).resolves.toContain("api.myapp.local");
     expect(prompted).toBe(true);
 
     const caddyfile = await readFile(context.paths.caddyFile, "utf8");
@@ -221,20 +216,22 @@ describe("app commands", () => {
     const context = await createContext();
     context.confirm = async () => false;
 
-    await addService(context, { name: "api.myapp", port: "8000" });
-    await expect(addService(context, { name: "api.myapp", port: "9000" })).resolves.toBe(
-      "Registration aborted.",
-    );
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+    await expect(
+      new RegistryService(context).addService({ name: "api.myapp", port: "9000" }),
+    ).resolves.toBe("Registration aborted.");
   });
 
   it("removes a service", async () => {
     const context = await createContext();
-    await addService(context, { name: "api.myapp", port: "8000" });
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
 
-    await expect(removeRegisteredService(context, "api.myapp")).resolves.toBe(
+    await expect(new RegistryService(context).removeRegisteredService("api.myapp")).resolves.toBe(
       "Removed api.myapp.local",
     );
-    await expect(listServices(context)).resolves.toBe("No services registered.");
+    await expect(new RegistryService(context).listServices()).resolves.toBe(
+      "No services registered.",
+    );
   });
 
   it("opens a service domain in the default browser", async () => {
@@ -244,7 +241,7 @@ describe("app commands", () => {
       openedUrl = url;
     };
 
-    await expect(openServiceInBrowser(context, "api.myapp")).resolves.toBe(
+    await expect(new ProjectService(context).openInBrowser("api.myapp")).resolves.toBe(
       "Opened https://api.myapp.local/ in the default browser.",
     );
     expect(openedUrl).toBe("https://api.myapp.local/");
@@ -252,18 +249,18 @@ describe("app commands", () => {
 
   it("starts and stops Caddy using the current registry", async () => {
     const context = await createContext();
-    await addService(context, { name: "api.myapp", port: "8000" });
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
 
-    await expect(startCaddyServer(context)).resolves.toBe(
+    await expect(new CaddyService(context).start()).resolves.toBe(
       "Caddy reloaded with 1 registered service(s).",
     );
-    await expect(stopCaddyServer(context)).resolves.toBe("Caddy stopped.");
+    await expect(new CaddyService(context).stop()).resolves.toBe("Caddy stopped.");
   });
 
   it("warns before starting when the Caddy root CA is missing", async () => {
     const context = await createContext();
 
-    await expect(getCaddyStartWarnings(context)).resolves.toEqual([
+    await expect(new CaddyService(context).getStartWarnings()).resolves.toEqual([
       expect.stringContaining("Caddy local root CA certificate was not found"),
     ]);
   });
@@ -275,7 +272,7 @@ describe("app commands", () => {
     });
     await writeFile(context.paths.caddyRootCAPath, testCertificatePem, "utf8");
 
-    await expect(getCaddyStartWarnings(context)).resolves.toEqual([]);
+    await expect(new CaddyService(context).getStartWarnings()).resolves.toEqual([]);
   });
 
   it("reports when Caddy has to start instead of reload", async () => {
@@ -292,9 +289,9 @@ describe("app commands", () => {
       return { code: 0, stdout: "ok", stderr: "" };
     });
 
-    await addService(context, { name: "api.myapp", port: "8000" });
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
 
-    await expect(startCaddyServer(context)).resolves.toBe(
+    await expect(new CaddyService(context).start()).resolves.toBe(
       "Caddy started with 1 registered service(s).",
     );
   });
@@ -306,7 +303,7 @@ describe("app commands", () => {
       stderr: "caddy not found",
     }));
 
-    const output = await doctor(context);
+    const output = await new DiagnosticsService(context).doctor();
 
     expect(output).toContain("fail Caddy on PATH");
     expect(output).toContain("winget install CaddyServer.Caddy");
@@ -326,9 +323,9 @@ describe("app commands", () => {
     context.probeTcp = async (host, port) => host === "localhost" && port === 8000;
     context.probeHttps = async (url) => url === "https://api.myapp.local/";
 
-    await addService(context, { name: "api.myapp", port: "8000" });
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
 
-    const output = await status(context);
+    const output = await new DiagnosticsService(context).status();
 
     expect(output).toContain("ok Caddy on PATH");
     expect(output).toContain("ok Caddy admin endpoint on localhost:2019 is reachable");
@@ -351,7 +348,7 @@ describe("app commands", () => {
     context.probeUrl = async () => true;
     context.probeHttps = async () => true;
 
-    const output = await status(context);
+    const output = await new DiagnosticsService(context).status();
 
     expect(output).toContain("info Registered services: 0");
     expect(output).toContain("info No services registered.");
@@ -366,7 +363,7 @@ describe("app commands", () => {
       return { code: 0, stdout: "ok", stderr: "" };
     });
 
-    const output = await printCertificateInfo(context);
+    const output = await new CaddyService(context).printCertificateInfo();
 
     expect(output).toContain("warn Root CA certificate not found");
     expect(output).toContain("caddy trust");
@@ -386,7 +383,7 @@ describe("app commands", () => {
     });
     await writeFile(context.paths.caddyRootCAPath, testCertificatePem, "utf8");
 
-    const output = await printCertificateInfo(context);
+    const output = await new CaddyService(context).printCertificateInfo();
 
     expect(output).toContain("ok Root CA certificate found");
     expect(output).toContain("Subject: CN=test.local");
@@ -397,7 +394,7 @@ describe("app commands", () => {
 
   it("list --json returns registered services", async () => {
     const context = await createContext();
-    await addService(context, { name: "api.myapp", port: "8000" });
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
 
     const output = await captureCommandOutput(buildProgram(context), [
       "node",
@@ -470,7 +467,7 @@ describe("app commands", () => {
     context.probeTcp = async (host, port) => host === "localhost" && port === 8000;
     context.probeHttps = async (url) => url === "https://api.myapp.local/";
 
-    await addService(context, { name: "api.myapp", port: "8000" });
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
 
     const output = await captureCommandOutput(buildProgram(context), [
       "node",
@@ -499,7 +496,10 @@ describe("app commands", () => {
     const context = await createContext();
 
     await expect(
-      initProjectConfig(context, context.paths.appDir, { name: "my-api", port: "9090" }),
+      new RegistryService(context).initProjectConfig(context.paths.appDir, {
+        name: "my-api",
+        port: "9090",
+      }),
     ).resolves.toContain("my-api.local");
 
     const configFile = join(context.paths.appDir, ".devproxy", "config.json");
@@ -526,24 +526,33 @@ describe("app commands", () => {
     const context = await createContext();
 
     await expect(
-      initProjectConfig(context, context.paths.appDir, { name: "", port: "8080" }),
+      new RegistryService(context).initProjectConfig(context.paths.appDir, {
+        name: "",
+        port: "8080",
+      }),
     ).rejects.toThrow("Service name is required");
     await expect(
-      initProjectConfig(context, context.paths.appDir, { name: "api", port: "abc" }),
+      new RegistryService(context).initProjectConfig(context.paths.appDir, {
+        name: "api",
+        port: "abc",
+      }),
     ).rejects.toThrow("Port must be an integer");
   });
 
   it("open without name reads domain from project config", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
-    await initProjectConfig(context, projectDir, { name: "my-app", port: "8080" });
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "my-app",
+      port: "8080",
+    });
 
     let openedUrl = "";
     context.openUrl = async (url) => {
       openedUrl = url;
     };
 
-    await expect(openServiceInBrowser(context, undefined, projectDir)).resolves.toBe(
+    await expect(new ProjectService(context).openInBrowser(undefined, projectDir)).resolves.toBe(
       "Opened https://my-app.local/ in the default browser.",
     );
     expect(openedUrl).toBe("https://my-app.local/");
@@ -552,7 +561,10 @@ describe("app commands", () => {
   it("open without name warns when Vite allowedHosts is missing", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
-    await initProjectConfig(context, projectDir, { name: "my-app", port: "8080" });
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "my-app",
+      port: "8080",
+    });
     await writeFile(
       join(projectDir, "vite.config.ts"),
       [
@@ -566,15 +578,18 @@ describe("app commands", () => {
 
     context.openUrl = async () => {};
 
-    await expect(openServiceInBrowser(context, undefined, projectDir)).resolves.toContain(
-      'server.allowedHosts is not set. Add "my-app.local"',
-    );
+    await expect(
+      new ProjectService(context).openInBrowser(undefined, projectDir),
+    ).resolves.toContain('server.allowedHosts is not set. Add "my-app.local"');
   });
 
   it("open without name ignores commented Vite allowedHosts", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
-    await initProjectConfig(context, projectDir, { name: "my-app", port: "8080" });
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "my-app",
+      port: "8080",
+    });
     await writeFile(
       join(projectDir, "vite.config.ts"),
       [
@@ -592,15 +607,18 @@ describe("app commands", () => {
 
     context.openUrl = async () => {};
 
-    await expect(openServiceInBrowser(context, undefined, projectDir)).resolves.toContain(
-      'server.allowedHosts is not set. Add "my-app.local"',
-    );
+    await expect(
+      new ProjectService(context).openInBrowser(undefined, projectDir),
+    ).resolves.toContain('server.allowedHosts is not set. Add "my-app.local"');
   });
 
   it("open without name warns when Vite allowedHosts omits the project domain", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
-    await initProjectConfig(context, projectDir, { name: "my-app", port: "8080" });
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "my-app",
+      port: "8080",
+    });
     await writeFile(
       join(projectDir, "vite.config.js"),
       "export default { server: { allowedHosts: ['other.local'] } };\n",
@@ -609,15 +627,18 @@ describe("app commands", () => {
 
     context.openUrl = async () => {};
 
-    await expect(openServiceInBrowser(context, undefined, projectDir)).resolves.toContain(
-      'server.allowedHosts does not include "my-app.local"',
-    );
+    await expect(
+      new ProjectService(context).openInBrowser(undefined, projectDir),
+    ).resolves.toContain('server.allowedHosts does not include "my-app.local"');
   });
 
   it("open without name does not warn when Vite allowedHosts includes the project domain", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
-    await initProjectConfig(context, projectDir, { name: "my-app", port: "8080" });
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "my-app",
+      port: "8080",
+    });
     await writeFile(
       join(projectDir, "vite.config.ts"),
       "export default { server: { allowedHosts: ['my-app.local'] } };\n",
@@ -626,7 +647,7 @@ describe("app commands", () => {
 
     context.openUrl = async () => {};
 
-    await expect(openServiceInBrowser(context, undefined, projectDir)).resolves.toBe(
+    await expect(new ProjectService(context).openInBrowser(undefined, projectDir)).resolves.toBe(
       "Opened https://my-app.local/ in the default browser.",
     );
   });
@@ -634,24 +655,27 @@ describe("app commands", () => {
   it("open without name errors when no config exists", async () => {
     const context = await createContext();
 
-    await expect(openServiceInBrowser(context, undefined, context.paths.appDir)).rejects.toThrow(
-      "No project config found",
-    );
+    await expect(
+      new ProjectService(context).openInBrowser(undefined, context.paths.appDir),
+    ).rejects.toThrow("No project config found");
   });
 
   it("open with explicit name ignores config", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
-    await initProjectConfig(context, projectDir, { name: "config-name", port: "8080" });
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "config-name",
+      port: "8080",
+    });
 
     let openedUrl = "";
     context.openUrl = async (url) => {
       openedUrl = url;
     };
 
-    await expect(openServiceInBrowser(context, "explicit-name", projectDir)).resolves.toBe(
-      "Opened https://explicit-name.local/ in the default browser.",
-    );
+    await expect(
+      new ProjectService(context).openInBrowser("explicit-name", projectDir),
+    ).resolves.toBe("Opened https://explicit-name.local/ in the default browser.");
     expect(openedUrl).toBe("https://explicit-name.local/");
   });
 
@@ -699,7 +723,7 @@ describe("app commands", () => {
     });
     context.isElevated = async () => true;
 
-    await addService(context, { name: "api.myapp", port: "8000" });
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
 
     expect(trustCalled).toBe(true);
   });
@@ -715,7 +739,7 @@ describe("app commands", () => {
       return { code: 0, stdout: "ok", stderr: "" };
     });
 
-    await addService(context, { name: "api.myapp", port: "8000" });
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
 
     expect(trustCalled).toBe(false);
   });

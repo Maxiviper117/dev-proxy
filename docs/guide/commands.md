@@ -7,9 +7,11 @@ elevated permissions: `devproxy init`, `devproxy add`, `devproxy remove`, and
 `devproxy certs` do not modify the hosts file or trust store and should run
 without `sudo` or an elevated shell.
 
-## `devproxy init --name <name> --port <port>`
+## `devproxy init [--name <name> --port <port>]`
 
 Create a `.devproxy/config.json` file and register the service in one step.
+
+### First time (no config file)
 
 ```bash
 devproxy init --name api.myapp --port 8000
@@ -17,7 +19,33 @@ devproxy init --name api.myapp --port 8000
 
 This registers `https://api.myapp.local`, writes the project config file, updates the hosts file, generates the Caddyfile, and reloads Caddy. If the terminal is already running with elevated permissions (Administrator on Windows, `sudo` on macOS/Linux), it also runs `caddy trust` automatically so the local CA is trusted immediately.
 
-Once the config file exists, `devproxy open` can omit the name:
+### With an existing config file
+
+When `.devproxy/config.json` already exists, you can run `devproxy init` without flags to register the service from the config:
+
+```bash
+devproxy init
+```
+
+DevProxy detects the existing config and prompts:
+
+```text
+Found existing .devproxy/config.json:
+  name: api.myapp
+  port: 8000
+
+Use this config? [y/N]
+```
+
+Answering `y` registers the service using the existing config. Answering `n` aborts; provide `--name` and `--port` to overwrite with new values:
+
+```bash
+devproxy init --name newapp --port 9000
+```
+
+If flags are provided alongside an existing config, DevProxy still prompts to confirm whether to use the existing config. Declining overwrites the config with the new values.
+
+Once the config file exists, `devproxy open` can open the domain:
 
 ```bash
 devproxy open
@@ -35,21 +63,44 @@ This registers `https://api.myapp.local` and proxies it to `127.0.0.1:8000` and 
 
 Service names can be a single label or multiple labels separated by dots, such as `myapp`, `api.myapp`, or `web.myapp`. Do not include the `.local` suffix yourself.
 
-## `devproxy open [name]`
+## `devproxy open [target]`
 
-Open a registered service in your default browser.
-
-```bash
-devproxy open api.myapp
-```
-
-When `name` is omitted, it is read from `.devproxy/config.json` (see `init`):
+Open a browser target from the project's `.devproxy/config.json` in your default browser.
 
 ```bash
 devproxy open
 ```
 
-This opens `https://<name>.local/`.
+Opens the default URL for the project. When no `open.default` is set, this opens `https://<name>.local/`. When `open.default` is set to a path like `/dashboard`, this opens `https://<name>.local/dashboard`.
+
+```bash
+devproxy open docs
+```
+
+Opens the named target's path. Targets are defined in `.devproxy/config.json` under `open.targets`. For example, with this config:
+
+```json
+{
+  "name": "api.myapp",
+  "port": 8000,
+  "open": {
+    "default": "/",
+    "targets": {
+      "docs": "/docs",
+      "admin": "/admin",
+      "graphql": "/graphql"
+    }
+  }
+}
+```
+
+- `devproxy open` opens `https://api.myapp.local/` (the `default` path)
+- `devproxy open docs` opens `https://api.myapp.local/docs`
+- `devproxy open admin` opens `https://api.myapp.local/admin`
+
+If you specify a target that is not listed in `open.targets`, DevProxy shows an error with the list of available targets.
+
+The `open` command requires a `.devproxy/config.json` in the current directory. Run `devproxy init` first to create one.
 
 ## `devproxy list`
 

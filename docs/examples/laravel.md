@@ -41,8 +41,10 @@ php artisan config:clear
 
 ## Open the site
 
+From a project with `.devproxy/config.json` (created by `devproxy init`):
+
 ```bash
-devproxy open api.myapp
+devproxy open
 ```
 
 Or navigate to `https://api.myapp.local` in your browser.

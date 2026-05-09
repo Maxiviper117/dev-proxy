@@ -3,10 +3,22 @@ import { dirname, join } from "node:path";
 import { restoreSudoOwner } from "../platform/ownership.js";
 import { DevProxyError } from "./errors.js";
 
+export type OpenTargets = Record<string, string>;
+
+export type OpenConfig = {
+  default?: string;
+  targets?: OpenTargets;
+};
+
 export type DevProxyConfig = {
+  $schema?: string;
   name: string;
   port: number;
+  open?: OpenConfig;
 };
+
+const configSchemaUrl =
+  "https://raw.githubusercontent.com/Maxiviper117/dev-proxy/main/src/core/config-schema.json";
 
 const configDirName = ".devproxy";
 const configFileName = "config.json";
@@ -32,11 +44,14 @@ export async function readProjectConfig(configFile: string): Promise<DevProxyCon
   try {
     const raw = await readFile(configFile, "utf8");
     const parsed = JSON.parse(raw) as DevProxyConfig;
-    if (typeof parsed.name !== "string" || typeof parsed.port !== "number") {
+    const { $schema: _, ...config } = parsed;
+    if (typeof config.name !== "string" || typeof config.port !== "number") {
       throw new DevProxyError(
         `Invalid project config at ${configFile}. Expected 'name' (string) and 'port' (number).`,
       );
     }
+
+    validateOpenConfig(config, configFile);
 
     return parsed;
   } catch (error) {
@@ -45,6 +60,40 @@ export async function readProjectConfig(configFile: string): Promise<DevProxyCon
     }
 
     throw error;
+  }
+}
+
+function validateOpenConfig(config: DevProxyConfig, configFile: string): void {
+  if (config.open === undefined) {
+    return;
+  }
+
+  if (typeof config.open !== "object" || config.open === null) {
+    throw new DevProxyError(
+      `Invalid project config at ${configFile}. 'open' must be an object with 'default' (string) and 'targets' (object).`,
+    );
+  }
+
+  if (config.open.default !== undefined && typeof config.open.default !== "string") {
+    throw new DevProxyError(
+      `Invalid project config at ${configFile}. 'open.default' must be a string.`,
+    );
+  }
+
+  if (config.open.targets !== undefined) {
+    if (typeof config.open.targets !== "object" || config.open.targets === null) {
+      throw new DevProxyError(
+        `Invalid project config at ${configFile}. 'open.targets' must be an object mapping target names to URL paths.`,
+      );
+    }
+
+    for (const [key, value] of Object.entries(config.open.targets)) {
+      if (typeof value !== "string") {
+        throw new DevProxyError(
+          `Invalid project config at ${configFile}. 'open.targets.${key}' must be a string.`,
+        );
+      }
+    }
   }
 }
 
@@ -59,7 +108,8 @@ export async function writeProjectConfig(
 ): Promise<void> {
   await mkdir(dirname(configFile), { recursive: true });
   await restoreSudoOwner(dirname(configFile));
-  await writeFile(configFile, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+  const withSchema: DevProxyConfig = { $schema: configSchemaUrl, ...config };
+  await writeFile(configFile, `${JSON.stringify(withSchema, null, 2)}\n`, "utf8");
   await restoreSudoOwner(configFile);
 }
 

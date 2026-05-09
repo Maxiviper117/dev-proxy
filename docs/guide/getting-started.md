@@ -68,11 +68,37 @@ devproxy init --name api.myapp --port 8000
 
 This creates `.devproxy/config.json` and registers the service in one step. If the terminal is already elevated (Administrator on Windows, `sudo` on macOS/Linux), it also runs `caddy trust` automatically so the local CA is trusted immediately. Your domain is live immediately.
 
+If `.devproxy/config.json` already exists (for example, when cloning a repo), you can run `devproxy init` without flags. DevProxy detects the existing config and prompts to confirm using it to register the service.
+
 ```bash
 devproxy open
 ```
 
-Opens the domain (reads the name from config).
+Opens the domain (reads the name from project config).
+
+You can add named browser targets to `.devproxy/config.json` for common project URLs:
+
+```json
+{
+  "name": "api.myapp",
+  "port": 8000,
+  "open": {
+    "default": "/",
+    "targets": {
+      "docs": "/docs",
+      "admin": "/admin"
+    }
+  }
+}
+```
+
+Then open them by name:
+
+```bash
+devproxy open          # opens https://api.myapp.local/
+devproxy open docs     # opens https://api.myapp.local/docs
+devproxy open admin    # opens https://api.myapp.local/admin
+```
 
 ## Register a Service Manually
 
@@ -84,19 +110,7 @@ devproxy add api.myapp --port 8000
 
 This registers the domain without spawning or managing the process.
 
-Open the domain (the name is read from config when omitted):
-
-```bash
-devproxy open api.myapp
-```
-
-Or when `.devproxy/config.json` is present:
-
-```bash
-devproxy open
-```
-
-Navigate to `https://api.myapp.local` in your browser.
+To open the service in your browser, run `devproxy init` from your project directory first to create `.devproxy/config.json`, then use `devproxy open`.
 
 ## Service Name Rules
 

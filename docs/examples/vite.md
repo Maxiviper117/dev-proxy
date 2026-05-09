@@ -74,8 +74,36 @@ When Vite runs inside WSL, run DevProxy from Windows and make sure Windows can r
 
 ## Open the site
 
+From a project with `.devproxy/config.json` (created by `devproxy init`):
+
 ```bash
-devproxy open web.myapp
+devproxy open
 ```
 
 Or navigate to `https://web.myapp.local` in your browser.
+
+## Named open targets
+
+You can add named browser targets to `.devproxy/config.json` for common project URLs:
+
+```json
+{
+  "name": "web.myapp",
+  "port": 5173,
+  "open": {
+    "default": "/",
+    "targets": {
+      "docs": "/docs",
+      "admin": "/admin"
+    }
+  }
+}
+```
+
+Then open them by name:
+
+```bash
+devproxy open          # opens https://web.myapp.local/
+devproxy open docs     # opens https://web.myapp.local/docs
+devproxy open admin    # opens https://web.myapp.local/admin
+```

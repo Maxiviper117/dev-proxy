@@ -236,14 +236,20 @@ describe("app commands", () => {
     );
   });
 
-  it("opens a service domain in the default browser", async () => {
+  it("opens a service domain in the default browser using project config", async () => {
     const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "api.myapp",
+      port: "8000",
+    });
+
     let openedUrl = "";
     context.openUrl = async (url) => {
       openedUrl = url;
     };
 
-    await expect(new ProjectService(context).openInBrowser("api.myapp")).resolves.toBe(
+    await expect(new ProjectService(context).openInBrowser(undefined, projectDir)).resolves.toBe(
       "Opened https://api.myapp.local/ in the default browser.",
     );
     expect(openedUrl).toBe("https://api.myapp.local/");
@@ -576,7 +582,12 @@ describe("app commands", () => {
     const configFile = join(context.paths.appDir, ".devproxy", "config.json");
     const raw = await readFile(configFile, "utf8");
     const parsed = JSON.parse(raw);
-    expect(parsed).toEqual({ name: "my-api", port: 9090 });
+    expect(parsed).toEqual({
+      $schema:
+        "https://raw.githubusercontent.com/Maxiviper117/dev-proxy/main/src/core/config-schema.json",
+      name: "my-api",
+      port: 9090,
+    });
 
     const registry = await readFile(context.paths.registryFile, "utf8");
     const registryParsed = JSON.parse(registry);
@@ -603,6 +614,8 @@ describe("app commands", () => {
     });
     await writeFile(context.paths.hostsFile, "127.0.0.1 localhost\n", "utf8");
     await writeFile(context.paths.caddyFile, "", "utf8");
+
+    context.confirm = async () => true;
 
     await expect(
       registry.initProjectConfig(context.paths.appDir, {
@@ -636,7 +649,131 @@ describe("app commands", () => {
     ).rejects.toThrow("Port must be an integer");
   });
 
-  it("open without name reads domain from project config", async () => {
+  it("init without config or flags returns help message", async () => {
+    const context = await createContext();
+
+    await expect(
+      new RegistryService(context).initProjectConfig(context.paths.appDir, undefined),
+    ).resolves.toBe("No .devproxy/config.json found. Provide --name and --port to create one.");
+  });
+
+  it("init with existing config and no flags, when confirmed, uses existing config", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "existing-app",
+      port: "4000",
+    });
+
+    context.confirm = async () => true;
+
+    await expect(
+      new RegistryService(context).initProjectConfig(projectDir, undefined),
+    ).resolves.toContain("already registered");
+
+    const configFile = join(projectDir, ".devproxy", "config.json");
+    const raw = await readFile(configFile, "utf8");
+    const parsed = JSON.parse(raw);
+    expect(parsed).toEqual({
+      $schema:
+        "https://raw.githubusercontent.com/Maxiviper117/dev-proxy/main/src/core/config-schema.json",
+      name: "existing-app",
+      port: 4000,
+    });
+  });
+
+  it("init with existing config and no flags, when declined, aborts", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "existing-app",
+      port: "4000",
+    });
+
+    context.confirm = async () => false;
+
+    await expect(
+      new RegistryService(context).initProjectConfig(projectDir, undefined),
+    ).resolves.toBe("Initialization aborted. Provide --name and --port to create a new config.");
+  });
+
+  it("init with existing config and flags, when confirmed, uses existing config", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "original",
+      port: "3000",
+    });
+
+    context.confirm = async () => true;
+
+    await expect(
+      new RegistryService(context).initProjectConfig(projectDir, {
+        name: "new-name",
+        port: "5000",
+      }),
+    ).resolves.toContain("already registered");
+
+    const configFile = join(projectDir, ".devproxy", "config.json");
+    const raw = await readFile(configFile, "utf8");
+    const parsed = JSON.parse(raw);
+    expect(parsed.name).toBe("original");
+    expect(parsed.port).toBe(3000);
+  });
+
+  it("init with existing config and flags, when declined, overwrites with new values", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "original",
+      port: "3000",
+    });
+
+    context.confirm = async () => false;
+
+    await expect(
+      new RegistryService(context).initProjectConfig(projectDir, {
+        name: "replacement",
+        port: "5000",
+      }),
+    ).resolves.toContain("replacement.local");
+
+    const configFile = join(projectDir, ".devproxy", "config.json");
+    const raw = await readFile(configFile, "utf8");
+    const parsed = JSON.parse(raw);
+    expect(parsed.name).toBe("replacement");
+    expect(parsed.port).toBe(5000);
+  });
+
+  it("init with existing config preserves open targets", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "my-app",
+      port: "8080",
+    });
+
+    const configFile = join(projectDir, ".devproxy", "config.json");
+    const raw = await readFile(configFile, "utf8");
+    const config = JSON.parse(raw) as Record<string, unknown>;
+    config.open = { default: "/", targets: { docs: "/docs" } };
+    await writeFile(configFile, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+
+    context.confirm = async () => true;
+
+    await new RegistryService(context).initProjectConfig(projectDir, undefined);
+
+    const updated = await readFile(configFile, "utf8");
+    const updatedConfig = JSON.parse(updated);
+    expect(updatedConfig.open).toEqual({ default: "/", targets: { docs: "/docs" } });
+  });
+
+  it("open without target opens default URL when no open config", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
     await new RegistryService(context).initProjectConfig(projectDir, {
@@ -655,7 +792,90 @@ describe("app commands", () => {
     expect(openedUrl).toBe("https://my-app.local/");
   });
 
-  it("open without name warns when Vite allowedHosts is missing", async () => {
+  it("open without target uses open.default path", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "my-app",
+      port: "8080",
+    });
+
+    const configPath = join(projectDir, ".devproxy", "config.json");
+    const config = JSON.parse(await readFile(configPath, "utf8")) as Record<string, unknown>;
+    config.open = { default: "/dashboard", targets: { docs: "/docs", admin: "/admin" } };
+    await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+
+    let openedUrl = "";
+    context.openUrl = async (url) => {
+      openedUrl = url;
+    };
+
+    await expect(new ProjectService(context).openInBrowser(undefined, projectDir)).resolves.toBe(
+      "Opened https://my-app.local/dashboard in the default browser.",
+    );
+    expect(openedUrl).toBe("https://my-app.local/dashboard");
+  });
+
+  it("open with target opens the named target path", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "my-app",
+      port: "8080",
+    });
+
+    const configPath = join(projectDir, ".devproxy", "config.json");
+    const config = JSON.parse(await readFile(configPath, "utf8")) as Record<string, unknown>;
+    config.open = { default: "/dashboard", targets: { docs: "/docs", admin: "/admin" } };
+    await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+
+    let openedUrl = "";
+    context.openUrl = async (url) => {
+      openedUrl = url;
+    };
+
+    await expect(new ProjectService(context).openInBrowser("docs", projectDir)).resolves.toBe(
+      "Opened https://my-app.local/docs in the default browser.",
+    );
+    expect(openedUrl).toBe("https://my-app.local/docs");
+  });
+
+  it("open with unknown target lists available targets", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "my-app",
+      port: "8080",
+    });
+
+    const configPath = join(projectDir, ".devproxy", "config.json");
+    const config = JSON.parse(await readFile(configPath, "utf8")) as Record<string, unknown>;
+    config.open = { default: "/", targets: { docs: "/docs", admin: "/admin" } };
+    await writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+
+    context.openUrl = async () => {};
+
+    await expect(new ProjectService(context).openInBrowser("graphql", projectDir)).rejects.toThrow(
+      "Target 'graphql' not found. Available targets: docs, admin.",
+    );
+  });
+
+  it("open with target errors when no targets defined", async () => {
+    const context = await createContext();
+    const projectDir = context.paths.appDir;
+    await new RegistryService(context).initProjectConfig(projectDir, {
+      name: "my-app",
+      port: "8080",
+    });
+
+    context.openUrl = async () => {};
+
+    await expect(new ProjectService(context).openInBrowser("docs", projectDir)).rejects.toThrow(
+      "Target 'docs' not found. No targets defined",
+    );
+  });
+
+  it("open warns when Vite allowedHosts is missing", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
     await new RegistryService(context).initProjectConfig(projectDir, {
@@ -680,7 +900,7 @@ describe("app commands", () => {
     ).resolves.toContain('server.allowedHosts is not set. Add "my-app.local"');
   });
 
-  it("open without name ignores commented Vite allowedHosts", async () => {
+  it("open ignores commented Vite allowedHosts", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
     await new RegistryService(context).initProjectConfig(projectDir, {
@@ -709,7 +929,7 @@ describe("app commands", () => {
     ).resolves.toContain('server.allowedHosts is not set. Add "my-app.local"');
   });
 
-  it("open without name warns when Vite allowedHosts omits the project domain", async () => {
+  it("open warns when Vite allowedHosts omits the project domain", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
     await new RegistryService(context).initProjectConfig(projectDir, {
@@ -729,7 +949,7 @@ describe("app commands", () => {
     ).resolves.toContain('server.allowedHosts does not include "my-app.local"');
   });
 
-  it("open without name does not warn when Vite allowedHosts includes the project domain", async () => {
+  it("open does not warn when Vite allowedHosts includes the project domain", async () => {
     const context = await createContext();
     const projectDir = context.paths.appDir;
     await new RegistryService(context).initProjectConfig(projectDir, {
@@ -749,31 +969,12 @@ describe("app commands", () => {
     );
   });
 
-  it("open without name errors when no config exists", async () => {
+  it("open errors when no config exists", async () => {
     const context = await createContext();
 
     await expect(
       new ProjectService(context).openInBrowser(undefined, context.paths.appDir),
     ).rejects.toThrow("No project config found");
-  });
-
-  it("open with explicit name ignores config", async () => {
-    const context = await createContext();
-    const projectDir = context.paths.appDir;
-    await new RegistryService(context).initProjectConfig(projectDir, {
-      name: "config-name",
-      port: "8080",
-    });
-
-    let openedUrl = "";
-    context.openUrl = async (url) => {
-      openedUrl = url;
-    };
-
-    await expect(
-      new ProjectService(context).openInBrowser("explicit-name", projectDir),
-    ).resolves.toBe("Opened https://explicit-name.local/ in the default browser.");
-    expect(openedUrl).toBe("https://explicit-name.local/");
   });
 
   it("trust command reports already trusted when certificate exists", async () => {

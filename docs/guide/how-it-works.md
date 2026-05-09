@@ -41,10 +41,37 @@ When you run `devproxy init --name <name> --port <port>` from your project root,
 .devproxy/config.json
 ```
 
-This file stores the project's service name and port. Once present, `devproxy open` can read the name from it, letting you open the domain without repeating the name:
+This file stores the project's service name, port, and optional open targets. When the config already exists (for example, when a teammate clones the repo), run `devproxy init` without flags and DevProxy will prompt to register using the existing config.
+
+Once the config is present, `devproxy open` reads the name from it:
 
 ```bash
 devproxy open          # domain from config
+```
+
+You can also add named browser targets to the config for quick access to common project URLs:
+
+```json
+{
+  "name": "api.myapp",
+  "port": 8000,
+  "open": {
+    "default": "/",
+    "targets": {
+      "docs": "/docs",
+      "admin": "/admin",
+      "graphql": "/graphql"
+    }
+  }
+}
+```
+
+Then open them by name:
+
+```bash
+devproxy open          # opens https://api.myapp.local/
+devproxy open docs     # opens https://api.myapp.local/docs
+devproxy open admin    # opens https://api.myapp.local/admin
 ```
 
 ## Managed Files

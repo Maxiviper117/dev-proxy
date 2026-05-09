@@ -105,7 +105,9 @@ pnpm pack --dry-run
 ## Product Defaults
 
 - MVP mode is attach-first: users provide a port with `devproxy add <name> --port <port>`.
+- `devproxy init [--name <name> --port <port>]` creates `.devproxy/config.json` and registers the service. When the config already exists, running `devproxy init` without flags prompts to confirm using the existing config. Declining with `--name` and `--port` provided overwrites the config.
 - Domain derivation is `<name>.local`; for example, `api.myapp` becomes `api.myapp.local`.
+- `devproxy open [target]` opens a browser target from `.devproxy/config.json`. Without a target, opens `open.default` or `/`. With a target name, opens the corresponding path from `open.targets`. Requires `.devproxy/config.json`.
 - `devproxy start` starts or reloads Caddy from the current registry.
 - `devproxy status` reports Caddy running state, registered services, and upstream reachability.
 - `devproxy doctor` warns when the DevProxy-owned hosts block has drifted from the global registry.

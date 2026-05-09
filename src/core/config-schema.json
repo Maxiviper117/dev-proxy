@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Maxiviper117/dev-proxy/main/src/core/config-schema.json",
+  "title": "DevProxy Project Config",
+  "description": "Configuration for a DevProxy project, stored in .devproxy/config.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema URI for editor validation and autocomplete."
+    },
+    "name": {
+      "type": "string",
+      "description": "Service name used to derive the .local domain. For example, 'api.myapp' becomes 'api.myapp.local'.",
+      "minLength": 1
+    },
+    "port": {
+      "type": "integer",
+      "description": "Local port the proxy forwards traffic to.",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "open": {
+      "type": "object",
+      "description": "Named browser targets for 'devproxy open'.",
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "string",
+          "description": "Path opened by 'devproxy open' with no target argument. Defaults to '/' if omitted."
+        },
+        "targets": {
+          "type": "object",
+          "description": "Named paths opened by 'devproxy open <target>'. Keys are target names, values are URL paths.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": ["name", "port"]
+}

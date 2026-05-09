@@ -45,9 +45,10 @@ export class AttachServiceRegistrar {
       }
 
       const prompt = this.context.confirm ?? confirm;
-      const confirmed = await prompt(
-        `Service '${existing.name}' already exists for ${existing.domain} on port ${existing.port}. Overwrite with port ${port}? [y/N] `,
-      );
+      const confirmed = await prompt({
+        message: `Service '${existing.name}' already exists for ${existing.domain} on port ${existing.port}. Overwrite with port ${port}?`,
+        default: false,
+      });
       if (!confirmed) {
         return { changed: false, message: "Registration aborted." };
       }

@@ -35,7 +35,7 @@ export type HttpsProbe = (url: string) => Promise<boolean>;
 
 export type BrowserOpener = (url: string) => Promise<void>;
 
-export type ConfirmFn = (message: string) => Promise<boolean>;
+export type ConfirmFn = (config: { message: string; default?: boolean }) => Promise<boolean>;
 
 export type ElevationChecker = () => Promise<boolean>;
 

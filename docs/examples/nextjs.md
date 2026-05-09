@@ -46,8 +46,10 @@ NEXT_PUBLIC_SITE_URL=https://web.myapp.local
 
 ## Open the site
 
+From a project with `.devproxy/config.json` (created by `devproxy init`):
+
 ```bash
-devproxy open web.myapp
+devproxy open
 ```
 
 Or navigate to `https://web.myapp.local` in your browser.

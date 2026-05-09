@@ -4,8 +4,9 @@ Stable HTTPS `.local` domains for local development on Windows, macOS, and Linux
 
 ## Features
 
-- **`devproxy init`** — create project config and register a domain in one command
-- **Project-local config** with `.devproxy/config.json` — store name and port so `open` needs zero arguments
+- **`devproxy init`** — create project config and register a domain in one command; re-run in an existing project to register from config
+- **Project-local config** with `.devproxy/config.json` — store name, port, and named browser targets so `open` needs zero arguments
+- **Named open targets** — `devproxy open docs` opens `/docs`, `devproxy open admin` opens `/admin`, and so on
 - **Attach-mode services** with `devproxy add` — proxy stable domains to already-running servers
 - **`.local` domain generation** for readable local URLs
 - **Hosts-file management** inside a safe, managed block

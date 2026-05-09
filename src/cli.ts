@@ -91,20 +91,17 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
 
   program
     .command("init")
-    .requiredOption("--name <name>", "service name, for example api.myapp")
-    .requiredOption("--port <port>", "local port")
+    .option("--name <name>", "service name, for example api.myapp")
+    .option("--port <port>", "local port")
     .description("Initialize DevProxy for the current project and register its domain.")
-    .action(async (options: { name: string; port: string }) => {
+    .action(async (options: { name?: string; port?: string }) => {
       const { renderSuccess } = await getUi();
       const { registry } = await getServiceInstances();
-      console.log(
-        renderSuccess(
-          await registry.initProjectConfig(process.cwd(), {
-            name: options.name,
-            port: options.port,
-          }),
-        ),
-      );
+      const input =
+        options.name !== undefined && options.port !== undefined
+          ? { name: options.name, port: options.port }
+          : undefined;
+      console.log(renderSuccess(await registry.initProjectConfig(process.cwd(), input)));
     });
 
   program
@@ -130,12 +127,12 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     });
 
   program
-    .command("open [name]")
-    .description("Open the service domain in the default browser.")
-    .action(async (name?: string) => {
+    .command("open [target]")
+    .description("Open a named browser target from .devproxy/config.json in the default browser.")
+    .action(async (target?: string) => {
       const { renderSuccess } = await getUi();
       const { project } = await getServiceInstances();
-      console.log(renderSuccess(await project.openInBrowser(name)));
+      console.log(renderSuccess(await project.openInBrowser(target)));
     });
 
   program

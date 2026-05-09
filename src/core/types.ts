@@ -37,6 +37,13 @@ export type BrowserOpener = (url: string) => Promise<void>;
 
 export type ConfirmFn = (config: { message: string; default?: boolean }) => Promise<boolean>;
 
+export type CheckboxFn = (config: {
+  message: string;
+  searchable?: boolean;
+  source: (answersSoFar: unknown, input?: string) => Promise<{ name: string; value: string }[]>;
+  required?: boolean;
+}) => Promise<string[]>;
+
 export type ElevationChecker = () => Promise<boolean>;
 
 export type DevProxyContext = {
@@ -49,5 +56,6 @@ export type DevProxyContext = {
   probeHttps?: HttpsProbe;
   openUrl?: BrowserOpener;
   confirm?: ConfirmFn;
+  checkbox?: CheckboxFn;
   isElevated?: ElevationChecker;
 };

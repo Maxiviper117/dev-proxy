@@ -126,9 +126,11 @@ This reports:
 - How many services are registered
 - Whether each service's `localhost:<port>` and `127.0.0.1:<port>` upstreams respond
 
-## `devproxy remove <name>`
+## `devproxy remove [name]`
 
-Remove a registered service.
+Remove one or more registered services.
+
+### Direct removal
 
 ```bash
 devproxy remove api.myapp
@@ -136,7 +138,27 @@ devproxy remove api.myapp
 
 Alias: `devproxy rm api.myapp`
 
-This removes the registry entry, rewrites the DevProxy hosts-file block, regenerates the Caddyfile, and reloads Caddy.
+Removes the registry entry, rewrites the DevProxy hosts-file block, regenerates the Caddyfile, and reloads Caddy.
+
+### Interactive removal
+
+```bash
+devproxy remove
+```
+
+Running without a service name opens an interactive, searchable prompt where you can type to filter and select one or more services to remove with the space bar. A confirmation prompt appears before removal.
+
+### Remove all services
+
+```bash
+devproxy remove --all
+```
+
+Removes every registered service. This shows a double-confirmation warning listing all services that will be removed before proceeding.
+
+### Elevation guard
+
+All three forms require write access to the system hosts file. On Windows, the command also checks whether the terminal is running as Administrator. If the hosts file is not writable or the terminal lacks elevation, the command fails immediately with platform-specific instructions — before any interactive prompts appear.
 
 ## `devproxy doctor`
 

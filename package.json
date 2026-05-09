@@ -44,7 +44,7 @@
   },
   "scripts": {
     "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\"",
-    "build": "pnpm clean && tsc -p tsconfig.build.json",
+    "build": "pnpm clean && tsc -p tsconfig.build.json && node -e \"fs.cpSync('src/core/config-schema.json', 'dist/core/config-schema.json')\"",
     "typecheck": "tsc -p tsconfig.build.json --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run",
     "lint": "oxlint",

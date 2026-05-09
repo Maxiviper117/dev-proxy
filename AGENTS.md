@@ -92,6 +92,10 @@ pnpm pack --dry-run
 
 - Keep `AGENTS.md` up to date after any project change that affects setup, commands,
   architecture, safety rules, or contributor workflow.
+- Keep `src/core/config-schema.json` in sync when the `.devproxy/config.json` shape
+  changes (new fields, renamed fields, or type changes). The schema is copied to
+  `dist/` during `pnpm build` and referenced via a `$schema` field in every
+  generated config file.
 - Do not touch the real system hosts file in tests.
 - Keep filesystem paths and command execution injectable through `DevProxyContext`.
 - Tests should use temp directories and mocked `CommandRunner` implementations.

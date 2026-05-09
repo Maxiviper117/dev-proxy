@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { restoreSudoOwner } from "../platform/ownership.js";
 import { DevProxyError } from "./errors.js";
 
@@ -17,8 +18,8 @@ export type DevProxyConfig = {
   open?: OpenConfig;
 };
 
-const configSchemaUrl =
-  "https://raw.githubusercontent.com/Maxiviper117/dev-proxy/main/src/core/config-schema.json";
+const configSchemaFile = join(dirname(fileURLToPath(import.meta.url)), "config-schema.json");
+const configSchemaUrl = pathToFileURL(configSchemaFile).href;
 
 const configDirName = ".devproxy";
 const configFileName = "config.json";

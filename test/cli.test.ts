@@ -582,12 +582,8 @@ describe("app commands", () => {
     const configFile = join(context.paths.appDir, ".devproxy", "config.json");
     const raw = await readFile(configFile, "utf8");
     const parsed = JSON.parse(raw);
-    expect(parsed).toEqual({
-      $schema:
-        "https://raw.githubusercontent.com/Maxiviper117/dev-proxy/main/src/core/config-schema.json",
-      name: "my-api",
-      port: 9090,
-    });
+    expect(parsed).toMatchObject({ name: "my-api", port: 9090 });
+    expect(parsed.$schema).toMatch(/config-schema\.json$/);
 
     const registry = await readFile(context.paths.registryFile, "utf8");
     const registryParsed = JSON.parse(registry);
@@ -675,12 +671,8 @@ describe("app commands", () => {
     const configFile = join(projectDir, ".devproxy", "config.json");
     const raw = await readFile(configFile, "utf8");
     const parsed = JSON.parse(raw);
-    expect(parsed).toEqual({
-      $schema:
-        "https://raw.githubusercontent.com/Maxiviper117/dev-proxy/main/src/core/config-schema.json",
-      name: "existing-app",
-      port: 4000,
-    });
+    expect(parsed).toMatchObject({ name: "existing-app", port: 4000 });
+    expect(parsed.$schema).toMatch(/config-schema\.json$/);
   });
 
   it("init with existing config and no flags, when declined, aborts", async () => {

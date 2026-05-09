@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.22.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.21.1...devproxy-v0.22.0) (2026-05-09)
+
+
+### Features
+
+* interactive service removal with searchable checkbox prompt ([#68](https://github.com/Maxiviper117/dev-proxy/issues/68)) ([de97db1](https://github.com/Maxiviper117/dev-proxy/commit/de97db164dc1d38bf7f210bec4469e9341fe5a7e))
+
 ## [0.21.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.21.0...devproxy-v0.21.1) (2026-05-09)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.21.0...devproxy-v0.21.1) (2026-05-09)
+
+
+### Bug Fixes
+
+* use local file URI for config  instead of GitHub raw URL ([#66](https://github.com/Maxiviper117/dev-proxy/issues/66)) ([bf80554](https://github.com/Maxiviper117/dev-proxy/commit/bf8055428db8fce39595aef977c3288f793996e9))
+
 ## [0.21.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.20.0...devproxy-v0.21.0) (2026-05-09)
 
 

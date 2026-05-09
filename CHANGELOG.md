@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.20.0...devproxy-v0.21.0) (2026-05-09)
+
+
+### Features
+
+* add open targets, config re-use init, and JSON schema ([#64](https://github.com/Maxiviper117/dev-proxy/issues/64)) ([ea604bf](https://github.com/Maxiviper117/dev-proxy/commit/ea604bf7909a3af3dcf5cb6a021e50c8375d2d22))
+
 ## [0.20.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.19.0...devproxy-v0.20.0) (2026-05-08)
 
 

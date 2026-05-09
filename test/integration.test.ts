@@ -177,6 +177,24 @@ describe("integration: add and remove services through command stack", () => {
       DevProxyError,
     );
   });
+
+  it("removes all services end-to-end", async () => {
+    await new RegistryService(temp.ctx).addService({ name: "svc1", port: "3001" });
+    await new RegistryService(temp.ctx).addService({ name: "svc2", port: "3002" });
+
+    temp.ctx.confirm = async () => true;
+
+    const result = await new RegistryService(temp.ctx).removeAllServices();
+
+    expect(result).toBe("Removed all 2 registered service(s).");
+
+    const registry = await readRegistry(temp.paths.registryFile);
+    expect(registry.services).toHaveLength(0);
+
+    const hosts = await readFile(temp.paths.hostsFile, "utf8");
+    expect(hosts).not.toContain("svc1.local");
+    expect(hosts).not.toContain("svc2.local");
+  });
 });
 
 describe("integration: list and status with stub Caddy", () => {

@@ -117,13 +117,21 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
 
   program
     .command("remove")
-    .argument("<name>", "registered service name")
+    .argument("[name]", "registered service name (omit for interactive selection)")
     .alias("rm")
-    .description("Remove a registered service.")
-    .action(async (name: string) => {
+    .option("--all", "remove all registered services")
+    .description("Remove registered service(s).")
+    .action(async (name: string | undefined, options: { all?: boolean }) => {
       const { renderSuccess } = await getUi();
       const { registry } = await getServiceInstances();
-      console.log(renderSuccess(await registry.removeRegisteredService(name)));
+
+      if (name) {
+        console.log(renderSuccess(await registry.removeRegisteredService(name)));
+      } else if (options.all) {
+        console.log(renderSuccess(await registry.removeAllServices()));
+      } else {
+        console.log(renderSuccess(await registry.interactiveRemove()));
+      }
     });
 
   program

@@ -121,6 +121,35 @@ export function removeService(
 }
 
 /**
+ * Remove multiple services from the registry by name.
+ *
+ * Filters out each named service, collects the removed entries, and returns
+ * the updated registry alongside the removed list. Throws when no matching
+ * services are found.
+ *
+ * @throws {DevProxyError} When no matching services are found.
+ */
+export function removeServices(
+  registry: Registry,
+  names: string[],
+): { registry: Registry; removed: Service[] } {
+  const removed: Service[] = [];
+  const remaining = registry.services.filter((service) => {
+    if (names.includes(service.name)) {
+      removed.push(service);
+      return false;
+    }
+    return true;
+  });
+
+  if (removed.length === 0) {
+    throw new DevProxyError("No matching services found.");
+  }
+
+  return { removed, registry: { ...registry, services: remaining } };
+}
+
+/**
  * Determine whether an unknown error indicates a missing file.
  *
  * Checks for the `ENOENT` error code commonly raised by Node.js filesystem

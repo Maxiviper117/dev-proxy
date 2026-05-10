@@ -226,10 +226,10 @@ describe("integration: list and status with stub Caddy", () => {
   });
 
   it("runs doctor with stub Caddy", async () => {
-    const result = await new DiagnosticsService(temp.ctx).doctor();
+    const data = await new DiagnosticsService(temp.ctx).getDoctorData();
 
-    expect(result).toContain("ok Supported platform");
-    expect(result).toContain("ok Caddy on PATH");
+    expect(data.platform).toBe("linux");
+    expect(data.caddyOnPath).toBe(true);
   });
 
   it("returns status data with stub probes", async () => {

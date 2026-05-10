@@ -5,7 +5,8 @@ elevated permissions: `devproxy init`, `devproxy add`, `devproxy remove`, and
 `devproxy trust`. Commands such as `devproxy start`, `devproxy stop`,
 `devproxy open`, `devproxy list`, `devproxy status`, `devproxy doctor`, and
 `devproxy certs` do not modify the hosts file or trust store and should run
-without `sudo` or an elevated shell.
+without `sudo` or an elevated shell. Adding `--fix` to `devproxy doctor`
+may require elevation for some fixes (hosts sync and cert trust).
 
 ## `devproxy init [--name <name> --port <port>]`
 
@@ -179,6 +180,59 @@ This reports:
 
 If the DevProxy hosts block has drifted from the registry, `doctor` warns and
 suggests `devproxy sync-hosts`.
+
+### `--json`
+
+Output diagnostic data as JSON:
+
+```bash
+devproxy doctor --json
+```
+
+### `--fix`
+
+Automatically fix detected issues where possible:
+
+```bash
+devproxy doctor --fix
+```
+
+When Caddy is installed, the following issues can be fixed:
+
+| Issue | Fix | Elevation |
+|-------|-----|-----------|
+| Hosts entries out of sync with registry | Rewrites the DevProxy hosts block | Required |
+| Caddy not running with registered services | Starts or reloads Caddy | Not required |
+| Root CA certificate missing | Runs `caddy trust` | Required |
+
+Fixes that require elevation and are run in a non-elevated terminal are
+reported as needing manual action, with platform-specific instructions.
+
+Each fixable issue prompts individually so you can approve or skip fixes one at
+a time.
+
+### `--non-interactive`
+
+Skip confirmation prompts (useful in CI):
+
+```bash
+devproxy doctor --fix --non-interactive
+```
+
+In non-interactive mode, all safe fixes are applied automatically. Fixes that
+require elevation become manual items with clear instructions.
+
+### `--fix --json`
+
+Returns structured fix results alongside diagnostic data:
+
+```bash
+devproxy doctor --fix --json
+```
+
+The JSON output includes a `fixResult` with an `items` array (each entry has
+`action`, `status`, and `detail`) and counts of `fixed`, `skipped`, and
+`manual` items.
 
 ## `devproxy sync-hosts`
 

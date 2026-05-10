@@ -54,6 +54,9 @@ Also run:
 devproxy doctor
 ```
 
+When issues are detected, `devproxy doctor --fix` can automatically fix
+several common problems (hosts drift, Caddy not running, missing root CA).
+
 ## Proxy cannot reach the upstream app
 
 Confirm the service is reachable from the host running DevProxy:

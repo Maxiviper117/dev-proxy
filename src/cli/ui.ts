@@ -1,5 +1,11 @@
 import chalk from "chalk";
-import type { DoctorData, StatusData, StatusServiceData } from "../commands/services.js";
+import type {
+  DoctorData,
+  DoctorFixItem,
+  DoctorFixResult,
+  StatusData,
+  StatusServiceData,
+} from "../commands/services.js";
 import type { Service } from "../core/types.js";
 
 type Tone = "ok" | "warn" | "fail" | "hint" | "info" | "error";
@@ -57,7 +63,10 @@ export function renderList(data: { services: Service[] }): string {
 /**
  * Render doctor output using structured diagnostic data.
  */
-export function renderDoctor(data: DoctorData, version: string): string {
+export function renderDoctor(
+  data: DoctorData & { fixResult?: DoctorFixResult },
+  version: string,
+): string {
   const supportedPlatform =
     data.platform === "win32" || data.platform === "darwin" || data.platform === "linux";
   const sections = [
@@ -96,6 +105,21 @@ export function renderDoctor(data: DoctorData, version: string): string {
         "Hints",
         "yellow",
         data.hints.map((hint) => renderStatusRow("hint", hint)).join("\n"),
+      ),
+    );
+  }
+
+  if (data.fixResult && data.fixResult.items.length > 0) {
+    sections.push(
+      renderSection(
+        "Fixes",
+        "magenta",
+        [
+          ...data.fixResult.items.map(renderFixItem),
+          chalk.bold(
+            `Fixed: ${data.fixResult.fixed}, Skipped: ${data.fixResult.skipped}, Manual: ${data.fixResult.manual}`,
+          ),
+        ].join("\n"),
       ),
     );
   }
@@ -268,6 +292,16 @@ function splitLabelAndValue(message: string): { label: string; value: string } |
     label: message.slice(0, separatorIndex),
     value: message.slice(separatorIndex + 1).trimStart(),
   };
+}
+
+function renderFixItem(item: DoctorFixItem): string {
+  const statusLabel =
+    item.status === "fixed"
+      ? chalk.green("✓ fixed")
+      : item.status === "skipped"
+        ? chalk.yellow("○ skipped")
+        : chalk.red("✗ manual");
+  return `${statusLabel} ${chalk.bold(item.action)}\n${chalk.dim(`  ${item.detail}`)}`;
 }
 
 function chalkColor(color: string): typeof chalk {

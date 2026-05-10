@@ -161,15 +161,28 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
   program
     .command("doctor")
     .option("--json", "Output in JSON format")
+    .option("--fix", "Attempt to automatically fix detected issues")
+    .option("--non-interactive", "Skip confirmation prompts (for CI)")
     .description("Check local DevProxy prerequisites.")
-    .action(async (options: { json?: boolean }) => {
+    .action(async (options: { json?: boolean; fix?: boolean; nonInteractive?: boolean }) => {
       const { diagnostics } = await getServiceInstances();
+      const fixOptions: { fix?: boolean; autoConfirm?: boolean } = {};
+      if (options.fix) {
+        fixOptions.fix = true;
+      }
+      if (options.nonInteractive) {
+        fixOptions.autoConfirm = true;
+      }
+      const data = await diagnostics.doctor(
+        fixOptions.fix !== undefined || fixOptions.autoConfirm !== undefined
+          ? fixOptions
+          : undefined,
+      );
       if (options.json) {
-        const data = await diagnostics.getDoctorData();
         console.log(JSON.stringify({ version: cliVersion, ...data }, null, 2));
       } else {
         const { renderDoctor } = await getUi();
-        console.log(renderDoctor(await diagnostics.getDoctorData(), cliVersion));
+        console.log(renderDoctor(data, cliVersion));
       }
     });
 

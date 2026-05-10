@@ -1,4 +1,5 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DiagnosticsService, RegistryService } from "../src/commands/services.js";
 import { createContext, createContextWithRunner } from "./helpers/test-helpers.js";
@@ -31,11 +32,12 @@ describe("diagnostics commands", () => {
       stderr: "caddy not found",
     }));
 
-    const output = await new DiagnosticsService(context).doctor();
+    const data = await new DiagnosticsService(context).getDoctorData();
 
-    expect(output).toContain("fail Caddy not on PATH");
-    expect(output).toContain("winget install CaddyServer.Caddy");
-    expect(output).toContain("brew install caddy");
+    expect(data.caddyOnPath).toBe(false);
+    expect(data.hints.length).toBeGreaterThan(0);
+    expect(data.hints[0]).toContain("winget install CaddyServer.Caddy");
+    expect(data.hints[0]).toContain("brew install caddy");
   });
 
   it("reports Caddy and upstream status", async () => {
@@ -249,5 +251,260 @@ describe("diagnostics commands", () => {
       loopbackReachable: false,
     });
     expect(parsed.hints).toEqual([]);
+  });
+
+  it("doctor --fix syncs hosts drift", async () => {
+    const context = await createContext();
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+    await writeFile(
+      context.paths.hostsFile,
+      [
+        "127.0.0.1 localhost",
+        "# BEGIN DEVPROXY",
+        "127.0.0.1 stale.local",
+        "# END DEVPROXY",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const result = await new DiagnosticsService(context).doctor({
+      fix: true,
+      autoConfirm: true,
+    });
+
+    expect(result.fixResult).toBeDefined();
+    expect(
+      result.fixResult!.items.some((i) => i.action === "Hosts drift" && i.status === "fixed"),
+    ).toBe(true);
+
+    const hosts = await readFile(context.paths.hostsFile, "utf8");
+    expect(hosts).toContain("127.0.0.1 api.myapp.local");
+    expect(hosts).not.toContain("stale.local");
+  });
+
+  it("doctor --fix prompts before fixing", async () => {
+    const context = await createContext();
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+    await writeFile(
+      context.paths.hostsFile,
+      [
+        "127.0.0.1 localhost",
+        "# BEGIN DEVPROXY",
+        "127.0.0.1 stale.local",
+        "# END DEVPROXY",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    context.confirm = async () => false;
+
+    const result = await new DiagnosticsService(context).doctor({ fix: true });
+
+    expect(result.fixResult).toBeDefined();
+    expect(
+      result.fixResult!.items.some((i) => i.action === "Hosts drift" && i.status === "skipped"),
+    ).toBe(true);
+  });
+
+  it("doctor --fix calls confirm when available on context", async () => {
+    const context = await createContext();
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+    await writeFile(
+      context.paths.hostsFile,
+      [
+        "127.0.0.1 localhost",
+        "# BEGIN DEVPROXY",
+        "127.0.0.1 stale.local",
+        "# END DEVPROXY",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const confirmCalls: { message: string; default: boolean | undefined }[] = [];
+    context.confirm = async (opts) => {
+      confirmCalls.push({ message: opts.message, default: opts.default });
+      return true;
+    };
+
+    const result = await new DiagnosticsService(context).doctor({ fix: true });
+
+    expect(confirmCalls.length).toBeGreaterThanOrEqual(1);
+    expect(confirmCalls.some((c) => c.message.includes("Hosts entries"))).toBe(true);
+    expect(
+      result.fixResult!.items.some((i) => i.action === "Hosts drift" && i.status === "fixed"),
+    ).toBe(true);
+  });
+
+  it("doctor --fix confirm prompt has correct default value", async () => {
+    const context = await createContext();
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+    await writeFile(
+      context.paths.hostsFile,
+      [
+        "127.0.0.1 localhost",
+        "# BEGIN DEVPROXY",
+        "127.0.0.1 stale.local",
+        "# END DEVPROXY",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    let capturedDefault: boolean | undefined;
+    context.confirm = async (opts) => {
+      capturedDefault = opts.default;
+      return true;
+    };
+
+    await new DiagnosticsService(context).doctor({ fix: true });
+
+    expect(capturedDefault).toBe(true);
+  });
+
+  it("doctor --fix --non-interactive skips prompts", async () => {
+    const context = await createContext();
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+    await writeFile(
+      context.paths.hostsFile,
+      [
+        "127.0.0.1 localhost",
+        "# BEGIN DEVPROXY",
+        "127.0.0.1 stale.local",
+        "# END DEVPROXY",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const result = await new DiagnosticsService(context).doctor({
+      fix: true,
+      autoConfirm: true,
+    });
+
+    expect(result.fixResult!.fixed).toBeGreaterThanOrEqual(1);
+    expect(
+      result.fixResult!.items.some((i) => i.action === "Hosts drift" && i.status === "fixed"),
+    ).toBe(true);
+  });
+
+  it("doctor --fix trusts cert when elevated", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "trust") {
+        await mkdir(dirname(context.paths.caddyRootCAPath), { recursive: true });
+        await writeFile(context.paths.caddyRootCAPath, "mock-cert", "utf8");
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      if (args[0] === "version") {
+        return { code: 0, stdout: "v2.8.4", stderr: "" };
+      }
+      return { code: 0, stdout: "", stderr: "" };
+    });
+    context.isElevated = async () => true;
+
+    const result = await new DiagnosticsService(context).doctor({
+      fix: true,
+      autoConfirm: true,
+    });
+
+    expect(result.fixResult).toBeDefined();
+    expect(
+      result.fixResult!.items.some((i) => i.action === "Root CA trust" && i.status === "fixed"),
+    ).toBe(true);
+  });
+
+  it("doctor --fix shows cert manual when not elevated", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "v2.8.4", stderr: "" };
+      }
+      return { code: 0, stdout: "", stderr: "" };
+    });
+    context.isElevated = async () => false;
+
+    const result = await new DiagnosticsService(context).doctor({
+      fix: true,
+      autoConfirm: true,
+    });
+
+    expect(
+      result.fixResult!.items.some((i) => i.action === "Root CA trust" && i.status === "manual"),
+    ).toBe(true);
+  });
+
+  it("doctor --fix starts caddy when services exist", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "v2.8.4", stderr: "" };
+      }
+      if (args[0] === "validate") {
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      if (args[0] === "reload") {
+        return {
+          code: 1,
+          stdout: "",
+          stderr: "connect: connection refused localhost:2019",
+        };
+      }
+      if (args[0] === "start") {
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      return { code: 0, stdout: "", stderr: "" };
+    });
+    context.probeUrl = async () => false;
+
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+
+    const result = await new DiagnosticsService(context).doctor({
+      fix: true,
+      autoConfirm: true,
+    });
+
+    expect(
+      result.fixResult!.items.some((i) => i.action === "Caddy start" && i.status === "fixed"),
+    ).toBe(true);
+  });
+
+  it("doctor --fix --json returns structured fix result", async () => {
+    const context = await createContext();
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "doctor",
+      "--fix",
+      "--non-interactive",
+      "--json",
+    ]);
+
+    const parsed = JSON.parse(output);
+    expect(parsed.fixResult).toBeDefined();
+    expect(parsed.fixResult.fixed).toBeGreaterThanOrEqual(0);
+    expect(parsed.fixResult.skipped).toBeGreaterThanOrEqual(0);
+    expect(parsed.fixResult.manual).toBeGreaterThanOrEqual(0);
+    expect(Array.isArray(parsed.fixResult.items)).toBe(true);
+  });
+
+  it("doctor --fix marks missing Caddy as manual", async () => {
+    const context = await createContextWithRunner(async () => ({
+      code: 127,
+      stdout: "",
+      stderr: "caddy not found",
+    }));
+
+    const result = await new DiagnosticsService(context).doctor({
+      fix: true,
+      autoConfirm: true,
+    });
+
+    expect(
+      result.fixResult!.items.some(
+        (i) => i.action === "Caddy installation" && i.status === "manual",
+      ),
+    ).toBe(true);
   });
 });

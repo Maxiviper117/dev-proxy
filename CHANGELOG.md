@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.22.0...devproxy-v0.23.0) (2026-05-10)
+
+
+### Features
+
+* add devproxy doctor --fix ([#70](https://github.com/Maxiviper117/dev-proxy/issues/70)) ([e7355df](https://github.com/Maxiviper117/dev-proxy/commit/e7355df51b146ee86516fecc6897e15973e4c670))
+
 ## [0.22.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.21.1...devproxy-v0.22.0) (2026-05-09)
 
 

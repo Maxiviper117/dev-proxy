@@ -1,4 +1,6 @@
-import { stat } from "node:fs/promises";
+import { mkdtemp, rm, stat, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   caddyInstallHint,
   ensureCaddyTrusted,
@@ -17,6 +19,17 @@ import { probeHttpsUrl, probeTcpPort, probeUrl } from "../../platform/probes.js"
 import { readRegistry } from "../../core/registry.js";
 import type { DevProxyContext } from "../../core/types.js";
 
+export type CaddyValidationResult = {
+  valid: boolean;
+  error?: string;
+  skipped?: boolean;
+};
+
+export type DuplicatePortEntry = {
+  port: number;
+  services: string[];
+};
+
 export type DoctorData = {
   platform: string;
   caddyOnPath: boolean;
@@ -25,6 +38,8 @@ export type DoctorData = {
   registryPath: string;
   caddyfilePath: string;
   caddyfilePreview: string;
+  caddyValidation: CaddyValidationResult;
+  duplicatePorts: DuplicatePortEntry[];
   hints: string[];
 };
 
@@ -265,6 +280,55 @@ export class DiagnosticsService {
       hints.push("Run 'devproxy sync-hosts' from an elevated terminal to align hosts.");
     }
 
+    // Caddy config validation
+    let caddyValidation: CaddyValidationResult;
+    if (!caddyOnPath) {
+      caddyValidation = { valid: false, skipped: true };
+    } else if (registry.services.length === 0) {
+      caddyValidation = { valid: true, skipped: true };
+    } else {
+      const tmpDir = await mkdtemp(join(tmpdir(), "devproxy-validate-"));
+      const tmpCaddyfile = join(tmpDir, "Caddyfile");
+      try {
+        await writeFile(tmpCaddyfile, generateCaddyfile(registry.services), "utf8");
+        const result = await this.context.run("caddy", ["validate", "--config", tmpCaddyfile]);
+        caddyValidation =
+          result.code === 0
+            ? { valid: true }
+            : { valid: false, error: result.stderr || result.stdout };
+      } catch (error) {
+        caddyValidation = {
+          valid: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      } finally {
+        await rm(tmpDir, { recursive: true, force: true }).catch(() => undefined);
+      }
+    }
+
+    // Duplicate port detection
+    const portMap = new Map<number, string[]>();
+    for (const service of registry.services) {
+      const existing = portMap.get(service.port) ?? [];
+      existing.push(service.name);
+      portMap.set(service.port, existing);
+    }
+    const duplicatePorts: DuplicatePortEntry[] = [];
+    for (const [port, services] of portMap) {
+      if (services.length > 1) {
+        duplicatePorts.push({ port, services });
+      }
+    }
+
+    if (!caddyValidation.valid && !caddyValidation.skipped) {
+      hints.push("Caddy config validation failed. Fix the errors above before starting DevProxy.");
+    }
+    for (const dup of duplicatePorts) {
+      hints.push(
+        `Port conflict: port ${dup.port} is used by multiple services (${dup.services.join(", ")}). Run 'devproxy update <name> --port <port>' to resolve.`,
+      );
+    }
+
     return {
       platform: this.context.platform,
       caddyOnPath,
@@ -273,6 +337,8 @@ export class DiagnosticsService {
       registryPath: this.context.paths.registryFile,
       caddyfilePath: this.context.paths.caddyFile,
       caddyfilePreview: generateCaddyfile(registry.services),
+      caddyValidation,
+      duplicatePorts,
       hints,
     };
   }

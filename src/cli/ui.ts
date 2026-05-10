@@ -95,6 +95,17 @@ export function renderDoctor(
         ),
         renderInfoRow("Registry", data.registryPath),
         renderInfoRow("Caddyfile", data.caddyfilePath),
+        data.caddyValidation.skipped
+          ? renderStatusRow("info", "Caddy config validation skipped")
+          : renderStatusRow(
+              data.caddyValidation.valid ? "ok" : "fail",
+              data.caddyValidation.valid
+                ? "Caddy config valid"
+                : `Caddy config invalid: ${data.caddyValidation.error ?? "unknown error"}`,
+            ),
+        ...data.duplicatePorts.map((dup) =>
+          renderStatusRow("warn", `Port conflict on :${dup.port}: ${dup.services.join(", ")}`),
+        ),
       ].join("\n"),
     ),
   ];

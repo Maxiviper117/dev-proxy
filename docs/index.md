@@ -14,6 +14,7 @@ Stable HTTPS `.local` domains for local development on Windows, macOS, and Linux
 - **Caddyfile generation** and lifecycle management
 - **Caddy `tls internal` HTTPS** out of the box
 - **Caddy config validation and reload**
+- **`devproxy doctor` verifies generated Caddy config and detects duplicate ports**
 - **Service listing, removal, and diagnostics**
 - **Status reporting** for Caddy, registry entries, and upstream reachability
 

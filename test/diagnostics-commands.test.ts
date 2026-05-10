@@ -151,6 +151,8 @@ describe("diagnostics commands", () => {
     expect(typeof parsed.caddyfilePath).toBe("string");
     expect(typeof parsed.caddyfilePreview).toBe("string");
     expect(parsed.hints).toEqual([]);
+    expect(parsed.caddyValidation).toMatchObject({ valid: true, skipped: true });
+    expect(parsed.duplicatePorts).toEqual([]);
   });
 
   it("doctor --json warns when hosts entries drift from the registry", async () => {
@@ -506,5 +508,205 @@ describe("diagnostics commands", () => {
         (i) => i.action === "Caddy installation" && i.status === "manual",
       ),
     ).toBe(true);
+  });
+
+  it("doctor reports Caddy config as valid when validate succeeds", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+      if (args[0] === "validate") {
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+
+    const data = await new DiagnosticsService(context).getDoctorData();
+
+    expect(data.caddyValidation.valid).toBe(true);
+    expect(data.caddyValidation.skipped).toBeUndefined();
+    expect(data.hints).not.toContain(
+      "Caddy config validation failed. Fix the errors above before starting DevProxy.",
+    );
+  });
+
+  it("doctor reports Caddy config as invalid when validate fails", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+      if (args[0] === "validate") {
+        // Doctor uses a temp path; addService uses the real caddyFile path
+        const configPath = (args[2] as string | undefined) ?? "";
+        if (configPath.includes("devproxy-validate-")) {
+          return { code: 1, stdout: "", stderr: "unrecognized directive: baddir" };
+        }
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+
+    const data = await new DiagnosticsService(context).getDoctorData();
+
+    expect(data.caddyValidation.valid).toBe(false);
+    expect(data.caddyValidation.error).toContain("unrecognized directive");
+    expect(data.hints.some((h) => h.includes("Caddy config validation failed"))).toBe(true);
+  });
+
+  it("doctor skips Caddy config validation when Caddy is not on PATH", async () => {
+    // Add service using a working context, then switch to a failing runner on same paths
+    const workingContext = await createContext();
+    await new RegistryService(workingContext).addService({ name: "api.myapp", port: "8000" });
+
+    const failingContext = await createContextWithRunner(async () => ({
+      code: 127,
+      stdout: "",
+      stderr: "caddy not found",
+    }));
+    const testContext = { ...failingContext, paths: workingContext.paths };
+
+    const data = await new DiagnosticsService(testContext).getDoctorData();
+
+    expect(data.caddyValidation.skipped).toBe(true);
+    expect(data.caddyValidation.valid).toBe(false);
+  });
+
+  it("doctor skips Caddy config validation when no services are registered", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    const data = await new DiagnosticsService(context).getDoctorData();
+
+    expect(data.caddyValidation.skipped).toBe(true);
+    expect(data.caddyValidation.valid).toBe(true);
+    expect(data.duplicatePorts).toEqual([]);
+  });
+
+  it("doctor detects duplicate ports across services", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+      if (args[0] === "validate") {
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    const registry = new RegistryService(context);
+    await registry.addService({ name: "api.myapp", port: "8000" });
+    await registry.addService({ name: "web.myapp", port: "8000" });
+
+    const data = await new DiagnosticsService(context).getDoctorData();
+
+    expect(data.duplicatePorts).toHaveLength(1);
+    const dup = data.duplicatePorts[0];
+    expect(dup).toBeDefined();
+    expect(dup!.port).toBe(8000);
+    expect(dup!.services).toContain("api.myapp");
+    expect(dup!.services).toContain("web.myapp");
+    expect(data.hints.some((h) => h.includes("Port conflict") && h.includes("8000"))).toBe(true);
+  });
+
+  it("doctor reports no duplicate ports when all ports are unique", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+      if (args[0] === "validate") {
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    const registry = new RegistryService(context);
+    await registry.addService({ name: "api.myapp", port: "8000" });
+    await registry.addService({ name: "web.myapp", port: "3000" });
+
+    const data = await new DiagnosticsService(context).getDoctorData();
+
+    expect(data.duplicatePorts).toEqual([]);
+    expect(data.hints.some((h) => h.includes("Port conflict"))).toBe(false);
+  });
+
+  it("doctor --json includes caddyValidation and duplicatePorts fields", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+      if (args[0] === "validate") {
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "doctor",
+      "--json",
+    ]);
+
+    const parsed = JSON.parse(output);
+    expect(parsed.caddyValidation).toBeDefined();
+    expect(parsed.caddyValidation.valid).toBe(true);
+    expect(Array.isArray(parsed.duplicatePorts)).toBe(true);
+    expect(parsed.duplicatePorts).toEqual([]);
+  });
+
+  it("doctor output shows Caddy config validation status", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+      if (args[0] === "validate") {
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    await new RegistryService(context).addService({ name: "api.myapp", port: "8000" });
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "doctor",
+    ]);
+
+    expect(output).toContain("Caddy config valid");
+  });
+
+  it("doctor output shows port conflict warning", async () => {
+    const context = await createContextWithRunner(async (_command, args) => {
+      if (args[0] === "version") {
+        return { code: 0, stdout: "caddy version 2.8.0", stderr: "" };
+      }
+      if (args[0] === "validate") {
+        return { code: 0, stdout: "", stderr: "" };
+      }
+      return { code: 0, stdout: "ok", stderr: "" };
+    });
+
+    const registry = new RegistryService(context);
+    await registry.addService({ name: "api.myapp", port: "8000" });
+    await registry.addService({ name: "web.myapp", port: "8000" });
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "doctor",
+    ]);
+
+    expect(output).toContain("Port conflict on :8000");
   });
 });

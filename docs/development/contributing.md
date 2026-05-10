@@ -63,12 +63,14 @@ devproxy start
 devproxy doctor
 ```
 
+::: warning Elevated permissions required
 Commands that update the system hosts file must be run from an elevated shell:
 
 ```powershell
 devproxy add api.myapp --port 8000
 devproxy remove api.myapp
 ```
+:::
 
 Use `node dist/cli.js ...` when you want to test the current build without linking globally.
 

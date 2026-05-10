@@ -123,6 +123,7 @@ Examples:
 
 ## Elevated Permissions
 
+::: warning Elevated permissions required
 Updating the system hosts file requires elevated permissions. If DevProxy cannot write to the hosts file, it fails with a clear message telling you to rerun the same command from an elevated shell.
 
 Commands that modify the hosts file include:
@@ -136,6 +137,7 @@ Commands that modify the hosts file include:
 Commands like `devproxy start`, `devproxy stop`, `devproxy list`, `devproxy status`, and `devproxy doctor` do not modify the hosts file or trust store and should not require elevation. When using `devproxy doctor --fix`, certain fixes (hosts sync, cert trust) still require elevation and will be skipped with manual instructions if run from a non-elevated terminal.
 
 When you run `devproxy init` or `devproxy add` from an already-elevated terminal, DevProxy automatically runs `caddy trust` for you if the local CA certificate has not been generated yet. This means you usually do not need to run `devproxy trust` separately.
+:::
 
 ## Windows and WSL
 

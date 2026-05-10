@@ -7,6 +7,9 @@ export default defineConfig({
   base: "/dev-proxy/",
   cleanUrls: true,
   lastUpdated: true,
+  sitemap: {
+    hostname: "https://maxiviper117.github.io/dev-proxy",
+  },
 
   markdown: {
     lineNumbers: true,
@@ -33,6 +36,25 @@ export default defineConfig({
           { text: "Project Config", link: "/guide/config" },
           { text: "How It Works", link: "/guide/how-it-works" },
           { text: "Troubleshooting", link: "/guide/troubleshooting" },
+        ],
+      },
+      {
+        text: "Commands",
+        collapsed: false,
+        items: [
+          { text: "devproxy init", link: "/guide/commands#init" },
+          { text: "devproxy add", link: "/guide/commands#add" },
+          { text: "devproxy open", link: "/guide/commands#open" },
+          { text: "devproxy list", link: "/guide/commands#list" },
+          { text: "devproxy status", link: "/guide/commands#status" },
+          { text: "devproxy update", link: "/guide/commands#update" },
+          { text: "devproxy remove", link: "/guide/commands#remove" },
+          { text: "devproxy doctor", link: "/guide/commands#doctor" },
+          { text: "devproxy sync-hosts", link: "/guide/commands#sync-hosts" },
+          { text: "devproxy start", link: "/guide/commands#start" },
+          { text: "devproxy stop", link: "/guide/commands#stop" },
+          { text: "devproxy certs", link: "/guide/commands#certs" },
+          { text: "devproxy trust", link: "/guide/commands#trust" },
         ],
       },
       {

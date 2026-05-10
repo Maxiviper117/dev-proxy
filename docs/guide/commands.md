@@ -1,5 +1,6 @@
 # Commands
 
+::: warning Elevated permissions required
 Commands that update the system hosts file or the system trust store need
 elevated permissions: `devproxy init`, `devproxy add`, `devproxy update`, `devproxy remove`, and
 `devproxy trust`. Commands such as `devproxy start`, `devproxy stop`,
@@ -7,7 +8,9 @@ elevated permissions: `devproxy init`, `devproxy add`, `devproxy update`, `devpr
 `devproxy certs` do not modify the hosts file or trust store and should run
 without `sudo` or an elevated shell. Adding `--fix` to `devproxy doctor`
 may require elevation for some fixes (hosts sync and cert trust).
+:::
 
+<a id="init"></a>
 ## `devproxy init [--name <name> --port <port>]`
 
 Create a `.devproxy/config.json` file and register the service in one step.
@@ -52,6 +55,7 @@ Once the config file exists, `devproxy open` can open the domain:
 devproxy open
 ```
 
+<a id="add"></a>
 ## `devproxy add <name> --port <port>`
 
 Register a new service.
@@ -64,6 +68,7 @@ This registers `https://api.myapp.local` and proxies it to `127.0.0.1:8000` and 
 
 Service names can be a single label or multiple labels separated by dots, such as `myapp`, `api.myapp`, or `web.myapp`. Do not include the `.local` suffix yourself.
 
+<a id="open"></a>
 ## `devproxy open [target]`
 
 Open a browser target from the project's `.devproxy/config.json` in your default browser.
@@ -103,6 +108,7 @@ If you specify a target that is not listed in `open.targets`, DevProxy shows an 
 
 The `open` command requires a `.devproxy/config.json` in the current directory. Run `devproxy init` first to create one.
 
+<a id="list"></a>
 ## `devproxy list`
 
 List all registered services.
@@ -113,6 +119,7 @@ devproxy list
 
 Alias: `devproxy ls`
 
+<a id="status"></a>
 ## `devproxy status`
 
 Report Caddy running state, registered services, and upstream reachability.
@@ -127,6 +134,7 @@ This reports:
 - How many services are registered
 - Whether each service's `localhost:<port>` and `127.0.0.1:<port>` upstreams respond
 
+<a id="update"></a>
 ## `devproxy update <name>`
 
 Update an existing service's port or rename it.
@@ -157,6 +165,7 @@ Output confirms what changed:
 Updated backend.myapp.local: renamed 'api.myapp' to 'backend.myapp', port 8000 -> 9000 (reloaded).
 ```
 
+<a id="remove"></a>
 ## `devproxy remove [name]`
 
 Remove one or more registered services.
@@ -191,6 +200,7 @@ Removes every registered service. This shows a double-confirmation warning listi
 
 All three forms require write access to the system hosts file. On Windows, the command also checks whether the terminal is running as Administrator. If the hosts file is not writable or the terminal lacks elevation, the command fails immediately with platform-specific instructions — before any interactive prompts appear.
 
+<a id="doctor"></a>
 ## `devproxy doctor`
 
 Check setup and report diagnostics.
@@ -207,9 +217,21 @@ This reports:
 - Whether DevProxy hosts entries match the registry
 - Registry path and contents
 - Caddyfile path and a generated preview
+- Whether the generated Caddyfile is valid
+- Duplicate configured ports across registered services
+
+`devproxy doctor` is read-only by default and does not modify the registry,
+hosts file, or Caddy config. Use `--fix` only when you want DevProxy to
+attempt repairs.
 
 If the DevProxy hosts block has drifted from the registry, `doctor` warns and
 suggests `devproxy sync-hosts`.
+
+If Caddy validation fails, `doctor` surfaces the Caddy `validate` error and
+provides a remediation hint.
+
+If duplicate ports are configured, `doctor` warns and suggests updating one of
+the conflicting services.
 
 ### `--fix`
 
@@ -232,6 +254,7 @@ Skip confirmation prompts, for use in CI:
 devproxy doctor --fix --non-interactive
 ```
 
+<a id="sync-hosts"></a>
 ## `devproxy sync-hosts`
 
 Align the DevProxy hosts-file block with the current registry.
@@ -240,8 +263,11 @@ Align the DevProxy hosts-file block with the current registry.
 devproxy sync-hosts
 ```
 
-Rewrites the `# BEGIN DEVPROXY` / `# END DEVPROXY` block in the system hosts file to exactly match the registered services. Requires the same elevated permissions as `devproxy add` and `devproxy remove`.
+::: warning Elevated permissions required
+Rewrites the `# BEGIN DEVPROXY` / `# END DEVPROXY` block in the system hosts file to exactly match the registered services. This command requires the same elevated permissions as `devproxy add` and `devproxy remove`.
+:::
 
+<a id="start"></a>
 ## `devproxy start`
 
 Start or reload Caddy using the current registry.
@@ -252,6 +278,7 @@ devproxy start
 
 Writes the Caddyfile from the current registry, validates it, and reloads Caddy. If no running instance is found, starts Caddy instead.
 
+<a id="stop"></a>
 ## `devproxy stop`
 
 Stop the Caddy server.
@@ -260,6 +287,7 @@ Stop the Caddy server.
 devproxy stop
 ```
 
+<a id="certs"></a>
 ## `devproxy certs`
 
 Print Caddy root CA certificate information.
@@ -270,6 +298,7 @@ devproxy certs
 
 Shows the certificate path, subject, issuer, validity window, and fingerprints. When the certificate is missing, prints a hint to run `caddy trust`.
 
+<a id="trust"></a>
 ## `devproxy trust`
 
 Trust the Caddy local root CA certificate.
@@ -278,7 +307,9 @@ Trust the Caddy local root CA certificate.
 devproxy trust
 ```
 
+::: warning Elevated permissions required
 Runs `caddy trust` to install the local CA into the system trust store. Requires elevated permissions (Administrator on Windows, `sudo` on macOS/Linux).
+:::
 
 
 ### `--fix`

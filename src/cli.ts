@@ -39,6 +39,7 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
 
   let servicesModule: typeof import("./commands/services.js") | undefined;
   let uiModule: typeof import("./cli/ui.js") | undefined;
+  let uiCommandModule: typeof import("./commands/ui.js") | undefined;
   let serviceInstances:
     | {
         context: DevProxyContext;
@@ -61,6 +62,13 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
       uiModule = await import("./cli/ui.js");
     }
     return uiModule;
+  }
+
+  async function getUiCommand() {
+    if (!uiCommandModule) {
+      uiCommandModule = await import("./commands/ui.js");
+    }
+    return uiCommandModule;
   }
 
   async function getContext(): Promise<DevProxyContext> {
@@ -160,6 +168,18 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
       const { renderSuccess } = await getUi();
       const { project } = await getServiceInstances();
       console.log(renderSuccess(await project.openInBrowser(target)));
+    });
+
+  program
+    .command("ui")
+    .option("--host <host>", "host interface for the local dashboard", "127.0.0.1")
+    .option("--port <port>", "preferred local dashboard port", "3579")
+    .option("--no-open", "start dashboard server without opening a browser")
+    .description("Launch the local DevProxy dashboard.")
+    .action(async (options: { host?: string; port?: string; open?: boolean }) => {
+      const { runUiCommand } = await getUiCommand();
+      const context = await getContext();
+      await runUiCommand(context, cliVersion, options);
     });
 
   program

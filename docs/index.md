@@ -17,6 +17,7 @@ Stable HTTPS `.local` domains for local development on Windows, macOS, and Linux
 - **`devproxy doctor` verifies generated Caddy config and detects duplicate ports**
 - **Service listing, removal, and diagnostics**
 - **Status reporting** for Caddy, registry entries, and upstream reachability
+- **Local browser dashboard** with `devproxy ui` for setup visibility and non-elevated actions
 
 ## Quick Start
 

@@ -13,6 +13,7 @@ Use `TODO.md` for future enhancements, deferred product work, and follow-up hard
 - Module format: native ESM
 - CLI framework: Commander
 - CLI UI rendering: Ink + React via `renderToString()` for formatted command/help output
+- Web UI: Vite + Svelte 5 SPA
 - Linter: Oxlint
 - Formatter: Oxfmt
 - Tests: Vitest
@@ -82,9 +83,12 @@ pnpm pack --dry-run
 - `src/cli.ts` is the npm binary entrypoint and defines the Commander CLI.
 - `src/cli/` contains terminal presentation helpers and Ink-based UI renderers.
 - `src/commands/` contains command-level workflows. `src/commands/services.ts` is a barrel for the class-based service API; implementation lives in `src/commands/services/` by domain (`RegistryService`, `ProjectService`, `CaddyService`, and `DiagnosticsService`).
+- `src/commands/ui.ts` contains `devproxy ui` command orchestration (port selection, browser launch, lifecycle).
 - `src/core/` contains domain validation, registry logic, shared types, and errors.
 - `src/integrations/` contains external integration logic such as Caddy and hosts-file management.
 - `src/platform/` contains runtime path resolution, default context creation, probe helpers, and child-process execution.
+- `src/ui/server.ts` contains the localhost-only dashboard server and API routes.
+- `ui/` contains the Svelte 5 SPA source built into `dist/ui-static/`.
 - `test/helpers/temp-context.ts` provides `createTempContext()` for integration tests; it creates a `DevProxyContext` backed by temp directories that never touch the real system.
 - `test/integration.test.ts` contains full-stack integration tests using `createTempContext()` with stub Caddy commands and temp file paths.
 
@@ -117,6 +121,7 @@ pnpm pack --dry-run
 - `devproxy open [target]` opens a browser target from `.devproxy/config.json`. Without a target, opens `open.default` or `/`. With a target name, opens the corresponding path from `open.targets`. Requires `.devproxy/config.json`.
 - `devproxy update <name> [--port <port>] [--name <name>]` updates an existing service port or renames it, re-derives the domain, rewrites hosts and Caddy config, and reloads Caddy.
 - `devproxy start` starts or reloads Caddy from the current registry.
+- `devproxy ui [--host <host> --port <port> --no-open]` starts a localhost dashboard for non-elevated status, diagnostics, and safe actions.
 - `devproxy status` reports Caddy running state, registered services, and upstream reachability.
 - `devproxy doctor` warns when the DevProxy-owned hosts block has drifted from the global registry.
 - `devproxy sync-hosts` rewrites the DevProxy-owned hosts block so it matches the global registry.

@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply m-0 bg-slate-100 text-slate-900;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+
+  button:disabled {
+    @apply cursor-not-allowed;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex min-h-9 items-center justify-center border border-teal-800 bg-teal-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-teal-800 disabled:border-zinc-300 disabled:bg-zinc-300 disabled:text-zinc-600;
+  }
+
+  .btn-secondary {
+    @apply inline-flex min-h-9 items-center justify-center border border-zinc-300 bg-white px-3 py-1.5 text-sm font-semibold text-zinc-800 hover:border-teal-700 hover:text-teal-800 disabled:bg-zinc-100 disabled:text-zinc-500;
+  }
+
+  .status-pill {
+    @apply inline-flex min-h-7 items-center justify-center border px-2 py-1 text-xs font-semibold;
+  }
+}

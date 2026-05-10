@@ -70,12 +70,15 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 | --- | --- |
 | `devproxy init --name <name> --port <port>` | Register a service and create project config in one step |
 | `devproxy add <name> --port <port>` | Register a new service |
+| `devproxy update <name> [--name <name>] [--port <port>]` | Rename a service or change its port |
 | `devproxy open [name]` | Open a service in your browser |
 | `devproxy list` | List all registered services |
 | `devproxy status` | Report Caddy state and upstream health |
 | `devproxy remove <name>` | Remove a registered service |
 | `devproxy doctor` | Check setup and diagnostics |
 | `devproxy sync-hosts` | Align DevProxy hosts entries with the registry |
+| `devproxy certs` | Print Caddy root CA certificate information |
+| `devproxy trust` | Trust the Caddy local root CA certificate |
 | `devproxy start` | Start or reload Caddy |
 | `devproxy stop` | Stop Caddy |
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.24.0...devproxy-v0.25.0) (2026-05-10)
+
+
+### Features
+
+* add doctor Caddy config validation, duplicate port detection, sitemap support, and standardized elevated permission warnings ([#74](https://github.com/Maxiviper117/dev-proxy/issues/74)) ([f7059ea](https://github.com/Maxiviper117/dev-proxy/commit/f7059ea3f5c7bb985785ed45b281fe4476e6a190))
+
 ## [0.24.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.23.0...devproxy-v0.24.0) (2026-05-10)
 
 

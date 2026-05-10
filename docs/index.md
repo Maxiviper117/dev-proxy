@@ -8,6 +8,7 @@ Stable HTTPS `.local` domains for local development on Windows, macOS, and Linux
 - **Project-local config** with `.devproxy/config.json` — store name, port, and named browser targets so `open` needs zero arguments
 - **Named open targets** — `devproxy open docs` opens `/docs`, `devproxy open admin` opens `/admin`, and so on
 - **Attach-mode services** with `devproxy add` — proxy stable domains to already-running servers
+- **In-place updates** with `devproxy update` — change a service port or rename it without remove-and-re-add
 - **`.local` domain generation** for readable local URLs
 - **Hosts-file management** inside a safe, managed block
 - **Caddyfile generation** and lifecycle management

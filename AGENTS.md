@@ -92,6 +92,9 @@ pnpm pack --dry-run
 
 - Keep `AGENTS.md` up to date after any project change that affects setup, commands,
   architecture, safety rules, or contributor workflow.
+- Keep `docs/` (VitePress) up to date when adding, removing, or changing CLI commands or
+  product behaviour. Every new command must have a section in `docs/guide/commands.md`.
+  Feature additions should be reflected in the `docs/index.md` feature list.
 - Keep `src/core/config-schema.json` in sync when the `.devproxy/config.json` shape
   changes (new fields, renamed fields, or type changes). The schema is copied to
   `dist/` during `pnpm build` and referenced via a `$schema` field in every
@@ -112,6 +115,7 @@ pnpm pack --dry-run
 - `devproxy init [--name <name> --port <port>]` creates `.devproxy/config.json` and registers the service. When the config already exists, running `devproxy init` without flags prompts to confirm using the existing config. Declining with `--name` and `--port` provided overwrites the config.
 - Domain derivation is `<name>.local`; for example, `api.myapp` becomes `api.myapp.local`.
 - `devproxy open [target]` opens a browser target from `.devproxy/config.json`. Without a target, opens `open.default` or `/`. With a target name, opens the corresponding path from `open.targets`. Requires `.devproxy/config.json`.
+- `devproxy update <name> [--port <port>] [--name <name>]` updates an existing service port or renames it, re-derives the domain, rewrites hosts and Caddy config, and reloads Caddy.
 - `devproxy start` starts or reloads Caddy from the current registry.
 - `devproxy status` reports Caddy running state, registered services, and upstream reachability.
 - `devproxy doctor` warns when the DevProxy-owned hosts block has drifted from the global registry.

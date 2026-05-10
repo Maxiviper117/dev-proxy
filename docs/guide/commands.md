@@ -4,7 +4,7 @@
 Commands that update the system hosts file or the system trust store need
 elevated permissions: `devproxy init`, `devproxy add`, `devproxy update`, `devproxy remove`, and
 `devproxy trust`. Commands such as `devproxy start`, `devproxy stop`,
-`devproxy open`, `devproxy list`, `devproxy status`, `devproxy doctor`, and
+`devproxy open`, `devproxy ui`, `devproxy list`, `devproxy status`, `devproxy doctor`, and
 `devproxy certs` do not modify the hosts file or trust store and should run
 without `sudo` or an elevated shell. Adding `--fix` to `devproxy doctor`
 may require elevation for some fixes (hosts sync and cert trust).
@@ -118,6 +118,31 @@ devproxy list
 ```
 
 Alias: `devproxy ls`
+
+<a id="ui"></a>
+## `devproxy ui`
+
+Launch the local dashboard in your browser.
+
+```bash
+devproxy ui
+```
+
+This starts a localhost-only web UI, opens it in your default browser, and keeps running until you stop it with `Ctrl+C`.
+
+```bash
+devproxy ui --no-open
+```
+
+Starts the UI server without opening a browser.
+
+```bash
+devproxy ui --host 127.0.0.1 --port 3579
+```
+
+Overrides the bind host or preferred port. If the preferred port is already in use, DevProxy tries nearby ports automatically.
+
+The UI supports read workflows and safe local actions such as refresh, `start`, `stop`, and opening registered service domains. Elevated workflows like hosts syncing, trust setup, and service registration remain CLI-first.
 
 <a id="status"></a>
 ## `devproxy status`

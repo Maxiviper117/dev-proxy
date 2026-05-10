@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.25.0...devproxy-v0.26.0) (2026-05-10)
+
+
+### Features
+
+* add local web dashboard ([#77](https://github.com/Maxiviper117/dev-proxy/issues/77)) ([3c08db6](https://github.com/Maxiviper117/dev-proxy/commit/3c08db6d4e7351bfdc96def7dc335c47163eacdf))
+
 ## [0.25.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.24.0...devproxy-v0.25.0) (2026-05-10)
 
 

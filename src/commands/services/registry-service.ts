@@ -8,8 +8,14 @@ import { validateAndReloadCaddy } from "../../integrations/caddy.js";
 import { ensureSupportedPlatform } from "../../platform/support.js";
 import { projectConfigPath, readProjectConfig, writeProjectConfig } from "../../core/config.js";
 import { DevProxyError } from "../../core/errors.js";
-import { readRegistry, removeService, removeServices } from "../../core/registry.js";
-import { AttachServiceRegistrar, writeProxyArtifacts, type ServiceInput } from "./shared.js";
+import { readRegistry, removeService, removeServices, updateService } from "../../core/registry.js";
+import { domainFromName, parsePort } from "../../core/domain.js";
+import {
+  AttachServiceRegistrar,
+  formatCaddyLifecycle,
+  writeProxyArtifacts,
+  type ServiceInput,
+} from "./shared.js";
 import { confirm } from "../../cli/prompt.js";
 import checkboxPlus from "inquirer-checkbox-plus-plus";
 
@@ -98,6 +104,54 @@ export class RegistryService {
     ensureSupportedPlatform(this.context.platform);
     const result = await new AttachServiceRegistrar(this.context).register(input);
     return result.message;
+  }
+
+  async updateRegisteredService(
+    name: string,
+    options: { port?: string | number; newName?: string },
+  ): Promise<string> {
+    ensureSupportedPlatform(this.context.platform);
+
+    if (options.port === undefined && options.newName === undefined) {
+      throw new DevProxyError("Provide --port and/or --name to update a service.");
+    }
+
+    await this.ensureHostsAndElevation();
+
+    const registry = await readRegistry(this.context.paths.registryFile);
+    const oldName = name.trim().toLowerCase();
+    const newName = options.newName?.trim().toLowerCase();
+    const newPort = options.port !== undefined ? parsePort(options.port) : undefined;
+
+    const nameUpdate =
+      newName !== undefined ? { name: newName, domain: domainFromName(newName) } : {};
+    const portUpdate = newPort !== undefined ? { port: newPort } : {};
+
+    const timestamp = this.context.now().toISOString();
+    const {
+      registry: next,
+      oldService,
+      newService,
+    } = updateService(registry, oldName, { ...nameUpdate, ...portUpdate }, timestamp);
+
+    await writeProxyArtifacts(this.context, next);
+    const caddyLifecycle = await validateAndReloadCaddy(
+      this.context.paths.caddyFile,
+      this.context.run,
+    );
+
+    const changes: string[] = [];
+    if (newName !== undefined && newName !== oldService.name) {
+      changes.push(`renamed '${oldService.name}' to '${newService.name}'`);
+    }
+    if (newPort !== undefined && newPort !== oldService.port) {
+      changes.push(`port ${oldService.port} -> ${newService.port}`);
+    }
+    if (changes.length === 0) {
+      changes.push("no changes applied");
+    }
+
+    return `Updated ${newService.domain}: ${changes.join(", ")} (${formatCaddyLifecycle(caddyLifecycle)}).`;
   }
 
   async removeRegisteredService(name: string): Promise<string> {

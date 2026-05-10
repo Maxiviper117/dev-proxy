@@ -121,6 +121,65 @@ export function removeService(
 }
 
 /**
+ * Update an existing service in the registry.
+ *
+ * Finds the service by old name, applies the provided updates, re-sorts the
+ * list alphabetically, and returns the new registry alongside the old and new
+ * service objects. If the new name or domain conflicts with another registered
+ * service an error is thrown.
+ *
+ * @throws {DevProxyError} When the named service is not found.
+ * @throws {DevProxyError} When the new name or domain conflicts with another service.
+ */
+export function updateService(
+  registry: Registry,
+  oldName: string,
+  update: Partial<Pick<Service, "name" | "domain" | "port">>,
+  timestamp: string,
+): { registry: Registry; oldService: Service; newService: Service } {
+  const existing = registry.services.find((s) => s.name === oldName);
+  if (!existing) {
+    throw new DevProxyError(`Service '${oldName}' is not registered.`);
+  }
+
+  const newName = update.name ?? existing.name;
+  const newDomain = update.domain ?? existing.domain;
+  const newPort = update.port ?? existing.port;
+
+  if (newName !== existing.name || newDomain !== existing.domain) {
+    const conflict = registry.services.find(
+      (s) => s.name !== oldName && (s.name === newName || s.domain === newDomain),
+    );
+    if (conflict) {
+      throw new DevProxyError(
+        `Service '${conflict.name}' already uses ${
+          conflict.name === newName ? `name '${newName}'` : `domain '${newDomain}'`
+        }.`,
+      );
+    }
+  }
+
+  const newService: Service = {
+    ...existing,
+    name: newName,
+    domain: newDomain,
+    port: newPort,
+    updatedAt: timestamp,
+  };
+
+  const services = registry.services
+    .filter((s) => s.name !== oldName)
+    .concat(newService)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return {
+    registry: { ...registry, services },
+    oldService: existing,
+    newService,
+  };
+}
+
+/**
  * Remove multiple services from the registry by name.
  *
  * Filters out each named service, collects the removed entries, and returns

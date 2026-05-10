@@ -1,7 +1,7 @@
 # Commands
 
 Commands that update the system hosts file or the system trust store need
-elevated permissions: `devproxy init`, `devproxy add`, `devproxy remove`, and
+elevated permissions: `devproxy init`, `devproxy add`, `devproxy update`, `devproxy remove`, and
 `devproxy trust`. Commands such as `devproxy start`, `devproxy stop`,
 `devproxy open`, `devproxy list`, `devproxy status`, `devproxy doctor`, and
 `devproxy certs` do not modify the hosts file or trust store and should run
@@ -127,6 +127,36 @@ This reports:
 - How many services are registered
 - Whether each service's `localhost:<port>` and `127.0.0.1:<port>` upstreams respond
 
+## `devproxy update <name>`
+
+Update an existing service's port or rename it.
+
+```bash
+devproxy update api.myapp --port 9000
+```
+
+Updates the port for `api.myapp`, rewrites the hosts-file block, regenerates the Caddyfile, and reloads Caddy.
+
+```bash
+devproxy update api.myapp --name backend.myapp
+```
+
+Renames `api.myapp` to `backend.myapp`, re-derives the domain to `backend.myapp.local`, removes the old domain from the hosts file, and adds the new one.
+
+```bash
+devproxy update api.myapp --name backend.myapp --port 9000
+```
+
+Renames and updates the port in a single operation.
+
+At least one of `--port` or `--name` must be provided. The command fails if the service does not exist or if the new name conflicts with another registered service.
+
+Output confirms what changed:
+
+```text
+Updated backend.myapp.local: renamed 'api.myapp' to 'backend.myapp', port 8000 -> 9000 (reloaded).
+```
+
 ## `devproxy remove [name]`
 
 Remove one or more registered services.
@@ -181,13 +211,75 @@ This reports:
 If the DevProxy hosts block has drifted from the registry, `doctor` warns and
 suggests `devproxy sync-hosts`.
 
-### `--json`
+### `--fix`
 
-Output diagnostic data as JSON:
+Automatically fix detected issues where possible:
 
 ```bash
-devproxy doctor --json
+devproxy doctor --fix
 ```
+
+When Caddy is installed, the following issues can be fixed:
+
+- Hosts-file drift (runs `sync-hosts`)
+- Untrusted Caddy root CA (runs `caddy trust` when elevated)
+
+### `--non-interactive`
+
+Skip confirmation prompts, for use in CI:
+
+```bash
+devproxy doctor --fix --non-interactive
+```
+
+## `devproxy sync-hosts`
+
+Align the DevProxy hosts-file block with the current registry.
+
+```bash
+devproxy sync-hosts
+```
+
+Rewrites the `# BEGIN DEVPROXY` / `# END DEVPROXY` block in the system hosts file to exactly match the registered services. Requires the same elevated permissions as `devproxy add` and `devproxy remove`.
+
+## `devproxy start`
+
+Start or reload Caddy using the current registry.
+
+```bash
+devproxy start
+```
+
+Writes the Caddyfile from the current registry, validates it, and reloads Caddy. If no running instance is found, starts Caddy instead.
+
+## `devproxy stop`
+
+Stop the Caddy server.
+
+```bash
+devproxy stop
+```
+
+## `devproxy certs`
+
+Print Caddy root CA certificate information.
+
+```bash
+devproxy certs
+```
+
+Shows the certificate path, subject, issuer, validity window, and fingerprints. When the certificate is missing, prints a hint to run `caddy trust`.
+
+## `devproxy trust`
+
+Trust the Caddy local root CA certificate.
+
+```bash
+devproxy trust
+```
+
+Runs `caddy trust` to install the local CA into the system trust store. Requires elevated permissions (Administrator on Windows, `sudo` on macOS/Linux).
+
 
 ### `--fix`
 

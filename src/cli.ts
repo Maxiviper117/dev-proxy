@@ -116,6 +116,25 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
     });
 
   program
+    .command("update")
+    .argument("<name>", "registered service name to update")
+    .option("-p, --port <port>", "new local port")
+    .option("--name <name>", "new service name")
+    .description("Update an existing service port or name.")
+    .action(async (name: string, options: { port?: string; name?: string }) => {
+      const { renderSuccess } = await getUi();
+      const { registry } = await getServiceInstances();
+      console.log(
+        renderSuccess(
+          await registry.updateRegisteredService(name, {
+            ...(options.port !== undefined ? { port: options.port } : {}),
+            ...(options.name !== undefined ? { newName: options.name } : {}),
+          }),
+        ),
+      );
+    });
+
+  program
     .command("remove")
     .argument("[name]", "registered service name (omit for interactive selection)")
     .alias("rm")

@@ -128,7 +128,7 @@ Launch the local dashboard in your browser.
 devproxy ui
 ```
 
-This starts a localhost-only web UI, opens it in your default browser, and keeps running until you stop it with `Ctrl+C`.
+This starts a localhost-only web UI at `http://127.0.0.1:3579`, opens it in your default browser, and keeps running until you stop it with `Ctrl+C`. If `3579` is already in use, DevProxy tries nearby ports automatically and prints the final dashboard URL.
 
 ```bash
 devproxy ui --no-open
@@ -137,12 +137,16 @@ devproxy ui --no-open
 Starts the UI server without opening a browser.
 
 ```bash
+devproxy ui --port 4173
+```
+
+Overrides the preferred port while keeping the default bind host. You can also override the bind host explicitly:
+
+```bash
 devproxy ui --host 127.0.0.1 --port 3579
 ```
 
-Overrides the bind host or preferred port. If the preferred port is already in use, DevProxy tries nearby ports automatically.
-
-The UI supports read workflows and safe local actions such as refresh, `start`, `stop`, and opening registered service domains. Elevated workflows like hosts syncing, trust setup, and service registration remain CLI-first.
+The UI supports read workflows and safe local actions such as refresh, `start`, `stop`, and opening registered service domains. Elevated workflows like hosts syncing, trust setup, and service registration remain CLI-first. When an elevated action is needed, the dashboard shows the CLI command to run in an administrator or `sudo` terminal instead of trying to elevate itself.
 
 <a id="status"></a>
 ## `devproxy status`

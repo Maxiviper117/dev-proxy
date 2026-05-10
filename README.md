@@ -64,6 +64,14 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 > [!TIP] 
 > If you registered with `init`, you can also run `devproxy open` from your project root (where `.devproxy/config.json` exists) and it will open the domain directly in your browser.
 
+6. Optionally open the local dashboard:
+
+   ```bash
+   devproxy ui
+   ```
+
+   The dashboard opens in your default browser on `127.0.0.1:3579` by default. Use `devproxy ui --port <port>` to choose another preferred port, or `devproxy ui --no-open` to start the dashboard without launching a browser.
+
 ## Commands
 
  | Command | Description |
@@ -72,6 +80,7 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 | `devproxy add <name> --port <port>` | Register a new service |
 | `devproxy update <name> [--name <name>] [--port <port>]` | Rename a service or change its port |
 | `devproxy open [name]` | Open a service in your browser |
+| `devproxy ui [--port <port>] [--no-open]` | Open the local browser dashboard |
 | `devproxy list` | List all registered services |
 | `devproxy status` | Report Caddy state and upstream health |
 | `devproxy remove <name>` | Remove a registered service |

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.23.0...devproxy-v0.24.0) (2026-05-10)
+
+
+### Features
+
+* add devproxy update command and keep docs in sync ([#72](https://github.com/Maxiviper117/dev-proxy/issues/72)) ([68ab210](https://github.com/Maxiviper117/dev-proxy/commit/68ab21030510859e21e1df25139a0b4afaadb5b0))
+
 ## [0.23.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.22.0...devproxy-v0.23.0) (2026-05-10)
 
 

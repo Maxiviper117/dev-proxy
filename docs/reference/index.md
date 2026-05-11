@@ -1,8 +1,6 @@
 ---
 title: Reference
 description: Exact command, config, and file details for DevProxy.
-layout: page
-navbar: false
 sidebar: false
 aside: false
 editLink: false

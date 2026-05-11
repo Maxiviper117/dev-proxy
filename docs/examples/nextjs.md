@@ -1,55 +1,15 @@
-# Next.js
+---
+title: Next.js
+description: This page moved to the How-to section.
+---
 
-Next.js dev server can be served through DevProxy by binding to `0.0.0.0` and registering the port with DevProxy.
+# Moved
 
-## Start the server
+This page moved to [How-to > Use DevProxy with Next.js](/how-to/use-nextjs).
 
-From your Next.js project directory:
+<script>
+if (typeof window !== "undefined") {
+  window.location.replace("/how-to/use-nextjs");
+}
+</script>
 
-```bash
-pnpm dev --hostname 0.0.0.0 --port 3000
-```
-
-Or with npm:
-
-```bash
-npm run dev -- --hostname 0.0.0.0 --port 3000
-```
-
-## Register with DevProxy
-
-From the host running DevProxy:
-
-```bash
-devproxy add web.myapp --port 3000
-```
-
-This creates:
-
-```text
-https://web.myapp.local -> 127.0.0.1:3000, localhost:3000
-```
-
-## Configure Next.js (optional)
-
-If you need Next.js to generate absolute URLs using the `.local` domain, set the environment variable:
-
-```text
-NEXT_PUBLIC_SITE_URL=https://web.myapp.local
-```
-
-You can place this in a `.env.local` file in your project root:
-
-```text
-NEXT_PUBLIC_SITE_URL=https://web.myapp.local
-```
-
-## Open the site
-
-From a project with `.devproxy/config.json` (created by `devproxy init`):
-
-```bash
-devproxy open
-```
-
-Or navigate to `https://web.myapp.local` in your browser.

@@ -1,50 +1,15 @@
-# Laravel
+---
+title: Laravel
+description: This page moved to the How-to section.
+---
 
-DevProxy works with Laravel running in WSL, Docker, or natively on Windows.
+# Moved
 
-## Start the server
+This page moved to [How-to > Use DevProxy with Laravel](/how-to/use-laravel).
 
-From your Laravel project directory:
+<script>
+if (typeof window !== "undefined") {
+  window.location.replace("/how-to/use-laravel");
+}
+</script>
 
-```bash
-php artisan serve --port=8000
-```
-
-## Register with DevProxy
-
-From the host running DevProxy, register a domain for the service:
-
-```bash
-devproxy add api.myapp --port 8000
-```
-
-This creates:
-
-```text
-https://api.myapp.local -> 127.0.0.1:8000, localhost:8000
-```
-
-## Configure Laravel
-
-Update your `.env` so Laravel generates correct URLs and accepts cookies on the `.local` domain:
-
-```text
-APP_URL=https://api.myapp.local
-SESSION_DOMAIN=.myapp.local
-```
-
-Clear the config cache if you are caching configuration files:
-
-```bash
-php artisan config:clear
-```
-
-## Open the site
-
-From a project with `.devproxy/config.json` (created by `devproxy init`):
-
-```bash
-devproxy open
-```
-
-Or navigate to `https://api.myapp.local` in your browser.

@@ -2,7 +2,7 @@
 
 Stable HTTPS `.local` domains for local development on Windows, macOS, and Linux.
 
-## Features
+## What DevProxy does
 
 - **`devproxy init`** — create project config and register a domain in one command; re-run in an existing project to register from config
 - **Project-local config** with `.devproxy/config.json` — store name, port, and named browser targets so `open` needs zero arguments
@@ -19,46 +19,18 @@ Stable HTTPS `.local` domains for local development on Windows, macOS, and Linux
 - **Status reporting** for Caddy, registry entries, and upstream reachability
 - **Local browser dashboard** with `devproxy ui` for setup visibility and non-elevated actions; it opens on `127.0.0.1:3579` by default and supports `--port` overrides
 
-## Quick Start
+## Start here
 
-Install Caddy and trust its local CA:
+1. [Tutorials](/tutorials/)
+2. [How-to guides](/how-to/)
+3. [Reference](/reference/)
+4. [Explanation](/explanation/)
 
-```powershell
-scoop install caddy
-caddy trust
-```
+## Quick links
 
-See [Install Caddy](/guide/install-caddy) for Windows, macOS, and Linux setup commands.
-
-Install DevProxy:
-
-```bash
-npm install -g @maxiviper117/devproxy
-```
-
-Register a service:
-
-```bash
-devproxy add api.myapp --port 8000
-```
-
-Open your new HTTPS domain:
-
-```text
-https://api.myapp.local
-```
-
-Open the dashboard:
-
-```bash
-devproxy ui
-```
-
-## Next Steps
-
-- [Getting Started](/guide/getting-started)
-- [Install Caddy](/guide/install-caddy)
-- [Commands](/guide/commands)
-- [How It Works](/guide/how-it-works)
-- [Troubleshooting](/guide/troubleshooting)
+- [Install Caddy](/how-to/install-caddy)
+- [Get Started](/tutorials/getting-started)
+- [Commands](/reference/commands)
+- [How It Works](/explanation/how-it-works)
+- [Troubleshoot HTTPS](/how-to/troubleshoot-https)
 - [Contributing](/development/contributing)

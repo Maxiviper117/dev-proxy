@@ -1,52 +1,15 @@
-# Express.js
+---
+title: Express.js
+description: This page moved to the How-to section.
+---
 
-Express applications work with DevProxy whether they run in WSL, Docker, or natively on Windows.
+# Moved
 
-## Start the server
+This page moved to [How-to > Use DevProxy with Express](/how-to/use-express).
 
-Make sure your Express app listens on the expected port. For example, in `server.js` or `app.js`:
+<script>
+if (typeof window !== "undefined") {
+  window.location.replace("/how-to/use-express");
+}
+</script>
 
-```js
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-});
-```
-
-Start the server:
-
-```bash
-node server.js
-```
-
-## Register with DevProxy
-
-From the host running DevProxy:
-
-```bash
-devproxy add api.myapp --port 3000
-```
-
-This creates:
-
-```text
-https://api.myapp.local -> 127.0.0.1:3000, localhost:3000
-```
-
-## Trust the proxy (optional)
-
-If your Express app needs to know it is behind a reverse proxy, enable `trust proxy` so headers such as `X-Forwarded-Proto` are respected:
-
-```js
-app.set("trust proxy", true);
-```
-
-## Open the site
-
-From a project with `.devproxy/config.json` (created by `devproxy init`):
-
-```bash
-devproxy open
-```
-
-Or navigate to `https://api.myapp.local` in your browser.

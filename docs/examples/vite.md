@@ -1,109 +1,20 @@
-# Vite
+---
+title: Vite
+description: This page moved to the How-to section.
+layout: page
+navbar: false
+sidebar: false
+aside: false
+editLink: false
+lastUpdated: false
+---
 
-Vite projects (React, Vue, Svelte, vanilla, etc.) can be served through DevProxy on Vite's default localhost binding. If your app is running inside WSL, Docker, or another environment that the host OS cannot reach through loopback, bind the dev server to `0.0.0.0`.
+# Moved
 
-## Start the server
+This page moved to [How-to > Use DevProxy with Vite](/how-to/use-vite).
 
-From your Vite project directory:
-
-```bash
-pnpm dev --port 5173
-```
-
-Or with npm:
-
-```bash
-npm run dev -- --port 5173
-```
-
-## Register with DevProxy
-
-From the host running DevProxy:
-
-```bash
-devproxy add web.myapp --port 5173
-```
-
-This creates:
-
-```text
-https://web.myapp.local -> 127.0.0.1:5173, localhost:5173
-```
-
-DevProxy configures Caddy to try both loopback upstreams. If Vite is reachable through `localhost:5173` but not `127.0.0.1:5173`, or the other way around, Caddy retries the working address instead of returning intermittent `502` responses.
-
-## Configure Vite
-
-Vite blocks requests for hosts that are not explicitly allowed. Add your DevProxy `.local` domain to `server.allowedHosts`. If the host OS cannot reach the server through loopback, also set `server.host` to `"0.0.0.0"`:
-
-```ts
-export default {
-  base: "/",
-  server: {
-    port: 5173,
-    allowedHosts: ["web.myapp.local"],
-    // host: "0.0.0.0",
-  },
-};
-```
-
-When `devproxy open` runs from a project with `.devproxy/config.json`, DevProxy checks common Vite config files and warns if `server.allowedHosts` is missing or does not include the configured domain.
-
-## Blocked host warning
-
-If Vite is missing the DevProxy host, the browser usually shows:
-
-```text
-Blocked request. This host ("your-host") is not allowed.
-To allow this host, add "your-host" to `server.allowedHosts` in vite.config.js.
-```
-
-Use the exact `.local` domain from DevProxy, for example:
-
-```ts
-export default {
-  server: {
-    allowedHosts: ["web.myapp.local"],
-  },
-};
-```
-
-## Windows and WSL
-
-When Vite runs inside WSL, run DevProxy from Windows and make sure Windows can reach the Vite port. If loopback forwarding is not enough for your setup, enable `server.host: "0.0.0.0"` and keep `allowedHosts` set to the `.local` domain.
-
-## Open the site
-
-From a project with `.devproxy/config.json` (created by `devproxy init`):
-
-```bash
-devproxy open
-```
-
-Or navigate to `https://web.myapp.local` in your browser.
-
-## Named open targets
-
-You can add named browser targets to `.devproxy/config.json` for common project URLs:
-
-```json
-{
-  "name": "web.myapp",
-  "port": 5173,
-  "open": {
-    "default": "/",
-    "targets": {
-      "docs": "/docs",
-      "admin": "/admin"
-    }
-  }
+<script>
+if (typeof window !== "undefined") {
+  window.location.replace("/how-to/use-vite");
 }
-```
-
-Then open them by name:
-
-```bash
-devproxy open          # opens https://web.myapp.local/
-devproxy open docs     # opens https://web.myapp.local/docs
-devproxy open admin    # opens https://web.myapp.local/admin
-```
+</script>

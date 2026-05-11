@@ -1,12 +1,20 @@
-# Examples
+---
+title: Examples
+description: This page moved to the How-to section.
+layout: page
+navbar: false
+sidebar: false
+aside: false
+editLink: false
+lastUpdated: false
+---
 
-DevProxy works with any local development server that the host running DevProxy can reach. The guides below show how to register common frameworks and run them behind a stable `.local` HTTPS domain.
+# Moved
 
-If your stack is not listed, the general pattern is the same for any framework:
+This page moved to [How-to](/how-to/).
 
-1. Start your development server on a known port.
-2. Register it with DevProxy using `devproxy add <name> --port <port>`.
-3. Run `devproxy init` from your project directory to create `.devproxy/config.json`.
-4. Open the site with `devproxy open`.
-
-Choose a guide below for framework-specific tips.
+<script>
+if (typeof window !== "undefined") {
+  window.location.replace("/how-to/");
+}
+</script>

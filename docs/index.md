@@ -1,64 +1,45 @@
-# DevProxy
+---
+layout: home
+title: DevProxy
+description: Stable HTTPS `.local` domains for local development.
+hero:
+  name: DevProxy
+  text: Stable HTTPS `.local` domains for local development
+  tagline: Attach local services to trusted browser URLs on Windows, macOS, and Linux.
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /tutorials/getting-started
+    - theme: alt
+      text: How-to Guides
+      link: /how-to/
+features:
+  - title: Attach-first workflow
+    details: "Register already-running services with `devproxy add` and keep app processes outside DevProxy."
+  - title: Project-local browser targets
+    details: "Store default and named open targets in `.devproxy/config.json` for repeatable project navigation."
+  - title: Trusted HTTPS
+    details: "Use Caddy with `tls internal` so every `.local` domain gets a browser-trusted certificate."
+  - title: Safe host management
+    details: "DevProxy only edits its own managed hosts block and leaves the rest of the file alone."
+  - title: Clear diagnostics
+    details: "`devproxy doctor` checks Caddy, hosts drift, duplicate ports, and upstream reachability."
+  - title: Local dashboard
+    details: "Inspect status and perform safe actions from `devproxy ui` without an elevated shell."
+---
 
-Stable HTTPS `.local` domains for local development on Windows, macOS, and Linux.
+## Start here
 
-## Features
+1. [Tutorials](/tutorials/)
+2. [How-to guides](/how-to/)
+3. [Reference](/reference/)
+4. [Explanation](/explanation/)
 
-- **`devproxy init`** — create project config and register a domain in one command; re-run in an existing project to register from config
-- **Project-local config** with `.devproxy/config.json` — store name, port, and named browser targets so `open` needs zero arguments
-- **Named open targets** — `devproxy open docs` opens `/docs`, `devproxy open admin` opens `/admin`, and so on
-- **Attach-mode services** with `devproxy add` — proxy stable domains to already-running servers
-- **In-place updates** with `devproxy update` — change a service port or rename it without remove-and-re-add
-- **`.local` domain generation** for readable local URLs
-- **Hosts-file management** inside a safe, managed block
-- **Caddyfile generation** and lifecycle management
-- **Caddy `tls internal` HTTPS** out of the box
-- **Caddy config validation and reload**
-- **`devproxy doctor` verifies generated Caddy config and detects duplicate ports**
-- **Service listing, removal, and diagnostics**
-- **Status reporting** for Caddy, registry entries, and upstream reachability
-- **Local browser dashboard** with `devproxy ui` for setup visibility and non-elevated actions; it opens on `127.0.0.1:3579` by default and supports `--port` overrides
+## Quick links
 
-## Quick Start
-
-Install Caddy and trust its local CA:
-
-```powershell
-scoop install caddy
-caddy trust
-```
-
-See [Install Caddy](/guide/install-caddy) for Windows, macOS, and Linux setup commands.
-
-Install DevProxy:
-
-```bash
-npm install -g @maxiviper117/devproxy
-```
-
-Register a service:
-
-```bash
-devproxy add api.myapp --port 8000
-```
-
-Open your new HTTPS domain:
-
-```text
-https://api.myapp.local
-```
-
-Open the dashboard:
-
-```bash
-devproxy ui
-```
-
-## Next Steps
-
-- [Getting Started](/guide/getting-started)
-- [Install Caddy](/guide/install-caddy)
-- [Commands](/guide/commands)
-- [How It Works](/guide/how-it-works)
-- [Troubleshooting](/guide/troubleshooting)
+- [Install Caddy](/how-to/install-caddy)
+- [Get Started](/tutorials/getting-started)
+- [Commands](/reference/commands)
+- [How It Works](/explanation/how-it-works)
+- [Troubleshoot HTTPS](/how-to/troubleshoot-https)
 - [Contributing](/development/contributing)

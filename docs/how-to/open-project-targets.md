@@ -1,6 +1,12 @@
 ---
 title: Open Project Targets
 description: Define and open named browser targets from .devproxy/config.json.
+prev:
+  text: Register a Service
+  link: /how-to/register-service
+next:
+  text: Use DevProxy with Vite
+  link: /how-to/use-vite
 ---
 
 # Open Project Targets
@@ -40,3 +46,5 @@ devproxy open admin
 
 Target values should be URL paths, not full domains. DevProxy prepends the project domain automatically.
 
+> [!TIP]
+> Use `/` for the default target and reserve named targets for screens that teammates open often.

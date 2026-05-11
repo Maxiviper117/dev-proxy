@@ -1,6 +1,10 @@
 ---
 title: Install Caddy
 description: Install and trust Caddy on Windows, macOS, or Linux.
+prev: false
+next:
+  text: Register a Service
+  link: /how-to/register-service
 ---
 
 # Install Caddy
@@ -11,17 +15,17 @@ See the official install guide for package-source details: <https://caddyserver.
 
 ## Windows
 
-Using Scoop:
+::: code-group
 
-```powershell
+```powershell [Scoop]
 scoop install caddy
 ```
 
-Using Chocolatey:
-
-```powershell
+```powershell [Chocolatey]
 choco install caddy
 ```
+
+:::
 
 Verify the install:
 
@@ -29,7 +33,8 @@ Verify the install:
 caddy version
 ```
 
-Then trust Caddy's local CA from an elevated PowerShell session:
+> [!WARNING]
+> Trust Caddy's local CA from an elevated PowerShell session:
 
 ```powershell
 caddy trust
@@ -49,7 +54,8 @@ Verify the install:
 caddy version
 ```
 
-Then trust Caddy's local CA:
+> [!WARNING]
+> Trust Caddy's local CA from an elevated terminal:
 
 ```bash
 caddy trust
@@ -59,9 +65,9 @@ If your trust store needs administrator privileges, rerun the command with `sudo
 
 ## Linux
 
-### Debian, Ubuntu, and Raspbian
+::: code-group
 
-```bash
+```bash [Debian / Ubuntu / Raspbian]
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
@@ -71,27 +77,23 @@ sudo apt update
 sudo apt install caddy
 ```
 
-### Fedora
-
-```bash
+```bash [Fedora]
 sudo dnf install dnf5-plugins
 sudo dnf copr enable @caddy/caddy
 sudo dnf install caddy
 ```
 
-### Red Hat, CentOS, and compatible dnf systems
-
-```bash
+```bash [Red Hat / CentOS]
 sudo dnf install dnf-plugins-core
 sudo dnf copr enable @caddy/caddy
 sudo dnf install caddy
 ```
 
-### Arch, Manjaro, and Parabola
-
-```bash
+```bash [Arch / Manjaro / Parabola]
 sudo pacman -Syu caddy
 ```
+
+:::
 
 Verify the install:
 
@@ -99,7 +101,8 @@ Verify the install:
 caddy version
 ```
 
-Then trust Caddy's local CA:
+> [!WARNING]
+> Trust Caddy's local CA with elevated permissions:
 
 ```bash
 sudo caddy trust
@@ -112,4 +115,3 @@ Run:
 ```bash
 devproxy doctor
 ```
-

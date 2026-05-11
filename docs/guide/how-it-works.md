@@ -1,6 +1,12 @@
 ---
 title: How It Works
 description: This page moved to the Explanation section.
+layout: page
+navbar: false
+sidebar: false
+aside: false
+editLink: false
+lastUpdated: false
 ---
 
 # Moved
@@ -12,4 +18,3 @@ if (typeof window !== "undefined") {
   window.location.replace("/explanation/how-it-works");
 }
 </script>
-

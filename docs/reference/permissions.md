@@ -18,6 +18,9 @@ The following commands need elevated permissions because they modify the hosts f
 
 `devproxy doctor --fix` may also need elevation for specific fixes such as hosts sync and cert trust.
 
+> [!WARNING]
+> DevProxy fails with platform-specific instructions instead of trying to prompt for elevation itself.
+
 ## Non-elevated commands
 
 These commands should run without `sudo` or Administrator rights:
@@ -30,8 +33,3 @@ These commands should run without `sudo` or Administrator rights:
 - `devproxy status`
 - `devproxy doctor`
 - `devproxy certs`
-
-## What happens when access is missing
-
-DevProxy fails with platform-specific instructions instead of trying to prompt for elevation itself.
-

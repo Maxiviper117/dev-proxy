@@ -1,6 +1,10 @@
 ---
 title: Troubleshoot HTTPS
 description: Fix browser certificate warnings for DevProxy domains.
+prev:
+  text: Fix Hosts Drift
+  link: /how-to/fix-hosts-drift
+next: false
 ---
 
 # Troubleshoot HTTPS
@@ -15,6 +19,9 @@ Run:
 devproxy trust
 ```
 
+> [!WARNING]
+> Without trust store access, browsers can still show HTTPS warnings even when DevProxy and Caddy are configured correctly.
+
 If you already have an elevated terminal, `devproxy init` and `devproxy add` can run `caddy trust` automatically when the CA is missing.
 
 ## Use Caddy directly
@@ -28,4 +35,3 @@ caddy trust
 ## Restart the browser
 
 Close and reopen the browser after the trust store changes.
-

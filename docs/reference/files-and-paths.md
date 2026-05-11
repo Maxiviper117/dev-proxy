@@ -1,6 +1,12 @@
 ---
 title: Files and Paths
 description: Managed files and platform-specific locations used by DevProxy.
+prev:
+  text: Config
+  link: /reference/config
+next:
+  text: Permissions
+  link: /reference/permissions
 ---
 
 # Files and Paths
@@ -72,4 +78,3 @@ DevProxy only manages entries inside this block:
 127.0.0.1 api.myapp.local
 # END DEVPROXY
 ```
-

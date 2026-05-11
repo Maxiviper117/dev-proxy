@@ -1,6 +1,12 @@
 ---
 title: Set Up Your First Project
 description: Create project config, define open targets, and reopen the site from the repo.
+prev:
+  text: Get Started
+  link: /tutorials/getting-started
+next:
+  text: Register a Service
+  link: /how-to/register-service
 ---
 
 # Set Up Your First Project
@@ -52,4 +58,3 @@ devproxy init
 ```
 
 DevProxy prompts before reusing the existing config so the project name and port stay explicit.
-

@@ -1,6 +1,12 @@
 ---
 title: Config
 description: Schema and fields for .devproxy/config.json.
+prev:
+  text: Commands
+  link: /reference/commands
+next:
+  text: Files and Paths
+  link: /reference/files-and-paths
 ---
 
 # Config
@@ -62,4 +68,3 @@ Named paths opened by `devproxy open <target>`.
   }
 }
 ```
-

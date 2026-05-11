@@ -1,6 +1,10 @@
 ---
 title: Get Started
 description: Install DevProxy, register one service, and open it in a browser.
+prev: false
+next:
+  text: Set Up Your First Project
+  link: /tutorials/first-project
 ---
 
 # Get Started
@@ -26,15 +30,17 @@ See [Install Caddy](/how-to/install-caddy) for platform-specific commands and tr
 
 ## 2. Install DevProxy
 
-```bash
+::: code-group
+
+```bash [npm]
 npm install -g @maxiviper117/devproxy
 ```
 
-Or:
-
-```bash
+```bash [pnpm]
 pnpm add -g @maxiviper117/devproxy
 ```
+
+:::
 
 Confirm the CLI works:
 
@@ -54,6 +60,9 @@ DevProxy creates `https://api.myapp.local` and proxies to both `127.0.0.1:8000` 
 
 ## 4. Open the domain
 
+> [!NOTE]
+> `devproxy open` reads the project name from `.devproxy/config.json`.
+
 If your project has `.devproxy/config.json`, open the site with:
 
 ```bash
@@ -69,4 +78,3 @@ Use diagnostics when something does not look right:
 ```bash
 devproxy doctor
 ```
-

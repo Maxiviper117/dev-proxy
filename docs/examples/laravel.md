@@ -1,6 +1,12 @@
 ---
 title: Laravel
 description: This page moved to the How-to section.
+layout: page
+navbar: false
+sidebar: false
+aside: false
+editLink: false
+lastUpdated: false
 ---
 
 # Moved
@@ -12,4 +18,3 @@ if (typeof window !== "undefined") {
   window.location.replace("/how-to/use-laravel");
 }
 </script>
-

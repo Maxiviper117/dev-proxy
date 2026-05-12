@@ -1,9 +1,4 @@
 import type { CheckboxFn, DevProxyContext, Service } from "../../core/types.js";
-import {
-  ensureHostsWritable,
-  hostsPermissionMessage,
-  writeHostsFile,
-} from "../../integrations/hosts.js";
 import { validateAndReloadCaddy } from "../../integrations/caddy.js";
 import { ensureSupportedPlatform } from "../../platform/support.js";
 import { projectConfigPath, readProjectConfig, writeProjectConfig } from "../../core/config.js";
@@ -12,8 +7,9 @@ import { readRegistry, removeService, removeServices, updateService } from "../.
 import { domainFromName, parsePort } from "../../core/domain.js";
 import {
   AttachServiceRegistrar,
+  applyRegistryHostsAndCaddy,
   formatCaddyLifecycle,
-  writeProxyArtifacts,
+  syncHostsBlock,
   type ServiceInput,
 } from "./shared.js";
 import { confirm } from "../../cli/prompt.js";
@@ -21,18 +17,6 @@ import checkboxPlus from "inquirer-checkbox-plus-plus";
 
 export class RegistryService {
   constructor(private readonly context: DevProxyContext) {}
-
-  private async ensureHostsAndElevation(): Promise<void> {
-    await ensureHostsWritable(this.context.paths.hostsFile, this.context.platform);
-
-    if (this.context.platform === "win32" && this.context.isElevated) {
-      if (!(await this.context.isElevated())) {
-        throw new DevProxyError(
-          hostsPermissionMessage(this.context.paths.hostsFile, this.context.platform),
-        );
-      }
-    }
-  }
 
   async initProjectConfig(cwd: string, input?: ServiceInput): Promise<string> {
     ensureSupportedPlatform(this.context.platform);
@@ -116,8 +100,6 @@ export class RegistryService {
       throw new DevProxyError("Provide --port and/or --name to update a service.");
     }
 
-    await this.ensureHostsAndElevation();
-
     const registry = await readRegistry(this.context.paths.registryFile);
     const oldName = name.trim().toLowerCase();
     const newName = options.newName?.trim().toLowerCase();
@@ -134,7 +116,7 @@ export class RegistryService {
       newService,
     } = updateService(registry, oldName, { ...nameUpdate, ...portUpdate }, timestamp);
 
-    await writeProxyArtifacts(this.context, next);
+    await applyRegistryHostsAndCaddy(this.context, next);
     const caddyLifecycle = await validateAndReloadCaddy(
       this.context.paths.caddyFile,
       this.context.run,
@@ -156,12 +138,10 @@ export class RegistryService {
 
   async removeRegisteredService(name: string): Promise<string> {
     ensureSupportedPlatform(this.context.platform);
-    await this.ensureHostsAndElevation();
-
     const registry = await readRegistry(this.context.paths.registryFile);
     const { registry: next, removed } = removeService(registry, name.trim().toLowerCase());
 
-    await writeProxyArtifacts(this.context, next);
+    await applyRegistryHostsAndCaddy(this.context, next);
     await validateAndReloadCaddy(this.context.paths.caddyFile, this.context.run);
 
     return `Removed ${removed.domain}`;
@@ -169,8 +149,6 @@ export class RegistryService {
 
   async removeAllServices(): Promise<string> {
     ensureSupportedPlatform(this.context.platform);
-    await this.ensureHostsAndElevation();
-
     const registry = await readRegistry(this.context.paths.registryFile);
 
     if (registry.services.length === 0) {
@@ -199,7 +177,7 @@ export class RegistryService {
       return "Removal cancelled.";
     }
 
-    await writeProxyArtifacts(this.context, { version: 1 as const, services: [] });
+    await applyRegistryHostsAndCaddy(this.context, { version: 1 as const, services: [] });
     await validateAndReloadCaddy(this.context.paths.caddyFile, this.context.run);
 
     return `Removed all ${count} registered service(s).`;
@@ -207,8 +185,6 @@ export class RegistryService {
 
   async interactiveRemove(): Promise<string> {
     ensureSupportedPlatform(this.context.platform);
-    await this.ensureHostsAndElevation();
-
     const registry = await readRegistry(this.context.paths.registryFile);
 
     if (registry.services.length === 0) {
@@ -252,7 +228,7 @@ export class RegistryService {
       services: registry.services.filter((s) => !selectedNames.includes(s.name)),
     };
 
-    await writeProxyArtifacts(this.context, next);
+    await applyRegistryHostsAndCaddy(this.context, next);
     await validateAndReloadCaddy(this.context.paths.caddyFile, this.context.run);
 
     return `Removed ${removed.map((r) => r.domain).join(", ")}`;
@@ -262,8 +238,7 @@ export class RegistryService {
     ensureSupportedPlatform(this.context.platform);
     const registry = await readRegistry(this.context.paths.registryFile);
 
-    await this.ensureHostsAndElevation();
-    await writeHostsFile(this.context.paths.hostsFile, registry.services, this.context.platform);
+    await syncHostsBlock(this.context, registry.services);
 
     return `Hosts file aligned with ${registry.services.length} registered service(s).`;
   }

@@ -6,7 +6,7 @@ description: Canonical CLI command reference for DevProxy.
 # Commands
 
 > [!WARNING]
-> Commands that modify the system hosts file or trust store need elevated permissions: `devproxy init`, `devproxy add`, `devproxy update`, `devproxy remove`, `devproxy sync-hosts`, and `devproxy trust`. `devproxy doctor --fix` may also need elevation for specific fixes.
+> Commands that modify the system hosts file or trust store may prompt for UAC on Windows: `devproxy init`, `devproxy add`, `devproxy update`, `devproxy remove`, `devproxy sync-hosts`, and `devproxy trust`. `devproxy doctor --fix` may also prompt for specific fixes.
 
 ## `devproxy init [--name <name> --port <port>]`
 

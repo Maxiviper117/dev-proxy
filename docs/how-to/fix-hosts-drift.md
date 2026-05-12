@@ -27,5 +27,5 @@ Or let `doctor` attempt safe fixes:
 devproxy doctor --fix
 ```
 
-On a non-elevated terminal, fixes that need permission are reported with manual instructions.
+On Windows, fixes that need permission prompt for UAC when DevProxy can perform them automatically. On macOS and Linux, the same fixes are reported with manual instructions when the shell is not elevated.
 

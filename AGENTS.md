@@ -83,10 +83,11 @@ pnpm pack --dry-run
 - `src/cli.ts` is the npm binary entrypoint and defines the Commander CLI.
 - `src/cli/` contains terminal presentation helpers and Ink-based UI renderers.
 - `src/commands/` contains command-level workflows. `src/commands/services.ts` is a barrel for the class-based service API; implementation lives in `src/commands/services/` by domain (`RegistryService`, `ProjectService`, `CaddyService`, and `DiagnosticsService`).
+- `src/commands/elevated.ts` contains the privileged helper operations that the Windows UAC flow calls through a hidden CLI command.
 - `src/commands/ui.ts` contains `devproxy ui` command orchestration (port selection, browser launch, lifecycle).
 - `src/core/` contains domain validation, registry logic, shared types, and errors.
 - `src/integrations/` contains external integration logic such as Caddy and hosts-file management.
-- `src/platform/` contains runtime path resolution, default context creation, probe helpers, and child-process execution.
+- `src/platform/` contains runtime path resolution, default context creation, probe helpers, child-process execution, and the Windows elevation runner.
 - `src/ui/server.ts` contains the localhost-only dashboard server and API routes.
 - `ui/` contains the Svelte 5 SPA source built into `dist/ui-static/`.
 - `test/helpers/temp-context.ts` provides `createTempContext()` for integration tests; it creates a `DevProxyContext` backed by temp directories that never touch the real system.
@@ -109,9 +110,9 @@ pnpm pack --dry-run
 - DevProxy must only modify hosts entries inside its own marker block:
   - `# BEGIN DEVPROXY`
   - `# END DEVPROXY`
-- Do not add automatic UAC elevation without an explicit product decision.
-- DevProxy may run `caddy trust` automatically when the process is already elevated, but it never triggers an elevation prompt itself.
-- If hosts-file access is missing, fail with clear platform-appropriate elevated-permission instructions.
+- Windows UAC elevation is an explicit product decision for the minimum privileged helper surface.
+- DevProxy may prompt for UAC only for hosts-file or trust-store changes. On macOS and Linux, it still falls back to clear elevated-shell instructions.
+- If hosts-file access is missing and UAC is unavailable or declined, fail with clear platform-appropriate elevated-permission instructions.
 
 ## Product Defaults
 

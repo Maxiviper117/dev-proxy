@@ -77,8 +77,8 @@ describe("hostsPermissionMessage", () => {
   it("uses Windows administrator guidance on win32", () => {
     const message = hostsPermissionMessage("C:\\Windows\\System32\\drivers\\etc\\hosts", "win32");
 
-    expect(message).toContain("administrator rights");
-    expect(message).toContain("Open PowerShell as Administrator");
+    expect(message).toContain("permission to update the Windows hosts file");
+    expect(message).toContain("UAC prompt");
   });
 
   it("uses sudo guidance on macOS and Linux", () => {

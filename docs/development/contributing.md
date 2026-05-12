@@ -64,7 +64,7 @@ devproxy doctor
 ```
 
 ::: warning Elevated permissions required
-Commands that update the system hosts file must be run from an elevated shell:
+On Windows, commands that update the system hosts file prompt for UAC when DevProxy needs permission. On macOS and Linux, run them from an elevated shell:
 
 ```powershell
 devproxy add api.myapp --port 8000
@@ -72,7 +72,7 @@ devproxy remove api.myapp
 ```
 :::
 
-Use `node dist/cli.js ...` when you want to test the current build without linking globally.
+Use `node dist/cli.js ...` when you want to test the current build without linking globally. On Windows, this local-build path still uses the same UAC helper for hosts-file and trust-store changes.
 
 ## Useful Scripts
 

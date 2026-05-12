@@ -70,11 +70,27 @@ export class CaddyService {
     }
 
     if (result === "not-elevated") {
+      if (this.context.platform === "win32" && this.context.elevate) {
+        const elevated = await this.context.elevate({
+          kind: "trust",
+          rootCAPath: this.context.paths.caddyRootCAPath,
+        });
+
+        if (elevated.code === 0) {
+          return elevated.stdout || "Caddy root CA certificate trusted successfully.";
+        }
+
+        return (
+          elevated.stderr ||
+          elevated.stdout ||
+          "Caddy root CA certificate could not be trusted automatically."
+        );
+      }
+
       if (this.context.platform === "win32") {
         return [
-          "DevProxy needs administrator rights to trust the Caddy root CA certificate.",
-          "Open PowerShell or Command Prompt as Administrator and run:",
-          "  devproxy trust",
+          "DevProxy needs permission to trust the Caddy root CA certificate.",
+          "Run `devproxy trust` and approve the UAC prompt, or rerun from an elevated shell if prompts are unavailable.",
         ].join("\n");
       }
 

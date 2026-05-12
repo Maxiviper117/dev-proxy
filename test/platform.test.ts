@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { browserOpenCommand } from "../src/platform/browser.js";
+import { createWindowsElevationInvoker } from "../src/platform/elevation.js";
 import { sudoOwnerFromEnv } from "../src/platform/ownership.js";
 import { defaultPaths } from "../src/platform/paths.js";
 
@@ -73,5 +74,49 @@ describe("sudoOwnerFromEnv", () => {
   it("ignores missing or invalid sudo ids", () => {
     expect(sudoOwnerFromEnv({})).toBeUndefined();
     expect(sudoOwnerFromEnv({ SUDO_UID: "abc", SUDO_GID: "20" })).toBeUndefined();
+  });
+});
+
+describe("createWindowsElevationInvoker", () => {
+  it("builds a PowerShell Start-Process RunAs invocation", async () => {
+    let encodedCommand = "";
+    const launch = async (command: string, args: readonly string[]) => {
+      expect(command).toBe("powershell.exe");
+      expect(args).toContain("-EncodedCommand");
+      encodedCommand = args[args.length - 1] ?? "";
+      const script = Buffer.from(encodedCommand, "base64").toString("utf16le");
+      const match = script.match(/\$resultPath = '([^']+)'/);
+      const resultPath = match?.[1];
+      expect(resultPath).toBeDefined();
+      if (resultPath) {
+        await import("node:fs/promises").then(({ writeFile }) =>
+          writeFile(resultPath, JSON.stringify({ code: 0, stdout: "ok", stderr: "" }), "utf8"),
+        );
+      }
+      return { code: 0, stdout: "", stderr: "" };
+    };
+
+    const elevate = createWindowsElevationInvoker(
+      "win32",
+      async () => ({ code: 0, stdout: "", stderr: "" }),
+      "C:\\Program Files\\nodejs\\node.exe",
+      "D:\\devproxy\\dist\\cli.js",
+      launch,
+    );
+
+    expect(elevate).toBeDefined();
+    const result = await elevate!({
+      kind: "hosts-sync",
+      registryFile: "C:\\temp\\registry.json",
+      hostsFile: "C:\\Windows\\System32\\drivers\\etc\\hosts",
+    });
+
+    expect(result.code).toBe(0);
+    expect(encodedCommand).not.toBe("");
+    const script = Buffer.from(encodedCommand, "base64").toString("utf16le");
+    expect(script).toContain("Start-Process");
+    expect(script).toContain("-Verb RunAs");
+    expect(script).toContain("-Wait -PassThru");
+    expect(script).toContain("-ArgumentList");
   });
 });

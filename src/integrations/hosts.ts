@@ -108,8 +108,8 @@ export async function readHostsDrift(
  * Read the hosts file and write it back with updated services.
  *
  * Wraps {@link updateHostsContent} in filesystem I/O and translates permission
- * errors into a user-friendly {@link DevProxyError} that asks for Administrator
- * privileges.
+ * errors into a user-friendly {@link DevProxyError} that asks for UAC approval
+ * on Windows or elevated permissions elsewhere.
  *
  * @throws {DevProxyError} When the file cannot be written due to permissions.
  */
@@ -149,7 +149,8 @@ export async function canWriteHosts(hostsFile: string): Promise<boolean> {
  * Throw if the hosts file cannot be written.
  *
  * A convenience wrapper around {@link canWriteHosts} that throws a detailed
- * {@link DevProxyError} instructing the user to run as Administrator.
+ * {@link DevProxyError} instructing the user to approve UAC on Windows or use
+ * elevated permissions elsewhere.
  *
  * @throws {DevProxyError} When the hosts file is not writable.
  */
@@ -190,14 +191,15 @@ function hostsPermissionError(hostsFile: string, platform: NodeJS.Platform): Dev
 /**
  * Build the human-readable hosts permission error message.
  *
- * Instructs the user to open PowerShell as Administrator and rerun the same
- * command, including the absolute path to the hosts file for clarity.
+ * Instructs the user to approve UAC on Windows or rerun with elevated
+ * permissions elsewhere, including the absolute path to the hosts file for
+ * clarity.
  */
 export function hostsPermissionMessage(hostsFile: string, platform: NodeJS.Platform): string {
   if (platform === "win32") {
     return [
-      "DevProxy needs administrator rights to update the Windows hosts file.",
-      "Open PowerShell as Administrator and rerun the same devproxy command.",
+      "DevProxy needs permission to update the Windows hosts file.",
+      "Run `devproxy` again and approve the UAC prompt when it appears, or rerun from an elevated shell if prompts are unavailable.",
       `Hosts file: ${hostsFile}`,
     ].join("\n");
   }

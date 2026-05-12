@@ -13,7 +13,7 @@ Caddy generates certificates for `https://<name>.local` using its local root CA.
 
 ## When trust happens automatically
 
-If `devproxy init` or `devproxy add` runs from an already elevated terminal, DevProxy can trust the local CA automatically when the certificate has not yet been generated.
+If `devproxy init` or `devproxy add` runs on Windows, DevProxy can prompt for UAC and trust the local CA automatically when the certificate has not yet been generated.
 
 ## When you need to trust manually
 

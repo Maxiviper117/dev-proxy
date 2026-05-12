@@ -12,12 +12,12 @@ import {
   canWriteHosts,
   hostsPermissionMessage,
   readHostsDrift,
-  writeHostsFile,
   type HostsDrift,
 } from "../../integrations/hosts.js";
 import { probeHttpsUrl, probeTcpPort, probeUrl } from "../../platform/probes.js";
 import { readRegistry } from "../../core/registry.js";
 import type { DevProxyContext } from "../../core/types.js";
+import { syncHostsBlock } from "./shared.js";
 
 export type CaddyValidationResult = {
   valid: boolean;
@@ -116,44 +116,35 @@ export class DiagnosticsService {
       });
     }
 
-    // Check 2: Hosts drift -> FIX if writable, MANUAL if not
+    // Check 2: Hosts drift -> FIX via direct write or UAC helper when possible
     if (!data.hostsDrift.inSync) {
-      if (data.hostsFileWritable) {
-        const ok = await shouldFix(
-          this.context.confirm,
-          "Hosts entries are out of sync with the registry. Sync them now?",
-        );
-        if (ok) {
-          try {
-            await writeHostsFile(
-              this.context.paths.hostsFile,
-              registry.services,
-              this.context.platform,
-            );
-            items.push({
-              action: "Hosts drift",
-              status: "fixed",
-              detail: "Hosts entries synced with the registry.",
-            });
-          } catch {
-            items.push({
-              action: "Hosts drift",
-              status: "manual",
-              detail: hostsPermissionMessage(this.context.paths.hostsFile, this.context.platform),
-            });
-          }
-        } else {
+      const ok = await shouldFix(
+        this.context.confirm,
+        "Hosts entries are out of sync with the registry. Sync them now?",
+      );
+      if (ok) {
+        try {
+          await syncHostsBlock(this.context, registry.services);
           items.push({
             action: "Hosts drift",
-            status: "skipped",
-            detail: "User declined to sync hosts.",
+            status: "fixed",
+            detail: "Hosts entries synced with the registry.",
+          });
+        } catch (error) {
+          items.push({
+            action: "Hosts drift",
+            status: "manual",
+            detail:
+              error instanceof Error
+                ? error.message
+                : hostsPermissionMessage(this.context.paths.hostsFile, this.context.platform),
           });
         }
       } else {
         items.push({
           action: "Hosts drift",
-          status: "manual",
-          detail: hostsPermissionMessage(this.context.paths.hostsFile, this.context.platform),
+          status: "skipped",
+          detail: "User declined to sync hosts.",
         });
       }
     }
@@ -163,7 +154,10 @@ export class DiagnosticsService {
       items.push({
         action: "Hosts file access",
         status: "manual",
-        detail: hostsPermissionMessage(this.context.paths.hostsFile, this.context.platform),
+        detail:
+          this.context.platform === "win32" && this.context.elevate
+            ? "DevProxy can prompt for UAC when hosts sync is needed, but this environment cannot write the hosts file directly."
+            : hostsPermissionMessage(this.context.paths.hostsFile, this.context.platform),
       });
     }
 
@@ -249,7 +243,7 @@ export class DiagnosticsService {
           status: "manual",
           detail:
             this.context.platform === "win32"
-              ? "Run PowerShell or Command Prompt as Administrator and run `devproxy trust`."
+              ? "Run `devproxy trust` and approve the UAC prompt."
               : "Rerun with sudo: `sudo devproxy trust`.",
         });
       }
@@ -277,7 +271,7 @@ export class DiagnosticsService {
       hints.push(caddyInstallHint);
     }
     if (!hostsDrift.inSync) {
-      hints.push("Run 'devproxy sync-hosts' from an elevated terminal to align hosts.");
+      hints.push("Run 'devproxy sync-hosts' and approve the UAC prompt to align hosts.");
     }
 
     // Caddy config validation

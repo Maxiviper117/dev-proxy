@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.26.0...devproxy-v0.27.0) (2026-05-12)
+
+
+### Features
+
+* add Windows UAC elevation support for privileged operations ([#80](https://github.com/Maxiviper117/dev-proxy/issues/80)) ([1ac5589](https://github.com/Maxiviper117/dev-proxy/commit/1ac5589ec8066362b8b2bdb66e6f101abc10e8c3))
+
 ## [0.26.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.25.0...devproxy-v0.26.0) (2026-05-10)
 
 

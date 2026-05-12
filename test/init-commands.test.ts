@@ -36,6 +36,29 @@ describe("init command", () => {
     expect(caddyfile).toContain("reverse_proxy 127.0.0.1:9090");
   });
 
+  it("does not write config or registry when elevated hosts sync is cancelled", async () => {
+    const context = await createContext();
+    const configFile = join(context.paths.appDir, ".devproxy", "config.json");
+    context.isElevated = async () => false;
+    context.elevate = async () => ({
+      code: 1,
+      stdout: "",
+      stderr: "The operation was canceled by the user.",
+    });
+
+    await expect(
+      new RegistryService(context).initProjectConfig(context.paths.appDir, {
+        name: "my-api",
+        port: "9090",
+      }),
+    ).rejects.toThrow("The operation was canceled by the user.");
+
+    await expect(readFile(configFile, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(new RegistryService(context).listServices()).resolves.toBe(
+      "No services registered.",
+    );
+  });
+
   it("repairs hosts and Caddyfile when the service is already registered", async () => {
     const context = await createContext();
     const registry = new RegistryService(context);

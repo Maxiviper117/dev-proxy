@@ -27,6 +27,21 @@ export type CommandRunner = (
   args: readonly string[],
 ) => Promise<{ code: number; stdout: string; stderr: string }>;
 
+export type ElevationRequest =
+  | {
+      kind: "hosts-sync";
+      registryFile: string;
+      hostsFile: string;
+    }
+  | {
+      kind: "trust";
+      rootCAPath: string;
+    };
+
+export type ElevationInvoker = (
+  request: ElevationRequest,
+) => Promise<{ code: number; stdout: string; stderr: string }>;
+
 export type TcpProbe = (host: string, port: number) => Promise<boolean>;
 
 export type UrlProbe = (url: string) => Promise<boolean>;
@@ -58,4 +73,5 @@ export type DevProxyContext = {
   confirm?: ConfirmFn;
   checkbox?: CheckboxFn;
   isElevated?: ElevationChecker;
+  elevate?: ElevationInvoker;
 };

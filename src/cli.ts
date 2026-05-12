@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import { realpathSync } from "node:fs";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import { Command } from "commander";
 import { renderBanner, renderVersionLine } from "./cli/help-text.js";
 import { DevProxyError, normalizeError } from "./core/errors.js";
 import type { DevProxyContext } from "./core/types.js";
+import { runElevatedRequest, writeElevatedResult } from "./commands/elevated.js";
 
 const require = createRequire(import.meta.url);
 const packageJson = require("../package.json") as { version?: string };
@@ -293,6 +294,71 @@ export function buildProgram(contextOrGetContext: DevProxyContext | GetContext):
       console.log(format(message));
     });
 
+  const elevatedCommand = new Command("__elevated")
+    .argument("<operation>")
+    .option("--registry <path>", "registry file path")
+    .option("--hosts <path>", "hosts file path")
+    .option("--root-ca <path>", "Caddy root CA path")
+    .option("--result <path>", "result file path")
+    .action(
+      async (
+        operation: string,
+        options: {
+          registry?: string;
+          hosts?: string;
+          rootCa?: string;
+          result?: string;
+        },
+      ) => {
+        const context = await getContext();
+
+        try {
+          let result: { code: number; stdout: string; stderr: string };
+
+          if (operation === "hosts-sync") {
+            if (!options.registry || !options.hosts || !options.result) {
+              throw new DevProxyError("Missing required elevation arguments for hosts sync.");
+            }
+
+            result = await runElevatedRequest({
+              kind: "hosts-sync",
+              platform: context.platform,
+              registryFile: options.registry,
+              hostsFile: options.hosts,
+              run: context.run,
+            });
+          } else if (operation === "trust") {
+            if (!options.rootCa || !options.result) {
+              throw new DevProxyError("Missing required elevation arguments for trust.");
+            }
+
+            result = await runElevatedRequest({
+              kind: "trust",
+              platform: context.platform,
+              rootCAPath: options.rootCa,
+              run: context.run,
+            });
+          } else {
+            throw new DevProxyError(`Unknown elevated operation: ${operation}`);
+          }
+
+          await writeElevatedResult(options.result, result);
+          process.exitCode = result.code;
+        } catch (error) {
+          const normalized = normalizeError(error);
+          if (options.result) {
+            await writeElevatedResult(options.result, {
+              code: 1,
+              stdout: "",
+              stderr: normalized.message,
+            });
+          }
+          process.exitCode = 1;
+        }
+      },
+    );
+  program.addCommand(elevatedCommand, { hidden: true });
+
   return program;
 }
 
@@ -309,7 +375,7 @@ export async function runCli(argv = process.argv): Promise<void> {
     await buildProgram(async () => {
       if (!context) {
         const { createDefaultContext } = await import("./platform/context.js");
-        context = createDefaultContext();
+        context = createDefaultContext(process.argv[1]);
       }
 
       return context;
@@ -323,6 +389,14 @@ export async function runCli(argv = process.argv): Promise<void> {
       console.error(normalized.message);
     }
     process.exitCode = normalized instanceof DevProxyError ? normalized.exitCode : 1;
+  } finally {
+    cleanupPromptInput();
+  }
+}
+
+function cleanupPromptInput(): void {
+  if (!process.stdin.destroyed) {
+    process.stdin.pause();
   }
 }
 
@@ -347,4 +421,5 @@ export function isCliEntrypoint(argvPath: string | undefined, moduleUrl: string)
 
 if (isCliEntrypoint(process.argv[1], import.meta.url)) {
   await runCli();
+  process.exit(process.exitCode ?? 0);
 }

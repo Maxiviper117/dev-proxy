@@ -40,7 +40,7 @@ caddy version
 caddy trust
 ```
 
-If you run `devproxy init` or `devproxy add` from an elevated terminal, DevProxy can run `caddy trust` automatically when the local CA has not been generated yet.
+If you run `devproxy init` or `devproxy add` on Windows, DevProxy can prompt for UAC and run `caddy trust` automatically when the local CA has not been generated yet.
 
 ## macOS
 
@@ -55,7 +55,7 @@ caddy version
 ```
 
 > [!WARNING]
-> Trust Caddy's local CA from an elevated terminal:
+> Trust Caddy's local CA by approving the UAC prompt on Windows:
 
 ```bash
 caddy trust

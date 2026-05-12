@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DiagnosticsService, RegistryService } from "../src/commands/services.js";
@@ -185,7 +185,7 @@ describe("diagnostics commands", () => {
       missing: ["api.myapp.local"],
     });
     expect(parsed.hints).toContain(
-      "Run 'devproxy sync-hosts' from an elevated terminal to align hosts.",
+      "Run 'devproxy sync-hosts' and approve the UAC prompt to align hosts.",
     );
   });
 
@@ -215,6 +215,52 @@ describe("diagnostics commands", () => {
     const hosts = await readFile(context.paths.hostsFile, "utf8");
     expect(hosts).toContain("127.0.0.1 api.myapp.local");
     expect(hosts).not.toContain("stale.local");
+  });
+
+  it("sync-hosts uses the elevation helper when the hosts file is read-only", async () => {
+    const context = await createContext();
+    const registry = new RegistryService(context);
+    await registry.addService({ name: "api.myapp", port: "8000" });
+    await chmod(context.paths.hostsFile, 0o444);
+    context.isElevated = async () => false;
+
+    let elevated = false;
+    context.elevate = async (request) => {
+      if (request.kind !== "hosts-sync") {
+        throw new Error("Unexpected elevation request");
+      }
+
+      elevated = true;
+      const registryData = JSON.parse(await readFile(request.registryFile, "utf8")) as {
+        services: { domain: string }[];
+      };
+      await chmod(request.hostsFile, 0o644);
+      await writeFile(
+        request.hostsFile,
+        [
+          "127.0.0.1 localhost",
+          "# BEGIN DEVPROXY",
+          ...registryData.services.map((service) => `127.0.0.1 ${service.domain}`),
+          "# END DEVPROXY",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      return {
+        code: 0,
+        stdout: `Hosts file aligned with ${registryData.services.length} registered service(s).`,
+        stderr: "",
+      };
+    };
+
+    const output = await captureCommandOutput(buildProgram(context), [
+      "node",
+      "devproxy",
+      "sync-hosts",
+    ]);
+
+    expect(output).toContain("Hosts file aligned with 1 registered service");
+    expect(elevated).toBe(true);
   });
 
   it("status --json returns structured status", async () => {

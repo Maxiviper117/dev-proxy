@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { chmod, readFile, writeFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { RegistryService } from "../src/commands/services.js";
 import { createContext } from "./helpers/test-helpers.js";
@@ -19,6 +19,54 @@ describe("service registration and removal", () => {
 
     const caddyfile = await readFile(context.paths.caddyFile, "utf8");
     expect(caddyfile).toContain("api.myapp.local");
+  });
+
+  it("uses the elevation helper when the hosts file is not writable", async () => {
+    const context = await createContext();
+    await chmod(context.paths.hostsFile, 0o444);
+    context.isElevated = async () => false;
+
+    let hostsElevated = false;
+    context.elevate = async (request) => {
+      if (request.kind === "trust") {
+        return {
+          code: 0,
+          stdout: "Caddy root CA certificate trusted successfully.",
+          stderr: "",
+        };
+      }
+
+      if (request.kind !== "hosts-sync") {
+        throw new Error("Unexpected elevation request");
+      }
+
+      hostsElevated = true;
+      const registry = JSON.parse(await readFile(request.registryFile, "utf8")) as {
+        services: { domain: string }[];
+      };
+      await chmod(request.hostsFile, 0o644);
+      const content = [
+        "127.0.0.1 localhost",
+        "# BEGIN DEVPROXY",
+        ...registry.services.map((service) => `127.0.0.1 ${service.domain}`),
+        "# END DEVPROXY",
+        "",
+      ].join("\n");
+      await writeFile(request.hostsFile, content, "utf8");
+      return {
+        code: 0,
+        stdout: `Hosts file aligned with ${registry.services.length} registered service(s).`,
+        stderr: "",
+      };
+    };
+
+    await expect(
+      new RegistryService(context).addService({ name: "api.myapp", port: "8000" }),
+    ).resolves.toContain("api.myapp.local");
+    expect(hostsElevated).toBe(true);
+
+    const hosts = await readFile(context.paths.hostsFile, "utf8");
+    expect(hosts).toContain("api.myapp.local");
   });
 
   it("notifies when registering a service already on the same port", async () => {
@@ -71,6 +119,23 @@ describe("service registration and removal", () => {
     await expect(new RegistryService(context).listServices()).resolves.toBe(
       "No services registered.",
     );
+  });
+
+  it("keeps the registry unchanged when elevated hosts sync is cancelled during remove", async () => {
+    const context = await createContext();
+    const registry = new RegistryService(context);
+    await registry.addService({ name: "api.myapp", port: "8000" });
+    context.isElevated = async () => false;
+    context.elevate = async () => ({
+      code: 1,
+      stdout: "",
+      stderr: "The operation was canceled by the user.",
+    });
+
+    await expect(registry.removeRegisteredService("api.myapp")).rejects.toThrow(
+      "The operation was canceled by the user.",
+    );
+    await expect(registry.listServices()).resolves.toContain("api.myapp");
   });
 
   it("removes all services with --all", async () => {

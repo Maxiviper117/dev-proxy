@@ -22,7 +22,7 @@ devproxy trust
 > [!WARNING]
 > Without trust store access, browsers can still show HTTPS warnings even when DevProxy and Caddy are configured correctly.
 
-If you already have an elevated terminal, `devproxy init` and `devproxy add` can run `caddy trust` automatically when the CA is missing.
+On Windows, `devproxy init` and `devproxy add` can prompt for UAC and run `caddy trust` automatically when the CA is missing.
 
 ## Use Caddy directly
 

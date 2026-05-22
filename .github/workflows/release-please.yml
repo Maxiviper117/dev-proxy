@@ -54,4 +54,5 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm pack --dry-run
-      - run: npm publish --access public
+      - name: Stage package on npm
+        run: npm stage publish --access public

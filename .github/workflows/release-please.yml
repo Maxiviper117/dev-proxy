@@ -16,17 +16,26 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
     concurrency:
       group: release-please-${{ github.ref }}
-      cancel-in-progress: true
+      cancel-in-progress: false
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
+      - name: Require release token
+        run: |
+          if [ -z "$RELEASE_PLEASE_TOKEN" ]; then
+            echo "RELEASE_PLEASE_TOKEN is required for Release Please."
+            echo "Use a PAT or GitHub App token so CI runs automatically on release PRs."
+            exit 1
+          fi
+
       - id: release
         uses: googleapis/release-please-action@v4
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN != '' && secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
@@ -50,9 +59,11 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: pnpm
 
+      - run: npm install --global npm@11.15.0
+      - run: npm --version
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm build
       - run: pnpm pack --dry-run
       - name: Stage package on npm
-        run: npm stage publish --access public
+        run: npm stage publish --access public --provenance

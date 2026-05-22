@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.27.1](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.27.0...devproxy-v0.27.1) (2026-05-22)
+
+
+### Bug Fixes
+
+* enhance release workflow with token validation and npm staging improvements ([4b56833](https://github.com/Maxiviper117/dev-proxy/commit/4b56833de8fd819f413b82a3bbf5e997d4d48957))
+* rename npm publish step to clarify staging process ([a3be60c](https://github.com/Maxiviper117/dev-proxy/commit/a3be60c95be10950160001944e54c66a6f168ff1))
+
 ## [0.27.0](https://github.com/Maxiviper117/dev-proxy/compare/devproxy-v0.26.0...devproxy-v0.27.0) (2026-05-12)
 
 

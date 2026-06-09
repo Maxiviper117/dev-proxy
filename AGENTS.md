@@ -64,6 +64,7 @@ pnpm pack --dry-run
 - `ci / checks` runs on a Windows, macOS, and Linux matrix so platform-specific regressions are caught before merge.
 - `ci / checks` is skipped for draft pull requests and only starts once the PR is ready for review.
 - The CI workflow normalizes Git line endings before checkout so Windows runners preserve LF files for `oxfmt --check`.
+- Local CI can be run with `pnpm act:ci` for Linux, `pnpm act:ci:windows` on Windows, and `pnpm act:ci:macos` on macOS. Each command uses the checked-in pull request event payload in `.act/pull_request.json` and selects one matrix entry with `act`.
 - Release Please config lives in `release-please-config.json`.
 - Release Please manifest lives in `.release-please-manifest.json`.
 - GitHub Actions workflow lives in `.github/workflows/release-please.yml`.

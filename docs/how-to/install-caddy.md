@@ -55,7 +55,7 @@ caddy version
 ```
 
 > [!WARNING]
-> Trust Caddy's local CA by approving the UAC prompt on Windows:
+> Trust Caddy's local CA from an elevated shell if needed:
 
 ```bash
 caddy trust
@@ -102,7 +102,7 @@ caddy version
 ```
 
 > [!WARNING]
-> Trust Caddy's local CA with elevated permissions:
+> Trust Caddy's local CA with `sudo`:
 
 ```bash
 sudo caddy trust

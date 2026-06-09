@@ -61,6 +61,8 @@ pnpm pack --dry-run
 
 - CI workflow lives in `.github/workflows/ci.yml`.
 - `ci / checks` runs only for pull requests targeting `main` (including new commits pushed to those PRs); it does not run again on the merge commit pushed to `main`.
+- `ci / checks` runs on a Windows, macOS, and Linux matrix so platform-specific regressions are caught before merge.
+- `ci / checks` is skipped for draft pull requests and only starts once the PR is ready for review.
 - Release Please config lives in `release-please-config.json`.
 - Release Please manifest lives in `.release-please-manifest.json`.
 - GitHub Actions workflow lives in `.github/workflows/release-please.yml`.

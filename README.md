@@ -14,14 +14,7 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 
 ## Quick Start
 
-1. Install [Caddy](https://caddyserver.com/) and trust its CA:
-
-   ```powershell
-   scoop install caddy
-   caddy trust
-   ```
-
-   On macOS, `brew install caddy` is the common install path. On Linux, use the official packages for your distribution. See the docs for the full Windows, macOS, and Linux setup guide.
+1. Install [Caddy](https://caddyserver.com/) and trust its CA. See [Install Caddy](https://maxiviper117.github.io/dev-proxy/how-to/install-caddy) for the Windows, macOS, and Linux commands.
 
 2. Install DevProxy:
 
@@ -50,7 +43,7 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
    ```
 
    `init` does two things:
-   1. **Registers the service globally** (same as `add`) — adds the domain to DevProxy's registry, updates your hosts file, and reloads Caddy.
+   1. **Registers the service globally** (same as `add`) - adds the domain to DevProxy's registry, updates your hosts file, and reloads Caddy.
    2. **Creates `.devproxy/config.json`** in your current directory, saving the service `name` and `port`.
 
    Because the config lives in your project, you can re-run `devproxy init` later without remembering the original flags. Commit `.devproxy/config.json` to version control so your team can run the same command to set up the project locally.
@@ -74,17 +67,19 @@ Full documentation is hosted at [https://maxiviper117.github.io/dev-proxy/](http
 
 ## Commands
 
- | Command | Description |
+| Command | Description |
 | --- | --- |
 | `devproxy init --name <name> --port <port>` | Register a service and create project config in one step |
 | `devproxy add <name> --port <port>` | Register a new service |
 | `devproxy update <name> [--name <name>] [--port <port>]` | Rename a service or change its port |
-| `devproxy open [name]` | Open a service in your browser |
-| `devproxy ui [--port <port>] [--no-open]` | Open the local browser dashboard |
+| `devproxy open [target]` | Open the current project or a named target in your browser |
+| `devproxy ui [--host <host> --port <port> --no-open]` | Open the local browser dashboard |
 | `devproxy list` | List all registered services |
+| `devproxy ls` | Alias for `devproxy list` |
 | `devproxy status` | Report Caddy state and upstream health |
-| `devproxy remove <name>` | Remove a registered service |
-| `devproxy doctor` | Check setup and diagnostics |
+| `devproxy remove [name]` | Remove one or more services |
+| `devproxy rm` | Alias for `devproxy remove` |
+| `devproxy doctor [--fix] [--non-interactive]` | Check setup and diagnostics |
 | `devproxy sync-hosts` | Align DevProxy hosts entries with the registry |
 | `devproxy certs` | Print Caddy root CA certificate information |
 | `devproxy trust` | Trust the Caddy local root CA certificate |

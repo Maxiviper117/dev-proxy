@@ -36,6 +36,36 @@ For publishing-related changes, also run:
 pnpm pack --dry-run
 ```
 
+## Run GitHub Actions Locally
+
+Use [`act`](https://github.com/nektos/act) to run the `ci` workflow locally against the `checks` job.
+
+Install `act`:
+
+```bash
+winget install nektos.act
+```
+
+Run the local CI harness on Linux:
+
+```bash
+pnpm act:ci
+```
+
+Run the Windows runner locally from this machine:
+
+```bash
+pnpm act:ci:windows
+```
+
+Run the macOS runner locally from a MacBook:
+
+```bash
+pnpm act:ci:macos
+```
+
+These commands use the checked-in `.act/pull_request.json` event payload plus `act` matrix selection to run a single OS job at a time. On Windows and macOS, `act` runs the selected job directly on the host with `-P windows-latest=-self-hosted` or `-P macos-latest=-self-hosted`; Linux runs in the default Docker container.
+
 ## Run the CLI from This Project
 
 Build first:

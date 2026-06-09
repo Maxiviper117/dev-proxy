@@ -1,0 +1,19 @@
+{
+  "act": true,
+  "base_ref": "main",
+  "head_ref": "local-act",
+  "pull_request": {
+    "base": {
+      "ref": "main",
+      "sha": "0000000000000000000000000000000000000000"
+    },
+    "draft": false,
+    "head": {
+      "ref": "local-act",
+      "sha": "0000000000000000000000000000000000000000"
+    }
+  },
+  "repository": {
+    "full_name": "Maxiviper117/dev-proxy"
+  }
+}

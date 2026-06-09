@@ -53,6 +53,10 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "pack:dry": "pnpm pack --dry-run",
+    "act:ci": "pnpm act:ci:linux",
+    "act:ci:linux": "act pull_request -e .act/pull_request.json -j checks --matrix os:ubuntu-latest",
+    "act:ci:windows": "act pull_request -e .act/pull_request.json -j checks --matrix os:windows-latest -P windows-latest=-self-hosted",
+    "act:ci:macos": "act pull_request -e .act/pull_request.json -j checks --matrix os:macos-latest -P macos-latest=-self-hosted",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"

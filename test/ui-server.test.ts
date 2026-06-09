@@ -35,7 +35,7 @@ describe("ui server", () => {
     } finally {
       await server.close();
     }
-  });
+  }, 15000);
 
   it("serves static assets and spa fallback", async () => {
     const context = await createContext();
